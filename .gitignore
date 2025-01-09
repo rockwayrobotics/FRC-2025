@@ -182,3 +182,7 @@ logs/
 
 # Folder that has CTRE Phoenix Sim device config storage
 ctre_sim/
+
+# Files that should just never be committed
+*.pyc
+*.bak
