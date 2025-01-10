@@ -18,3 +18,5 @@
      - configurable parameters available (e.g. exposure time)
 - [ ] consider doing camera calibration and using it
 - [ ] add Java code to get the Transform3d, but also just add to web dash
+- [x] set up Samba share on fire1 (user "user", no password)
+- [ ] Java: learn how to receive NT updates (for vision info) on new data
