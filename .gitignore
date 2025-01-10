@@ -186,3 +186,5 @@ ctre_sim/
 # Files that should just never be committed
 *.pyc
 *.bak
+
+.DS_Store
