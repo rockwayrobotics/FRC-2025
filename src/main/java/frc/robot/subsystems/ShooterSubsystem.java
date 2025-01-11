@@ -57,32 +57,35 @@ public class ShooterSubsystem extends SubsystemBase {
     m_leftPID = m_leftFlywheel.getClosedLoopController();
     m_rightPID = m_rightFlywheel.getClosedLoopController();
 
-    // TODO: It seemed safest to reset to safe first and then avoid persisting the changes through power cycle?
+    // TODO: It seemed safest to reset to safe first and then avoid persisting the
+    // changes through power cycle?
     m_leftFlywheel.configure(
-      new SparkMaxConfig()
-        .idleMode(IdleMode.kCoast)
-        .inverted(true)
-        .smartCurrentLimit(40)
-        .apply(new ClosedLoopConfig().p(0.00008).velocityFF(0.00019)),
-      ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        new SparkMaxConfig()
+            .idleMode(IdleMode.kCoast)
+            .inverted(true)
+            .smartCurrentLimit(40)
+            .apply(new ClosedLoopConfig().p(0.00008).velocityFF(0.00019)),
+        ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     m_rightFlywheel.configure(
-      new SparkMaxConfig()
-        .idleMode(IdleMode.kCoast)
-        .smartCurrentLimit(40)
-        .apply(new ClosedLoopConfig().p(0.00008).velocityFF(0.00018)),
-      ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        new SparkMaxConfig()
+            .idleMode(IdleMode.kCoast)
+            .smartCurrentLimit(40)
+            .apply(new ClosedLoopConfig().p(0.00008).velocityFF(0.00018)),
+        ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
-    //m_rightFlywheel.follow(m_leftFlywheel, true);
+    // m_rightFlywheel.follow(m_leftFlywheel, true);
 
     m_shooterTopSensor = new DigitalInput(Constants.Digital.SHOOTER_TOP_SENSOR);
 
     shooterTopSensorWidget = dashboardTab.addPersistent("Shooter Staged Sensor", false).getEntry();
-    //leftFlywheelWidget = dashboardTab.addPersistent("Left Flywheel Speed", 0).getEntry();
-    //rightFlywheelWidget = dashboardTab.addPersistent("Right Flywheel Speed", 0).getEntry();
+    // leftFlywheelWidget = dashboardTab.addPersistent("Left Flywheel Speed",
+    // 0).getEntry();
+    // rightFlywheelWidget = dashboardTab.addPersistent("Right Flywheel Speed",
+    // 0).getEntry();
     FlywheelSetRPMWidget = dashboardTab.addPersistent("Flywheel Set RPM Setpoint", 5000).getEntry();
     FlywheelScaleWidget = dashboardTab.addPersistent("Flywheel Scale", 1).getEntry();
     flywheelSpeedWidget = dashboardTab.addPersistent("Flywheel Speed", 0.5).getEntry();
-    flywheelWaitWidget = dashboardTab.addPersistent("Flywheel Wait To Ramp", 1).getEntry(); 
+    flywheelWaitWidget = dashboardTab.addPersistent("Flywheel Wait To Ramp", 1).getEntry();
     leftRPMWidget = dashboardTab.add("Left Flywheel RPM", 0).getEntry();
     rightRPMWidget = dashboardTab.add("Right Flywheel RPM", 0).getEntry();
   }

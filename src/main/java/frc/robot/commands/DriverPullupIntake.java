@@ -15,7 +15,6 @@ public class DriverPullupIntake extends Command {
 
   int counter = 0;
 
-
   public DriverPullupIntake(ShooterSubsystem shooter, IntakeSubsystem intake, LedSubsystem led) {
     m_shooter = shooter;
     m_intake = intake;
@@ -27,7 +26,7 @@ public class DriverPullupIntake extends Command {
   @Override
   public void initialize() {
     // Resets encoder values to default
-    //System.out.println("operator pullup");
+    // System.out.println("operator pullup");
     m_shooter.instantStopFlywheels();
     m_intake.setBelt(0.7);
     m_intake.setIntake(0.2);
@@ -42,8 +41,8 @@ public class DriverPullupIntake extends Command {
 
   @Override
   public boolean isFinished() {
-    //  TODO: Make this 70 a constant
-    if (counter > 2 * 140){
+    // TODO: Make this 70 a constant
+    if (counter > 2 * 140) {
       return true;
     }
     return m_shooter.isNoteStaged(); // Returns true if the shooter is staged
@@ -51,10 +50,9 @@ public class DriverPullupIntake extends Command {
 
   @Override
   public void end(boolean cancelled) {
-    if (counter > 2 * 140){
-      m_intake.stagedFlag = false; 
-    }
-    else {
+    if (counter > 2 * 140) {
+      m_intake.stagedFlag = false;
+    } else {
       m_intake.stagedFlag = true;
     }
   }

@@ -17,12 +17,11 @@ public class ShootFromGroundDriveFour extends SequentialCommandGroup {
   LedSubsystem m_led;
 
   public ShootFromGroundDriveFour(
-    ShooterSubsystem shooter,
-    IntakeSubsystem intake,
-    LedSubsystem led,
-    DrivebaseSubsystem drivebase,
-    double drivedistance
-  ) {
+      ShooterSubsystem shooter,
+      IntakeSubsystem intake,
+      LedSubsystem led,
+      DrivebaseSubsystem drivebase,
+      double drivedistance) {
     m_shooter = shooter;
     m_intake = intake;
     m_led = led;
@@ -31,10 +30,9 @@ public class ShootFromGroundDriveFour extends SequentialCommandGroup {
     addRequirements(m_shooter, m_intake, m_led, m_drivebase);
 
     System.out.println("ShootFromGroundDriveFour");
-    
+
     this.addCommands(
-        new InstantCommand(() -> m_led.setMode(Constants.LED.modes.FlashingOrange))
-      );
+        new InstantCommand(() -> m_led.setMode(Constants.LED.modes.FlashingOrange)));
 
     this.addCommands(new InstantCommand(() -> m_intake.setBelt(1)));
     this.addCommands(new InstantCommand(() -> m_intake.setIntake(0.5)));
@@ -53,7 +51,6 @@ public class ShootFromGroundDriveFour extends SequentialCommandGroup {
     this.addCommands(new InstantCommand(() -> m_intake.setBelt(0)));
     this.addCommands(new InstantCommand(() -> m_shooter.setFlywheels(0)));
     this.addCommands(
-        new InstantCommand(() -> m_led.setMode(Constants.LED.modes.Rainbow))
-      );
+        new InstantCommand(() -> m_led.setMode(Constants.LED.modes.Rainbow)));
   }
 }

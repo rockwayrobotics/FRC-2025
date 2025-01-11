@@ -27,7 +27,9 @@ public class DriveDistance extends Command {
   }
 
   public DriveDistance(DrivebaseSubsystem subsystem, double speed, double distance) {
-    this(subsystem, speed, () -> { return distance; });
+    this(subsystem, speed, () -> {
+      return distance;
+    });
   }
 
   @Override
@@ -43,7 +45,7 @@ public class DriveDistance extends Command {
     m_rightBase = m_drivebase.getRDistance();
 
     System.out.printf("Moving: %.3f from %.3f, %.3f%n",
-      m_distance, m_leftBase, m_rightBase);
+        m_distance, m_leftBase, m_rightBase);
   }
 
   @Override
@@ -54,8 +56,10 @@ public class DriveDistance extends Command {
 
   @Override
   public boolean isFinished() {
-    // System.out.println("Current pos: " + Math.abs(m_drivebase.getRDistance()) + " Setpoint: " + m_distance);
-    //SmartDashboard.putNumber("Auto Command Distance Travelled", m_drivebase.getRDistance());
+    // System.out.println("Current pos: " + Math.abs(m_drivebase.getRDistance()) + "
+    // Setpoint: " + m_distance);
+    // SmartDashboard.putNumber("Auto Command Distance Travelled",
+    // m_drivebase.getRDistance());
     double m_leftDist = m_drivebase.getLDistance() - m_leftBase;
     double m_rightDist = m_drivebase.getRDistance() - m_rightBase;
     double distance = (m_leftDist + m_rightDist) / 2.0;

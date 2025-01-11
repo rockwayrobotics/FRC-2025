@@ -36,8 +36,10 @@ public class DriveRotate extends Command {
 
   @Override
   public boolean isFinished() {
-    // System.out.println("Current pos: " + Math.abs(m_drivebase.getAngle()) + " Setpoint: " + Math.abs(m_angle));
-    //SmartDashboard.putNumber("Auto Command Distance Travelled", m_drivebase.getRDistance());
+    // System.out.println("Current pos: " + Math.abs(m_drivebase.getAngle()) + "
+    // Setpoint: " + Math.abs(m_angle));
+    // SmartDashboard.putNumber("Auto Command Distance Travelled",
+    // m_drivebase.getRDistance());
     return (Math.abs(m_drivebase.getAngle()) >= Math.abs(m_angle));
   }
 

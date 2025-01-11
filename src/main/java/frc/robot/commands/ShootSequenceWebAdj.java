@@ -9,11 +9,10 @@ import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 
-
 public class ShootSequenceWebAdj extends SequentialCommandGroup {
   ShooterSubsystem m_shooter;
   IntakeSubsystem m_intake;
-  LedSubsystem m_led; 
+  LedSubsystem m_led;
 
   private ShootSequenceWebAdj(ShooterSubsystem shooter, IntakeSubsystem intake, LedSubsystem led) {
     m_shooter = shooter;
@@ -32,7 +31,7 @@ public class ShootSequenceWebAdj extends SequentialCommandGroup {
     this.addCommands(new InstantCommand(() -> m_shooter.setFlywheels(0)));
     this.addCommands(new InstantCommand(() -> m_led.setMode(Constants.LED.modes.Rainbow)));
   }
-  
+
   public static Command create(ShooterSubsystem shooter, IntakeSubsystem intake, LedSubsystem led) {
     return new ShootSequenceWebAdj(shooter, intake, led).finallyDo((boolean interrupted) -> {
       shooter.setFlywheels(0);

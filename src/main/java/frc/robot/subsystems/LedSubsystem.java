@@ -29,9 +29,9 @@ public class LedSubsystem extends SubsystemBase {
 
   BufferedImage badapple;
   BufferedImage heatgradient;
-  BufferedImage whitedotlines; 
+  BufferedImage whitedotlines;
 
-  BufferedImage currentimage; 
+  BufferedImage currentimage;
 
   public LedSubsystem() {
     m_led = new AddressableLED(Constants.LED.LED_PWM);
@@ -128,7 +128,7 @@ public class LedSubsystem extends SubsystemBase {
     }
     counter++;
   }
-  
+
   private void flashing_green() {
     int phase = (counter / 2) % 2;
     int red = phase * 0;
@@ -144,7 +144,7 @@ public class LedSubsystem extends SubsystemBase {
       return ImageIO.read(new File(Filesystem.getDeployDirectory(), imagePath));
     } catch (IOException e) {
       e.printStackTrace();
-      // make robust 
+      // make robust
     }
     return null;
   }
@@ -169,11 +169,15 @@ public class LedSubsystem extends SubsystemBase {
     }
   }
 
-/**
- * <p>Set the LED mode to a specific color</p>
- * @param mode the mode to set the LED to
- * @param optionalOverride whether to override the current mode, defaults to false
- */
+  /**
+   * <p>
+   * Set the LED mode to a specific color
+   * </p>
+   * 
+   * @param mode             the mode to set the LED to
+   * @param optionalOverride whether to override the current mode, defaults to
+   *                         false
+   */
   public void setMode(modes mode, boolean... optionalOverride) {
     // TODO: Override does not do anything
     // optionalOverride defaults to false
@@ -186,7 +190,7 @@ public class LedSubsystem extends SubsystemBase {
       m_mode = mode;
       counter = 0;
     }
-    //System.out.println("Set LED to: " + mode);
+    // System.out.println("Set LED to: " + mode);
   }
 
   public modes getMode() {
@@ -218,7 +222,7 @@ public class LedSubsystem extends SubsystemBase {
           break;
         case Off:
           off();
-          break; 
+          break;
         case BreathingYellow:
           breathing_monochrome(30);
           break;

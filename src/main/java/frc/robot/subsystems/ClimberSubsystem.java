@@ -36,13 +36,13 @@ public class ClimberSubsystem extends SubsystemBase {
   public ClimberSubsystem(int climberMotor /* , int topLimitSwitch, int bottomLimitSwitch */) {
     m_climberMotor = new SparkMax(climberMotor, MotorType.kBrushless);
     SoftLimitConfig softLimitConfig = new SoftLimitConfig()
-      .forwardSoftLimit(Constants.Climber.FORWARD_MAX)
-      .reverseSoftLimit(Constants.Climber.REVERSE_MAX)
-      .forwardSoftLimitEnabled(true)
-      .reverseSoftLimitEnabled(true);
+        .forwardSoftLimit(Constants.Climber.FORWARD_MAX)
+        .reverseSoftLimit(Constants.Climber.REVERSE_MAX)
+        .forwardSoftLimitEnabled(true)
+        .reverseSoftLimitEnabled(true);
     m_climberMotor.configure(
-      new SparkMaxConfig().idleMode(IdleMode.kBrake).inverted(true).apply(softLimitConfig),
-      ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        new SparkMaxConfig().idleMode(IdleMode.kBrake).inverted(true).apply(softLimitConfig),
+        ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
     m_climberEncoder = m_climberMotor.getEncoder();
     m_climberEncoder.setPosition(0);
@@ -95,9 +95,9 @@ public class ClimberSubsystem extends SubsystemBase {
     climberEncoderEntry.setDouble(m_climberEncoder.getPosition());
     climberSpeedEntry.setDouble(m_climberMotor.get());
     m_climberMotor.configure(new SparkMaxConfig().apply(
-      new SoftLimitConfig()
-        .forwardSoftLimitEnabled(!softLimitOverride.getBoolean(true))
-        .reverseSoftLimitEnabled(!softLimitOverride.getBoolean(true))),
-      ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        new SoftLimitConfig()
+            .forwardSoftLimitEnabled(!softLimitOverride.getBoolean(true))
+            .reverseSoftLimitEnabled(!softLimitOverride.getBoolean(true))),
+        ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 }

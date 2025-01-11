@@ -82,7 +82,6 @@ public class DrivebaseSubsystem extends SubsystemBase {
 
   double counter = 0;
 
-
   private final AHRS m_gyro = new AHRS(NavXComType.kMXP_SPI);
 
   private double yawOffset;
@@ -193,12 +192,12 @@ public class DrivebaseSubsystem extends SubsystemBase {
         new PPLTVController(0.02), // duration in seconds between update loop calls, defaults to 0.02s = 20ms
         new RobotConfig(112., 7.5,
             new ModuleConfig(
-              Drive.WHEEL_CIRCUM / 2 / Math.PI,
-              Drive.MAX_SPEED_MPS,
-              1.0 /* placeholder for coefficient of friction */,
-              DCMotor.getNEO(1).withReduction(Drive.WHEEL_GEAR_RATIO),
-              38,
-              2 /* is this 4? */),
+                Drive.WHEEL_CIRCUM / 2 / Math.PI,
+                Drive.MAX_SPEED_MPS,
+                1.0 /* placeholder for coefficient of friction */,
+                DCMotor.getNEO(1).withReduction(Drive.WHEEL_GEAR_RATIO),
+                38,
+                2 /* is this 4? */),
             Drive.TRACK_WIDTH_METERS),
         () -> {
           // Boolean supplier that controls when the path will be mirrored for the red

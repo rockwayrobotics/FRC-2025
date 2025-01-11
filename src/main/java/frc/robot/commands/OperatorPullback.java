@@ -25,7 +25,7 @@ public class OperatorPullback extends SequentialCommandGroup {
     this.addCommands(new InstantCommand(() -> m_intake.setBelt(-0.5)));
     this.addCommands(new WaitCommand(0.1));
     this.addCommands(new InstantCommand(() -> m_intake.setBelt(0)));
-    
+
     this.addCommands(new InstantCommand(() -> {
       Constants.LED.modes mode = m_intake.stagedFlag ? Constants.LED.modes.Green : Constants.LED.modes.Red;
       m_led.setMode(mode);

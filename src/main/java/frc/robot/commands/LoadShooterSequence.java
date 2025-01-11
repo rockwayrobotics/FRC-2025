@@ -20,7 +20,7 @@ public class LoadShooterSequence extends SequentialCommandGroup {
 
     addRequirements(m_intake, m_shooter, m_led);
 
-    this.addCommands(new InstantCommand(() ->m_led.setMode(Constants.LED.modes.Blue)));
+    this.addCommands(new InstantCommand(() -> m_led.setMode(Constants.LED.modes.Blue)));
 
     this.addCommands(new InstantCommand(() -> m_intake.setBelt(0.5)));
     this.addCommands(new WaitCommand(3.5));
@@ -28,6 +28,6 @@ public class LoadShooterSequence extends SequentialCommandGroup {
     this.addCommands(new WaitCommand(0.5));
 
     this.addCommands(new InstantCommand(() -> m_intake.setBelt(0)));
-    this.addCommands(new InstantCommand(() ->m_led.setMode(Constants.LED.modes.Rainbow)));
+    this.addCommands(new InstantCommand(() -> m_led.setMode(Constants.LED.modes.Rainbow)));
   }
 }

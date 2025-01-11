@@ -18,12 +18,11 @@ public class ShootFromGroundDriveFourSensor extends SequentialCommandGroup {
   LedSubsystem m_led;
 
   public ShootFromGroundDriveFourSensor(
-    ShooterSubsystem shooter,
-    IntakeSubsystem intake,
-    LedSubsystem led,
-    DrivebaseSubsystem drivebase,
-    double drivedistance
-  ) {
+      ShooterSubsystem shooter,
+      IntakeSubsystem intake,
+      LedSubsystem led,
+      DrivebaseSubsystem drivebase,
+      double drivedistance) {
     m_shooter = shooter;
     m_intake = intake;
     m_led = led;
@@ -32,10 +31,9 @@ public class ShootFromGroundDriveFourSensor extends SequentialCommandGroup {
     addRequirements(m_shooter, m_intake, m_led, m_drivebase);
 
     System.out.println("ShootFromGroundDriveFourSensor");
-    
+
     this.addCommands(
-        new InstantCommand(() -> m_led.setMode(Constants.LED.modes.FlashingOrange))
-      );
+        new InstantCommand(() -> m_led.setMode(Constants.LED.modes.FlashingOrange)));
 
     this.addCommands(new InstantCommand(() -> m_intake.setBelt(1)));
     this.addCommands(new InstantCommand(() -> m_intake.setIntake(0.5)));
@@ -44,7 +42,6 @@ public class ShootFromGroundDriveFourSensor extends SequentialCommandGroup {
 
     this.addCommands(new DriveDistance(m_drivebase, 0.5, drivedistance));
 
-  
     this.addCommands(new WaitUntilCommand(() -> m_shooter.isNoteStaged()).withTimeout(1));
     this.addCommands(new InstantCommand(() -> m_intake.setBelt(0)));
     this.addCommands(new AutoPullback(shooter, intake, led));
@@ -57,7 +54,6 @@ public class ShootFromGroundDriveFourSensor extends SequentialCommandGroup {
     this.addCommands(new InstantCommand(() -> m_intake.setBelt(0)));
     this.addCommands(new InstantCommand(() -> m_shooter.setFlywheels(0)));
     this.addCommands(
-        new InstantCommand(() -> m_led.setMode(Constants.LED.modes.Rainbow))
-      );
+        new InstantCommand(() -> m_led.setMode(Constants.LED.modes.Rainbow)));
   }
 }

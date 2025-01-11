@@ -10,8 +10,8 @@ import frc.robot.subsystems.LedSubsystem;
 
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-
-/** Four piece auto from the middle of the field, starting on the red alliance.
+/**
+ * Four piece auto from the middle of the field, starting on the red alliance.
  * Different for each alliance so we don't smack into the truss first
  */
 public class AutoShootReset extends SequentialCommandGroup {
@@ -19,7 +19,7 @@ public class AutoShootReset extends SequentialCommandGroup {
     IntakeSubsystem m_intake;
     LedSubsystem m_led;
 
-    public AutoShootReset(DrivebaseSubsystem drivebase, IntakeSubsystem intake, LedSubsystem led){
+    public AutoShootReset(DrivebaseSubsystem drivebase, IntakeSubsystem intake, LedSubsystem led) {
         m_drivebase = drivebase;
         m_intake = intake;
         m_led = led;

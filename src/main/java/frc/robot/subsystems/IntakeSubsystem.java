@@ -19,12 +19,12 @@ public class IntakeSubsystem extends SubsystemBase {
   private final SparkMax m_leftIntake;
   private final SparkMax m_rightIntake;
 
-  private DigitalInput m_intakeLoadSensor; 
+  private DigitalInput m_intakeLoadSensor;
 
-  public boolean intakeLoad; 
-  public boolean stagedFlag; 
+  public boolean intakeLoad;
+  public boolean stagedFlag;
 
-  private LedSubsystem m_led; 
+  private LedSubsystem m_led;
 
   GenericEntry intakeLoadWidget;
 
@@ -36,9 +36,12 @@ public class IntakeSubsystem extends SubsystemBase {
     m_beltMotor = new SparkMax(beltMotor, SparkMax.MotorType.kBrushless);
     m_leftIntake = new SparkMax(leftIntake, SparkMax.MotorType.kBrushed);
     m_rightIntake = new SparkMax(rightIntake, SparkMax.MotorType.kBrushed);
-    m_beltMotor.configure(new SparkMaxConfig().idleMode(IdleMode.kBrake).inverted(true), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-    m_leftIntake.configure(new SparkMaxConfig().idleMode(IdleMode.kCoast), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-    m_rightIntake.configure(new SparkMaxConfig().idleMode(IdleMode.kCoast).follow(m_leftIntake, true), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+    m_beltMotor.configure(new SparkMaxConfig().idleMode(IdleMode.kBrake).inverted(true), ResetMode.kResetSafeParameters,
+        PersistMode.kNoPersistParameters);
+    m_leftIntake.configure(new SparkMaxConfig().idleMode(IdleMode.kCoast), ResetMode.kResetSafeParameters,
+        PersistMode.kNoPersistParameters);
+    m_rightIntake.configure(new SparkMaxConfig().idleMode(IdleMode.kCoast).follow(m_leftIntake, true),
+        ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
     m_beltEncoder = m_beltMotor.getEncoder();
 
@@ -62,17 +65,19 @@ public class IntakeSubsystem extends SubsystemBase {
     return !m_intakeLoadSensor.get();
   }
 
-  public void periodic(){
+  public void periodic() {
     // if (!intakeLoad && isNoteLoaded()){
-    //   new OperatorPullupSensor(m_robotContainer.m_shooter, m_robotContainer.m_intake, m_robotContainer.m_led)
-    //   .withTimeout(1.5).andThen(new OperatorPullback(m_robotContainer.m_shooter, m_robotContainer.m_intake, m_robotContainer.m_led))
-    //   .schedule();
+    // new OperatorPullupSensor(m_robotContainer.m_shooter,
+    // m_robotContainer.m_intake, m_robotContainer.m_led)
+    // .withTimeout(1.5).andThen(new OperatorPullback(m_robotContainer.m_shooter,
+    // m_robotContainer.m_intake, m_robotContainer.m_led))
+    // .schedule();
     // }
-    if (!intakeLoad && isNoteLoaded() && m_led.getMode() != Constants.LED.modes.FlashingOrange){
+    if (!intakeLoad && isNoteLoaded() && m_led.getMode() != Constants.LED.modes.FlashingOrange) {
       m_led.setMode(Constants.LED.modes.BreathingMagenta);
     }
-    if (intakeLoad && !isNoteLoaded() && m_led.getMode() != Constants.LED.modes.FlashingOrange){
-        m_led.setMode(Constants.LED.modes.Rainbow);
+    if (intakeLoad && !isNoteLoaded() && m_led.getMode() != Constants.LED.modes.FlashingOrange) {
+      m_led.setMode(Constants.LED.modes.Rainbow);
     }
 
     intakeLoad = isNoteLoaded();

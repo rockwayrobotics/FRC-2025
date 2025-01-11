@@ -11,8 +11,7 @@ import frc.robot.subsystems.ShooterSubsystem;
 public class ShootSequenceFullAuto extends SequentialCommandGroup {
   ShooterSubsystem m_shooter;
   IntakeSubsystem m_intake;
-  LedSubsystem m_led; 
-
+  LedSubsystem m_led;
 
   public ShootSequenceFullAuto(ShooterSubsystem shooter, IntakeSubsystem intake, LedSubsystem led) {
     m_shooter = shooter;

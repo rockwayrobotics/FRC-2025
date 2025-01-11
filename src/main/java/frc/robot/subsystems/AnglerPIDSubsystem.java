@@ -69,11 +69,12 @@ public class AnglerPIDSubsystem extends PIDSubsystem {
     // getController().setTolerance(Constants.Angler.ANGLE_PID_TOLERANCE);
 
     SoftLimitConfig softLimit = new SoftLimitConfig()
-      .forwardSoftLimit(Constants.Angler.ANGLE_BOTTOM_MAX)
-      .reverseSoftLimit(Constants.Angler.ANGLE_TOP_MAX)
-      .forwardSoftLimitEnabled(true)
-      .reverseSoftLimitEnabled(true);
-    m_angleMotor.configure(new SparkMaxConfig().idleMode(IdleMode.kBrake).apply(softLimit), ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        .forwardSoftLimit(Constants.Angler.ANGLE_BOTTOM_MAX)
+        .reverseSoftLimit(Constants.Angler.ANGLE_TOP_MAX)
+        .forwardSoftLimitEnabled(true)
+        .reverseSoftLimitEnabled(true);
+    m_angleMotor.configure(new SparkMaxConfig().idleMode(IdleMode.kBrake).apply(softLimit),
+        ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     m_angleEncoder.setPosition(0);
 
@@ -174,11 +175,11 @@ public class AnglerPIDSubsystem extends PIDSubsystem {
     // getController().setD(kDVal);
 
     m_angleMotor.configure(
-      new SparkMaxConfig().apply(
-        new SoftLimitConfig()
-          .forwardSoftLimitEnabled(!softLimitOverride.getBoolean(false))
-          .reverseSoftLimitEnabled(!softLimitOverride.getBoolean(false))),
-      ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        new SparkMaxConfig().apply(
+            new SoftLimitConfig()
+                .forwardSoftLimitEnabled(!softLimitOverride.getBoolean(false))
+                .reverseSoftLimitEnabled(!softLimitOverride.getBoolean(false))),
+        ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     setpoint1 = setpoint1Widget.getDouble(0);
     setpoint2 = setpoint2Widget.getDouble(0);
