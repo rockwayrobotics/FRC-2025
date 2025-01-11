@@ -119,10 +119,6 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    // if (!m_robotContainer.m_intake.intakeLoad &&
-    // m_robotContainer.m_intake.isNoteLoaded()){
-    // m_robotContainer.noteStage();
-    // }
   }
 
   @Override

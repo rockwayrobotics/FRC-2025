@@ -42,7 +42,6 @@ public class RobotContainer {
   SendableChooser<String> m_autoChooser = new SendableChooser<>();
 
   ShuffleboardTab dashboard = Shuffleboard.getTab("RobotContainer");
-  // Configure the trigger bindings
 
   public GenericEntry waittime = dashboard.add("Time After Shoot to Wait (Seconds)", 0)
       .getEntry();

@@ -45,11 +45,6 @@ public final class Constants {
     public static final int CLIMB = 11;
   }
 
-  public static final class Digital {
-    public final static int CLIMB_HOME_SWITCH = 0;
-    public final static int SHOOTER_TOP_SENSOR = 1;
-    public final static int INTAKE_LOAD_SENSOR = 2;
-  }
 
   public static final class Drive {
     public static final double TRACK_WIDTH_METERS = 0.56;
@@ -67,36 +62,6 @@ public final class Constants {
     public final static boolean RIGHT_DRIVE_INVERTED = true;
 
     public final static double rotation_kP = 0.3;
-  }
-
-  public static final class Climber {
-    public final static float REVERSE_MAX = 0;
-    public final static float FORWARD_MAX = 270;
-  }
-
-  public static final class Shooter {
-    public static enum ScoringMode {
-      SPEAKER,
-      AMP,
-    }
-  }
-
-  public static final class Angler {
-    public final static float ANGLE_TOP_MAX = 0f;
-    public final static float ANGLE_BOTTOM_MAX = 40f;
-
-    public final static double AUTO_SPEAKER_SETPOINT = 13.5;
-    public final static double SPEAKER_SETPOINT = 0;
-    public final static double ZERO_SETPOINT = 0;
-    public final static double HALF_CYCLE_SETPOINT = 25;
-    public final static double LOW_HALF_CYCLE_SETPOINT = 40;
-
-    public final static double DEFAULT_PID_kP = 0.3;
-    public final static double DEFAULT_PID_kI = 0;
-    public final static double DEFAULT_PID_kD = 0;
-
-    public final static double DEFAULT_POSITIVE_CLAMP = 0.15;
-    public final static double DEFAULT_NEGATIVE_CLAMP = -0.15;
   }
 
   // Constants for LEDs
