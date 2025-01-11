@@ -62,7 +62,6 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    m_robotContainer.m_angler.angleSetpointWidget.setDouble(0);
     m_robotContainer.onDisable();
 
     // Expect this to print zeros at first, but do it anyway as a sanity-check.
@@ -82,7 +81,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_robotContainer.m_angler.resetAngleEncoder();
     // m_robotContainer.m_drivebase.resetPose(new Pose2d(2,7, new Rotation2d(0)));
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
@@ -114,7 +112,6 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
     m_robotContainer.onTeleopInit();
-    m_robotContainer.m_angler.angleSetpointWidget.setDouble(Constants.Angler.SPEAKER_SETPOINT);
 
     // m_robotContainer.m_drivebaseSubsystem.setDrivebaseIdle(DrivebaseSubsystem.IdleMode.kCoast);
   }
