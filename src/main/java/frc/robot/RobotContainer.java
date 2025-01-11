@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Gamepads;
@@ -43,16 +42,7 @@ public class RobotContainer {
 
   ShuffleboardTab dashboard = Shuffleboard.getTab("RobotContainer");
 
-  public GenericEntry waittime = dashboard.add("Time After Shoot to Wait (Seconds)", 0)
-      .getEntry();
-
-  public GenericEntry drivedistance = dashboard.add("Drivedistance (m)", 1)
-      .getEntry();
-
-  GenericEntry drivescale = dashboard.addPersistent("Drivescale", 0.3)
-      .getEntry();
-
-  GenericEntry driveMoreOffsetEntry = dashboard.addPersistent("Drive More Offset", 0.07)
+  GenericEntry drivescale = dashboard.addPersistent("Drivescale", 1)
       .getEntry();
 
   /**
@@ -87,12 +77,11 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
+
+    // left bumper -> set drive scale to 0.3 when held
     m_driverController.leftBumper().onTrue(new InstantCommand(() -> m_drivebase.setScale(drivescale.getDouble(0.3))));
     m_driverController.leftBumper().onFalse(new InstantCommand(() -> m_drivebase.setScale(1)));
 
-    m_driverController.leftTrigger()
-        .whileTrue(new RepeatCommand(new InstantCommand(() -> m_drivebase.set(0.175, m_driverController.getRightX()))));
-    m_driverController.leftTrigger().onFalse(new InstantCommand(() -> m_drivebase.set(0, 0)));
   }
 
   public void onDisable() {

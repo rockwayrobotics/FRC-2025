@@ -81,7 +81,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    // m_robotContainer.m_drivebase.resetPose(new Pose2d(2,7, new Rotation2d(0)));
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
@@ -123,7 +122,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopExit() {
-    m_robotContainer.m_drivebase.reportFailures("teleop"); // print encoder reset fail counts
+    // m_robotContainer.m_drivebase.reportFailures("teleop"); // print encoder reset fail counts
   }
 
   @Override

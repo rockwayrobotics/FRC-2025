@@ -70,21 +70,17 @@ public class DrivebaseSubsystem extends SubsystemBase {
 
   GenericEntry rotationScaleWidget;
   GenericEntry brakeModeWidget;
-  GenericEntry coastModeWidget;
   GenericEntry leftDistanceWidget;
   GenericEntry rightDistanceWidget;
 
   GenericEntry navxMonitorWidget;
-  GenericEntry counterWidget;
 
   Field2d field = new Field2d();
-  // GenericEntry fieldWidget;
 
   double counter = 0;
 
   private final AHRS m_gyro = new AHRS(NavXComType.kMXP_SPI);
 
-  private double yawOffset;
   private DifferentialDriveOdometry driveOdometry;
 
   // Tracking of whether we have encoder reset issues.
@@ -145,9 +141,6 @@ public class DrivebaseSubsystem extends SubsystemBase {
     m_rightDriveMotorR.configure(new SparkMaxConfig().smartCurrentLimit(38).follow(m_rightDriveMotorF),
         ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
-    // m_leftDriveMotorF.getPIDController().setP(0.2);
-    // m_rightDriveMotorF.getPIDController().setP(0.2);
-
     m_drive = new DifferentialDrive(m_leftDriveMotorF, m_rightDriveMotorF);
 
     setDrivebaseIdle(IdleMode.kBrake);
@@ -167,10 +160,8 @@ public class DrivebaseSubsystem extends SubsystemBase {
         .getEntry();
 
     brakeModeWidget = dashboardTab.add("Brake Mode", false).getEntry();
-    coastModeWidget = dashboardTab.add("Coast Mode", false).getEntry();
 
     navxMonitorWidget = dashboardTab.add("NavX Monitor", 0).getEntry();
-    counterWidget = dashboardTab.add("Counter Widget", 0).getEntry();
 
     leftDistanceWidget = dashboardTab.add("Left Distance", 0).getEntry();
     rightDistanceWidget = dashboardTab.add("Right Distance", 0).getEntry();
@@ -262,11 +253,17 @@ public class DrivebaseSubsystem extends SubsystemBase {
 
   }
 
+  /**
+   * Sets the drive and rotate speeds.
+   * @param scale double from 0 to 1
+   */
   public void setScale(double scale) {
     m_scale = scale;
   }
 
-  // Get the pose of the robot as Pose2d
+  /**
+   * @return The current pose of the robot as a {@link Pose2d} object.
+   */
   public Pose2d getPose() {
     var pose = driveOdometry.getPoseMeters();
     return pose;
@@ -324,12 +321,8 @@ public class DrivebaseSubsystem extends SubsystemBase {
     m_gyro.reset();
   }
 
-  public void setAutoOffset(double autoOffset) {
-    yawOffset = autoOffset;
-  }
-
   public double getYaw() {
-    return m_gyro.getYaw() + yawOffset;
+    return m_gyro.getYaw();
   }
 
   public double getPitch() {
@@ -370,11 +363,6 @@ public class DrivebaseSubsystem extends SubsystemBase {
     }
   }
 
-  public void reportFailures(String state) {
-    System.out.printf("Reset failures (%s): %d, %d%n",
-        state, leftErrorCount, rightErrorCount);
-  }
-
   @Override
   public void periodic() {
     driveOdometry.update(m_gyro.getRotation2d().unaryMinus(), getLDistance(), getRDistance());
@@ -390,22 +378,9 @@ public class DrivebaseSubsystem extends SubsystemBase {
       if (isBrakeMode) {
         setDrivebaseIdle(IdleMode.kBrake);
       }
-
-      if (isCoastMode != coastModeWidget.getBoolean(false)) {
-        isCoastMode = coastModeWidget.getBoolean(false);
-        if (isCoastMode) {
-          setDrivebaseIdle(IdleMode.kCoast);
-        }
-      }
     }
+
     navxMonitorWidget.setDouble(m_gyro.getAngle());
-
-    counter++;
-
-    if (counter == 50) {
-      counter = 0;
-    }
-    counterWidget.setDouble(counter);
   }
 
   public void onSimulationInit() {
@@ -434,5 +409,13 @@ public class DrivebaseSubsystem extends SubsystemBase {
     m_lastSimTime = now;
 
     m_drivebaseSim.update(period);
+  }
+
+  //////////////////////////////
+  // TODO: Check if we actually need code like this.
+  //////////////////////////////
+  public void reportFailures(String state) {
+    System.out.printf("Reset failures (%s): %d, %d%n",
+        state, leftErrorCount, rightErrorCount);
   }
 }
