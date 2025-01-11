@@ -4,7 +4,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -95,8 +94,6 @@ public class DrivebaseSubsystem extends SubsystemBase {
 
   ShuffleboardTab dashboardTab = Shuffleboard.getTab("Drivebase");
 
-  // Turn on LTV path building instead of ramsete.
-  private boolean m_experimentalLTV = true;
   // Use PIDs in before calling tankDrive.
   private boolean m_experimentalPID = true;
 
