@@ -18,12 +18,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Gamepads;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.DriveForward;
-import frc.robot.commands.DriverPullupIntake;
-import frc.robot.commands.OperatorManualLoad;
-import frc.robot.commands.OperatorPullback;
-import frc.robot.commands.OperatorPullupSensor;
-import frc.robot.commands.OperatorRevThenPullback;
-import frc.robot.commands.ShootSequenceFull;
 import frc.robot.subsystems.AnglerPIDSubsystem;
 import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.DrivebaseSubsystem;
@@ -131,11 +125,6 @@ public class RobotContainer {
     // m_driverController.rightBumper().onTrue(ShootSequenceFullNoFlywheels.create(m_shooter,
     // m_intake, m_led));
 
-    m_driverController.a().onTrue(ShootSequenceFull.create(m_shooter, m_intake, m_led));
-
-    m_driverController.b().onTrue(new DriverPullupIntake(m_shooter, m_intake, m_led)
-        .andThen(new OperatorRevThenPullback(m_shooter, m_intake, m_led)));
-
     // m_driverController.x().onTrue(new LoadShooterSequence(m_shooter, m_intake,
     // m_led));
 
@@ -190,18 +179,12 @@ public class RobotContainer {
     m_operatorController.b()
         .onTrue(new InstantCommand(() -> m_angler.angleSetpointWidget.setDouble(Constants.Angler.ZERO_SETPOINT)));
 
-    m_operatorController.y().onTrue(
-        new InstantCommand(() -> m_intake.stagedFlag = true).andThen(new OperatorPullback(m_shooter, m_intake, m_led)));
-
     m_operatorController.a().whileTrue(
         new RepeatCommand(new InstantCommand(() -> m_intake.setBelt(-0.7))
             .andThen(new InstantCommand(() -> m_intake.setIntake(-0.2)))));
     m_operatorController.a().onFalse(
         new InstantCommand(() -> m_intake.setBelt(0)).andThen(new InstantCommand(() -> m_intake.setIntake(0))));
 
-    m_operatorController.x().onTrue(new OperatorManualLoad(m_shooter, m_intake, m_led));
-    m_operatorController.x().onFalse(
-        new InstantCommand(() -> m_intake.setBelt(0)).andThen(new InstantCommand(() -> m_intake.setIntake(0))));
 
     // m_operatorController.leftStick().onTrue(new InstantCommand(() ->
     // m_led.setMode(Constants.LED.modes.whiteDotLines)));
@@ -212,9 +195,6 @@ public class RobotContainer {
         new InstantCommand(() -> m_angler.angleSetpointWidget.setDouble(Constants.Angler.LOW_HALF_CYCLE_SETPOINT)));
 
     m_operatorController.leftBumper().onTrue(new InstantCommand(() -> m_shooter.setFlywheels(1)));
-
-    m_operatorController.rightBumper().onTrue(new OperatorPullupSensor(m_shooter, m_intake, m_led)
-        .andThen(new OperatorRevThenPullback(m_shooter, m_intake, m_led)));
 
     m_operatorController.rightStick().onTrue(new InstantCommand(() -> m_angler.resetAngleEncoder()));
 
