@@ -7,7 +7,6 @@ package frc.robot.commands;
 import static frc.robot.Constants.Gamepads.JOY_ROTATE_SCALE;
 import static frc.robot.Constants.Gamepads.JOY_SPEED_SCALE;
 
-//import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
 
@@ -51,9 +50,6 @@ public class DriveCommand extends Command {
       rotation = rotate_clockwise;
     }
     m_DrivebaseSubsystem.set(speed, rotation);
-
-    // SmartDashboard.putNumber("Y", m_left_y.getAsDouble());
-    // SmartDashboard.putNumber("X", m_right_x.getAsDouble());
   }
 
   // Called once the command ends or is interrupted.
