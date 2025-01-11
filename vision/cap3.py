@@ -108,6 +108,31 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 #                   3280x2464 [21.19 fps - (0, 0)/3280x2464 crop]
 
 
+CALS = {
+    # images1
+    # fx = 717.428307,
+    # fy = 712.943769,
+    # cx = 365.509738,
+    # cy = 219.080481,
+
+    # images2 640x480
+    '640x480': dict(
+        fx = 813.002665,
+        fy = 814.367913,
+        cx = 340.340811,
+        cy = 248.727651,
+    ),
+
+    # images4 1456x1088
+    '1456x1088': dict(
+        fx = 1757.669488,
+        fy = 1762.782233,
+        cx = 736.690867,
+        cy = 557.428635,
+    ),
+}
+
+
 def main():
     cam = picamera2.Picamera2()
 
@@ -148,17 +173,7 @@ def main():
 
     config = at.AprilTagPoseEstimator.Config(
         tagSize = units.inchesToMeters(6.5), # 16.51cm
-        # images1
-        # fx = 717.428307,
-        # fy = 712.943769,
-        # cx = 365.509738,
-        # cy = 219.080481,
-
-        # images2
-        fx = 813.002665,
-        fy = 814.367913,
-        cx = 340.340811,
-        cy = 248.727651,
+        **CALS[args.res]
         )
     estimator = at.AprilTagPoseEstimator(config)
 
@@ -241,7 +256,7 @@ def main():
                     # Convert YUV420 to BGR (OpenCV's default color space)
                     # bgr = cv2.cvtColor(arr, cv2.COLOR_YUV2BGR_I420)
                     ts = dt.datetime.now().strftime('%Y%m%d-%H%M%S')
-                    path = f'images/{ts}-640x480.png'
+                    path = f'images/{ts}-{args.res}.png'
                     cv2.imwrite(path, img)
 
                     # bgr = cv2.cvtColor(img)
@@ -271,7 +286,7 @@ if __name__ == '__main__':
     parser.add_argument('--dec', type=int, default=2)
     parser.add_argument('--threads', type=int, default=4)
     parser.add_argument('--fps', type=float, default=60.0)
-    parser.add_argument('--time', type=float, default=10.0)
+    parser.add_argument('--time', type=float, default=10000.0)
 
     args = parser.parse_args()
     SIZE = tuple(int(x) for x in args.res.split('x'))

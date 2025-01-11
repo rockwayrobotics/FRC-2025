@@ -28,4 +28,9 @@ and then convert the calibration results for a different resolution.
 
 ## How to Calibrate
 
+## Camera Measurements
 
+### Global Shutter Camera
+
+Native resolution is probably 1456x1088.  At that resolution with
+default parameters we're getting about 14 FPS, and manage at least

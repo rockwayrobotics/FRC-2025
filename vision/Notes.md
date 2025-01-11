@@ -12,7 +12,7 @@
 - [ ] learn how to convert AprilTag pose stuff to "cameraToObject" for
       the ComputerVisionUtil.objectToRobotPose() call
 - [ ] characterize camera parameters/performance
-     - frame rate ranges
+     - frame rate ranges (check if exposure time affects)
      - native resolutions
      - native formats
      - configurable parameters available (e.g. exposure time)
@@ -25,4 +25,5 @@
 - [ ] figure out camera calibration and correct fx,fy values
 - [ ] print checkerboard for calibration and document the process
 - [ ] sort out transform from camera frame to match field frame
-- [ ] try to increase max AprilTag distance again...
+- [ ] try to increase max AprilTag distance at 640x480 again...
+- [ ] learn how to extract ambiguous poses to pull out the right one

@@ -23,7 +23,8 @@ def main():
     prev_img_shape = None
 
     # Extracting path of individual image stored in a given directory
-    images = Path(args.dir).glob('*-640x480.png')
+    images = Path(args.dir).glob(f'*-{args.res}.png')
+    # print(list(images))
     # images = glob.glob('chess3-3280x2464.png')
     for fpath in images:
         if fpath.name.startswith('anno-'):
@@ -88,7 +89,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--debug', action='store_true')
-    # parser.add_argument('--res', default='640x480')
+    parser.add_argument('--res', default='640x480')
     parser.add_argument('--dir', type=Path, default=Path('./'))
 
     args = parser.parse_args()
