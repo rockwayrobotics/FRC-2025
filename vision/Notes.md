@@ -24,3 +24,5 @@
       over network tables to be shown in Field2d in web dashboard
 - [ ] figure out camera calibration and correct fx,fy values
 - [ ] print checkerboard for calibration and document the process
+- [ ] sort out transform from camera frame to match field frame
+- [ ] try to increase max AprilTag distance again...
