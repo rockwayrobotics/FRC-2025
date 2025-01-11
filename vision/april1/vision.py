@@ -26,6 +26,12 @@ class Processor:
         # cfg.quadSigma = 0.0 # default
         # det.setConfig(cfg)
 
+        tagSize = 0.1651 # 6.5 in in meters
+        cameraConfig = at.AprilTagPoseEstimator.Config(tagSize, 1, 1, 320, 320)
+        self.estimator = at.AprilTagPoseEstimator(cameraConfig)
+        self.field = at.AprilTagFieldLayout.loadField(at.AprilTagField.k2024Crescendo) # robotpy_apriltag doesn't have the 2025 field yet
+        # even though it's been added to https://github.com/wpilibsuite/allwpilib/blob/main/apriltag/src/main/native/resources/edu/wpi/first/apriltag/2025-reefscape.json
+
         # If we actually want to draw on the image
         self.draw_tags = True
 
@@ -40,6 +46,9 @@ class Processor:
                 x = int(c.x)
                 y = int(c.y)
                 tid = tag.getId()
+                transform3d = self.estimator.estimate(tag)
+                pose = self.field.getTagPose(tid)
+                print(transform3d, pose)
 
                 if self.draw_tags: 
                     # Draw a circle on the output image in the center of the tag
