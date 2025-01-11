@@ -47,6 +47,9 @@ public class DrivebaseSim {
   private int m_leftMotorDeviceHandle;
   private int m_rightMotorDeviceHandle;
 
+  private int m_leftMotorEncoderDeviceHandle;
+  private int m_rightMotorEncoderDeviceHandle;
+
   private SimDouble m_leftAppliedOutput;
   private SimDouble m_rightAppliedOutput;
 
@@ -56,9 +59,15 @@ public class DrivebaseSim {
   private SimDouble m_leftVelocityMetersPerSecond;
   private SimDouble m_rightVelocityMetersPerSecond;
 
+  private SimDouble m_leftEncoderPositionMeters;
+  private SimDouble m_rightEncoderPositionMeters;
+
+  private SimDouble m_leftEncoderVelocityMetersPerSecond;
+  private SimDouble m_rightEncoderVelocityMetersPerSecond;
+
   // Suggested code from
   // https://pdocs.kauailabs.com/navx-mxp/software/roborio-libraries/java/
-  public static final String GYRO_DEVICE_NAME = "navX-Sensor[0]";
+  public static final String GYRO_DEVICE_NAME = "navX-Sensor[4]";
   private SimDouble m_yaw;
 
   private DifferentialDrivetrainSim m_drivetrainSim;
@@ -85,18 +94,35 @@ public class DrivebaseSim {
 
     m_leftMotor = leftMotor;
     m_rightMotor = rightMotor;
+
     m_leftMotorDeviceHandle = SimDeviceDataJNI.getSimDeviceHandle("SPARK MAX [" + leftMotor.getDeviceId() + "]");
     m_rightMotorDeviceHandle = SimDeviceDataJNI.getSimDeviceHandle("SPARK MAX [" + rightMotor.getDeviceId() + "]");
+
+    m_leftMotorEncoderDeviceHandle = SimDeviceDataJNI
+        .getSimDeviceHandle("SPARK MAX [" + leftMotor.getDeviceId() + "] RELATIVE ENCODER");
+    m_rightMotorEncoderDeviceHandle = SimDeviceDataJNI
+        .getSimDeviceHandle("SPARK MAX [" + rightMotor.getDeviceId() + "] RELATIVE ENCODER");
+
     m_leftAppliedOutput = new SimDouble(
         SimDeviceDataJNI.getSimValueHandle(m_leftMotorDeviceHandle, DrivebaseSim.APPLIED_OUTPUT));
     m_rightAppliedOutput = new SimDouble(
         SimDeviceDataJNI.getSimValueHandle(m_rightMotorDeviceHandle, DrivebaseSim.APPLIED_OUTPUT));
+
     m_leftPositionMeters = new SimDouble(SimDeviceDataJNI.getSimValueHandle(m_leftMotorDeviceHandle, POSITION));
     m_rightPositionMeters = new SimDouble(SimDeviceDataJNI.getSimValueHandle(m_rightMotorDeviceHandle, POSITION));
     m_leftVelocityMetersPerSecond = new SimDouble(
         SimDeviceDataJNI.getSimValueHandle(m_leftMotorDeviceHandle, VELOCITY));
     m_rightVelocityMetersPerSecond = new SimDouble(
         SimDeviceDataJNI.getSimValueHandle(m_rightMotorDeviceHandle, VELOCITY));
+
+    m_leftEncoderPositionMeters = new SimDouble(SimDeviceDataJNI.getSimValueHandle(m_leftMotorEncoderDeviceHandle, POSITION));
+    m_rightEncoderPositionMeters = new SimDouble(SimDeviceDataJNI.getSimValueHandle(m_rightMotorEncoderDeviceHandle, POSITION));
+
+    m_leftEncoderVelocityMetersPerSecond = new SimDouble(
+        SimDeviceDataJNI.getSimValueHandle(m_leftMotorEncoderDeviceHandle, VELOCITY));
+
+    m_rightEncoderVelocityMetersPerSecond = new SimDouble(
+        SimDeviceDataJNI.getSimValueHandle(m_rightMotorEncoderDeviceHandle, VELOCITY));
 
     int gyroDeviceHandle = SimDeviceDataJNI.getSimDeviceHandle(GYRO_DEVICE_NAME);
     m_yaw = new SimDouble(SimDeviceDataJNI.getSimValueHandle(gyroDeviceHandle, "Yaw"));
@@ -128,10 +154,18 @@ public class DrivebaseSim {
     this.updateAppliedOutput();
     m_drivetrainSim.setInputs(m_leftMotor.getAppliedOutput(), m_rightMotor.getAppliedOutput());
     m_drivetrainSim.update(period);
+
     m_leftPositionMeters.set(m_drivetrainSim.getLeftPositionMeters());
     m_rightPositionMeters.set(m_drivetrainSim.getRightPositionMeters());
     m_leftVelocityMetersPerSecond.set(m_drivetrainSim.getLeftVelocityMetersPerSecond());
     m_rightVelocityMetersPerSecond.set(m_drivetrainSim.getRightVelocityMetersPerSecond());
+
+    m_leftEncoderPositionMeters.set(m_drivetrainSim.getLeftPositionMeters());
+    m_rightEncoderPositionMeters.set(m_drivetrainSim.getRightPositionMeters());
+
+    m_leftEncoderVelocityMetersPerSecond.set(m_drivetrainSim.getLeftVelocityMetersPerSecond());
+    m_rightEncoderVelocityMetersPerSecond.set(m_drivetrainSim.getRightVelocityMetersPerSecond());
+
     m_yaw.set(m_drivetrainSim.getHeading().getDegrees());
   }
 
