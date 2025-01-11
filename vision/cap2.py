@@ -4,6 +4,7 @@
 # see also https://github.com/tobybreckon/python-examples-cv/blob/master/calibrate_camera.py
 # chessboard: https://docs.opencv.org/3.4/pattern.png
 
+import datetime as dt
 import io
 import logging
 import socketserver
@@ -12,7 +13,10 @@ import threading
 import math
 import time
 
-from wpimath.units import meters
+import cv2
+from keys import NonBlockingConsole
+
+from wpimath import units
 import robotpy_apriltag as at
 
 from libcamera import Transform
@@ -104,15 +108,6 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 def main():
     cam = picamera2.Picamera2()
 
-    still1 = cam.create_still_configuration(
-        main=dict(size=SIZE, format='RGB888'),
-        lores=dict(size=SIZE, format='YUV420'),
-        controls=dict(FrameRate=args.fps), # FrameDurationLimits=(1, 5000)),
-        queue=True,
-        buffer_count=2,
-        transform=Transform(hflip=1, vflip=1),
-        )
-
     vid1 = cam.create_video_configuration(
         main=dict(size=SIZE),
         lores=dict(size=SIZE, format='YUV420'),
@@ -149,13 +144,22 @@ def main():
     field = at.AprilTagFieldLayout("2025-reefscape.json")
 
     config = at.AprilTagPoseEstimator.Config(
-        tagSize = meters(0.1651),
-        fx = 700.0,
-        fy = 700.0,
-        cx = 320.0,
-        cy = 240.0,
-    )
+        tagSize = units.inchesToMeters(6.5), # 16.51cm
+        # images1
+        # fx = 717.428307,
+        # fy = 712.943769,
+        # cx = 365.509738,
+        # cy = 219.080481,
+
+        # images2
+        fx = 813.002665,
+        fy = 814.367913,
+        cx = 340.340811,
+        cy = 248.727651,
+        )
     estimator = at.AprilTagPoseEstimator(config)
+
+    console = NonBlockingConsole()
 
     try:
         det = at.AprilTagDetector()
@@ -178,10 +182,13 @@ def main():
         missed = 0
         fps = 0
         found = False
-        height = SIZE[0] * 2 // 3
+        height = SIZE[1] * 2 // 3
+        print('SIZE', SIZE, 'height', height)
         while now - start < args.time:
-            arr = cam.capture_array('lores')
-            img = arr[:height,:]
+            # arr = cam.capture_array('lores')
+            arr = cam.capture_array('main')
+            # img = arr[:height,:]
+            img = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
             tags = det.detect(img)
             count += 1
             now = time.time()
@@ -206,7 +213,7 @@ def main():
                 # pose = field.getTagPose(tid)
                 tf = estimator.estimate(tag)
                 # print(tf)
-                tftext = f'T=({round(tf.x,2)},{round(tf.y,2)},{round(tf.rotation().z_degrees)})'
+                tftext = f'T=({round(tf.x,2)},{round(tf.y,2)},{round(tf.z,2)}) R=({round(tf.rotation().x_degrees)},{round(tf.rotation().y_degrees)},{round(tf.rotation().z_degrees)})'
 
                 hmat = '' # '[' + ', '.join(f'{x:.0f}' for x in x.getHomography()) + ']'
                 margin = tag.getDecisionMargin()
@@ -214,7 +221,27 @@ def main():
 
                 print(f'\r{fps:3.0f} FPS: m={margin:2.0f} @{c.x:3.0f},{c.y:3.0f} id={tid:2} {tftext}   ' % tags, end='')
 
+            key = console.get_key()
+            if key is not None:
+                if key == ' ':
+                    # Convert YUV420 to BGR (OpenCV's default color space)
+                    # bgr = cv2.cvtColor(arr, cv2.COLOR_YUV2BGR_I420)
+                    ts = dt.datetime.now().strftime('%Y%m%d-%H%M%S')
+                    path = f'images/{ts}-640x480.png'
+                    cv2.imwrite(path, img)
+
+                    # bgr = cv2.cvtColor(img)
+                    # ts = dt.datetime.now().strftime('%Y%m%d-%H%M%S')
+                    # path = f'images/luma-{ts}-640x480.png'
+                    # cv2.imwrite(path, img)
+
+                    print('captured image')
+
+                elif key.lower() == 'q':
+                    break
+
     finally:
+        del console
         print()
         cam.stop()
         server.close()

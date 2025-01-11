@@ -22,3 +22,5 @@
 - [ ] Java: learn how to receive NT updates (for vision info) on new data
 - [ ] Python code to send results of AprilTag detection and pose estimation
       over network tables to be shown in Field2d in web dashboard
+- [ ] figure out camera calibration and correct fx,fy values
+- [ ] print checkerboard for calibration and document the process
