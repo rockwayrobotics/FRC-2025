@@ -45,7 +45,6 @@ public final class Constants {
     public static final int CLIMB = 11;
   }
 
-
   public static final class Drive {
     public static final double TRACK_WIDTH_METERS = 0.56;
     public static final double MAX_SPEED_MPS = 4.;

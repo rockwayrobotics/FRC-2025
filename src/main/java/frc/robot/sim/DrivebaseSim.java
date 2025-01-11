@@ -115,8 +115,10 @@ public class DrivebaseSim {
     m_rightVelocityMetersPerSecond = new SimDouble(
         SimDeviceDataJNI.getSimValueHandle(m_rightMotorDeviceHandle, VELOCITY));
 
-    m_leftEncoderPositionMeters = new SimDouble(SimDeviceDataJNI.getSimValueHandle(m_leftMotorEncoderDeviceHandle, POSITION));
-    m_rightEncoderPositionMeters = new SimDouble(SimDeviceDataJNI.getSimValueHandle(m_rightMotorEncoderDeviceHandle, POSITION));
+    m_leftEncoderPositionMeters = new SimDouble(
+        SimDeviceDataJNI.getSimValueHandle(m_leftMotorEncoderDeviceHandle, POSITION));
+    m_rightEncoderPositionMeters = new SimDouble(
+        SimDeviceDataJNI.getSimValueHandle(m_rightMotorEncoderDeviceHandle, POSITION));
 
     m_leftEncoderVelocityMetersPerSecond = new SimDouble(
         SimDeviceDataJNI.getSimValueHandle(m_leftMotorEncoderDeviceHandle, VELOCITY));
