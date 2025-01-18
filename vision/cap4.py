@@ -129,7 +129,7 @@ class PiCam:
 
     def capture_array(self, config):
         return self.cam.capture_array(config)
-    
+
     def stop(self):
         self.cam.stop()
 
@@ -139,7 +139,7 @@ class CV2Cam:
         self.cam.set(cv2.CAP_PROP_FPS, args.fps)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, SIZE[0])
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, SIZE[1])
-    
+
     def setup_output(self, output):
         self.output = output
 
@@ -158,7 +158,7 @@ class CV2Cam:
 
     def stop(self):
         self.cam.release()
-    
+
 
 
 # imx219 [3280x2464] (/base/soc/i2c0mux/i2c@1/imx219@10)
@@ -211,6 +211,15 @@ CALS = {
     ),
 }
 
+def cam2Field(fieldPos, camPos):
+    tagInCameraFrame = Transform3d(camPos.x, camPos.y, camPos.z, Rotation3d(-camPos.rotation().x - math.pi, -camPos.rotation().y, camPos.rotation().z - math.pi))
+    # Convert from East-Down-North to North-West-Up
+    tagInCameraFrameNWU = CoordinateSystem.convert(tagInCameraFrame, CoordinateSystem.EDN(), CoordinateSystem.NWU())
+    # Add the field-relative tag position to the inverse of the camera-to-tag transform and return it
+    result = (fieldPos + tagInCameraFrameNWU.inverse()).toPose2d()
+    return result
+
+
 def main():
     if is_pi:
         cam = PiCam(args)
@@ -249,6 +258,12 @@ def main():
     tagPose = nt.getFloatArrayTopic(
         "/Shuffleboard/Drivebase/Field2d/Robot"
     ).publish(PubSubOptions())  # Uses default options
+    tagPose2 = nt.getFloatArrayTopic(
+        "/Shuffleboard/Drivebase/Field2d/Robot2"
+    ).publish(PubSubOptions())  # Uses default options
+    ambiguityTopic = nt.getFloatTopic(
+        "/Shuffleboard/Drivebase/Field2d/Ambiguity"
+    ).publish(PubSubOptions())  # Uses default options
 
     nt.startServer()
 
@@ -279,7 +294,10 @@ def main():
             # arr = cam.capture_array('lores')
             arr = cam.capture_array('main')
             # img = arr[:height,:]
+            s = time.monotonic()
             img = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
+            elapsed = time.monotonic() - s
+            print(f'Elapsed {round(elapsed * 1000,3)} ms')
             tags = det.detect(img)
             count += 1
             now = time.time()
@@ -302,20 +320,30 @@ def main():
                 c = tag.getCenter()
                 tid = tag.getId()
                 absolutePose = field.getTagPose(tid)
-                tf = estimator.estimate(tag)
+                # tf = estimator.estimate(tag)
+                poseEstimate = estimator.estimateOrthogonalIteration(tag, 50)
+                ambiguity = poseEstimate.getAmbiguity()
+                pose1 = cam2Field(absolutePose, poseEstimate.pose1)
+                pose2 = cam2Field(absolutePose, poseEstimate.pose2)
+                print(f'\rAmbiguity={ambiguity}')
+                ambiguityTopic.set(ambiguity * 100)
+                if pose1 is not None:
+                    print(f'\r{poseEstimate.error1} Pose1={round(pose1.x,2)},{round(pose1.y,2)},{round(pose1.rotation().degrees())}')
+                    tagPose.set([pose1.x, pose1.y, pose1.rotation().radians()])
+                if pose2 is not None and ambiguity > 0:
+                    print(f'\r{poseEstimate.error2} Pose2={round(pose2.x,2)},{round(pose2.y,2)},{round(pose2.rotation().degrees())}')
+                    tagPose2.set([pose2.x, pose2.y, pose2.rotation().radians()])
+                if pose1 is not None and pose2 is not None:
+                    print(f'\rDistance: {pose1.translation().distance(pose2.translation())}')
 
-                # FIXME: This is the rotation that I do NOT understand. I think it should somehow be inverting the rotation so that we get the camera orientation rather than the tag orientation.
-                tagInCameraFrame = Transform3d(tf.x, tf.y, tf.z, Rotation3d(-tf.rotation().x - math.pi, -tf.rotation().y, tf.rotation().z - math.pi))
-                # Convert from East-Down-North to North-West-Up
-                tagInCameraFrameNWU = CoordinateSystem.convert(tagInCameraFrame, CoordinateSystem.EDN(), CoordinateSystem.NWU())
-                # Add the field-relative tag position to the inverse of the camera-to-tag transform and return it
-                rp = (absolutePose + tagInCameraFrameNWU.inverse()).toPose2d()
+                tf = poseEstimate.pose1
+                rp = pose1
 
                 pose = [rp.x, rp.y, rp.rotation().radians()]
 
                 # This is the pose from camera which could be sent as a tag for debugging
                 # pose = [tf.z, -tf.x, -tf.rotation().y_degrees]
-                tagPose.set(pose)
+                # tagPose.set(pose)
                 # print(tf)
                 tftext = f'T=({round(tf.x,2)},{round(tf.y,2)},{round(tf.z,2)}) R=({round(tf.rotation().x_degrees)},{round(tf.rotation().y_degrees)},{round(tf.rotation().z_degrees)})'
                 # rptext = f'T=({round(rp.x,2)},{round(rp.y,2)},{round(rp.z,2)}) R=({round(rp.rotation().x_degrees)},{round(rp.rotation().y_degrees)},{round(rp.rotation().z_degrees)})'
@@ -325,7 +353,7 @@ def main():
                 margin = tag.getDecisionMargin()
                 # print(f'\r{fps:3.0f} FPS: margin={margin:2.0f} @{c.x:3.0f},{c.y:3.0f} id={tid:2} {hmat}    ' % tags, end='')
 
-                print(f'\r{fps:3.0f} FPS: m={margin:2.0f} @{c.x:3.0f},{c.y:3.0f} id={tid:2} {tftext} {rptext}   ' % tags, end='')
+                # print(f'\r{fps:3.0f} FPS: m={margin:2.0f} @{c.x:3.0f},{c.y:3.0f} id={tid:2} {tftext} {rptext}   ' % tags, end='')
 
             key = console.get_key()
             if key is not None:
