@@ -34,7 +34,8 @@ import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.GenericEntry;
-
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 
 import frc.robot.Constants;
@@ -76,6 +77,8 @@ public class DrivebaseSubsystem extends SubsystemBase {
   GenericEntry navxMonitorWidget;
 
   Field2d field = new Field2d();
+
+  StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault().getStructTopic("/Robot/Pose", Pose2d.struct).publish();
 
   double counter = 0;
 
@@ -372,6 +375,8 @@ public class DrivebaseSubsystem extends SubsystemBase {
 
     // This publishes changes through to the dashboard.
     field.setRobotPose(driveOdometry.getPoseMeters());
+
+    robotPosePublisher.set(driveOdometry.getPoseMeters());
 
     if (isBrakeMode != brakeModeWidget.getBoolean(false)) {
       isBrakeMode = brakeModeWidget.getBoolean(false);
