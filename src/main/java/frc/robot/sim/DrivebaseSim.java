@@ -82,7 +82,7 @@ public class DrivebaseSim {
         7.5,
         112.0,
         // This value is the wheel radius in metres
-        Drive.WHEEL_CIRCUM / 100. / Math.PI / 2.,
+        Drive.WHEEL_CIRCUM_CM / 100. / Math.PI / 2.,
         Drive.TRACK_WIDTH_METERS,
         // TODO: Add noise to the simulation here as standard deviation values for
         // noise:

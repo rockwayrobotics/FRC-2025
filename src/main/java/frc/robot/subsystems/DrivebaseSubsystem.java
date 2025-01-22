@@ -186,7 +186,7 @@ public class DrivebaseSubsystem extends SubsystemBase {
         new PPLTVController(0.02), // duration in seconds between update loop calls, defaults to 0.02s = 20ms
         new RobotConfig(112., 7.5,
             new ModuleConfig(
-                Drive.WHEEL_CIRCUM / 2 / Math.PI,
+                Drive.WHEEL_CIRCUM_CM / 2 / Math.PI,
                 Drive.MAX_SPEED_MPS,
                 1.0 /* placeholder for coefficient of friction */,
                 DCMotor.getNEO(1).withReduction(Drive.WHEEL_GEAR_RATIO),

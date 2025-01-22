@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -49,6 +50,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    // Switch thread to high priority to improve loop timing.
+    Threads.setCurrentThreadPriority(true, 99);
+
     // Runs the Scheduler. This is responsible for polling buttons, adding
     // newly-scheduled
     // commands, running already-scheduled commands, removing finished or
@@ -57,19 +61,14 @@ public class Robot extends TimedRobot {
     // robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+
+    // Back to normal priority
+    Threads.setCurrentThreadPriority(false, 10);
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {
-    m_robotContainer.onDisable();
-
-    // Expect this to print zeros at first, but do it anyway as a sanity-check.
-    // We should actually see the output from here twice, once at startup
-    // and once after the game is over when the robot should (in theory)
-    // be sent back to the disabled state.
-    m_robotContainer.m_drivebase.reportFailures("disabled"); // print encoder reset fail counts
-  }
+  public void disabledInit() { }
 
   @Override
   public void disabledPeriodic() {
@@ -87,8 +86,6 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
-
-    // m_robotContainer.m_angler.angleSetpointWidget.setDouble(Constants.Angler.AUTO_SPEAKER_SETPOINT);
   }
 
   /** This function is called periodically during autonomous. */
@@ -97,9 +94,7 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void autonomousExit() {
-    m_robotContainer.m_drivebase.reportFailures("auto"); // print encoder reset fail counts
-  }
+  public void autonomousExit() {}
 
   @Override
   public void teleopInit() {
@@ -110,9 +105,6 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
-    m_robotContainer.onTeleopInit();
-
-    // m_robotContainer.m_drivebaseSubsystem.setDrivebaseIdle(DrivebaseSubsystem.IdleMode.kCoast);
   }
 
   /** This function is called periodically during operator control. */
@@ -121,9 +113,7 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void teleopExit() {
-    // m_robotContainer.m_drivebase.reportFailures("teleop"); // print encoder reset fail counts
-  }
+  public void teleopExit() {}
 
   @Override
   public void testInit() {
@@ -133,17 +123,13 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {
-  }
+  public void testPeriodic() {}
 
   /** This function is called once when the robot is first started up. */
   @Override
-  public void simulationInit() {
-    m_robotContainer.onSimulationInit();
-  }
+  public void simulationInit() {}
 
   /** This function is called periodically whilst in simulation. */
   @Override
-  public void simulationPeriodic() {
-  }
+  public void simulationPeriodic() {}
 }

@@ -4,6 +4,11 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.RobotConfig;
+
+import edu.wpi.first.math.system.plant.DCMotor;
+
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
  * numerical or boolean
@@ -49,11 +54,12 @@ public final class Constants {
     public static final double TRACK_WIDTH_METERS = 0.56;
     public static final double MAX_SPEED_MPS = 4.;
 
-    public final static double WHEEL_CIRCUM = 46.8;
+    public final static double WHEEL_CIRCUM_CM = 46.8;
+    public final static double WHEEL_RADIUS_METERS = WHEEL_CIRCUM_CM / 100 / 2 / Math.PI;
     public final static double WHEEL_GEAR_RATIO = 8.46;
     public final static double LEFT_SCALING = (1509 / 1501.89) / 100;
     public final static double RIGHT_SCALING = (1509 / 1504.21) / 100;
-    public final static double WHEEL_ENCODER_SCALING = WHEEL_CIRCUM / WHEEL_GEAR_RATIO;
+    public final static double WHEEL_ENCODER_SCALING = WHEEL_CIRCUM_CM / WHEEL_GEAR_RATIO;
 
     // you probably never need to change this, swap the ids for left and right motor
     // groups.
@@ -61,6 +67,24 @@ public final class Constants {
     public final static boolean RIGHT_DRIVE_INVERTED = true;
 
     public final static double rotation_kP = 0.3;
+  }
+
+  public static final class PathPlanner {
+    // FIXME: This needs to be measured!
+    public static final double ROBOT_MASS_KG = 112.0;
+    // FIXME: This needs to be measured!
+    public static final double ROBOT_MOI = 7.5;
+    public static final RobotConfig CONFIG = new RobotConfig(
+        ROBOT_MASS_KG,
+        ROBOT_MOI,
+        new ModuleConfig(
+            Drive.WHEEL_RADIUS_METERS,
+            Drive.MAX_SPEED_MPS,
+            1.0, // FIXME: Wheel coefficient of friction should be measured!
+            DCMotor.getNEO(2).withReduction(Drive.WHEEL_GEAR_RATIO), // FIXME: Check this
+            38, // FIXME: Current limit should be a constant
+            2),
+        Drive.TRACK_WIDTH_METERS);
   }
 
   // Constants for LEDs
