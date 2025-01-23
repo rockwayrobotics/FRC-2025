@@ -3,11 +3,8 @@ package frc.robot.subsystems.drive;
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
-import com.studica.frc.AHRS;
-import com.studica.frc.AHRS.NavXComType;
 
 import edu.wpi.first.hal.HALValue;
-import edu.wpi.first.hal.SimDeviceJNI;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
 import edu.wpi.first.math.VecBuilder;
@@ -54,8 +51,9 @@ public class DriveIOSim extends DriveIOSparkMax {
   private SimDouble rightAppliedOutput;
 
   private SimDouble yaw;
+  private SimDouble yawVelocityRadPerSec;
 
-  public DriveIOSim() {
+  public DriveIOSim(GyroIOSim gyroIO) {
     super();
     drivetrain = new DifferentialDrivetrainSim(DCMotor.getNEO(2),
         Constants.Drive.WHEEL_GEAR_RATIO,
@@ -87,9 +85,8 @@ public class DriveIOSim extends DriveIOSparkMax {
     rightAppliedOutput = new SimDouble(
         SimDeviceDataJNI.getSimValueHandle(rightMotorDeviceHandle, DrivebaseSim.APPLIED_OUTPUT));
 
-    AHRS navX = new AHRS(NavXComType.kMXP_SPI);
-    int gyroDeviceHandle = SimDeviceDataJNI.getSimDeviceHandle(GYRO_DEVICE_NAME);
-    yaw = new SimDouble(SimDeviceDataJNI.getSimValueHandle(gyroDeviceHandle, "Yaw"));
+    yaw = new SimDouble(SimDeviceDataJNI.getSimValueHandle(gyroIO.getGyroDeviceSim().getNativeHandle(), "Yaw"));
+    yawVelocityRadPerSec = new SimDouble(SimDeviceDataJNI.getSimValueHandle(gyroIO.getGyroDeviceSim().getNativeHandle(), "Velocity Z"));
   }
 
   public double getYaw() {
@@ -141,14 +138,15 @@ public class DriveIOSim extends DriveIOSparkMax {
     leftAppliedOutput.set(leftDriveMotorF.get() * leftDriveMotorF.getBusVoltage());
     rightAppliedOutput.set(rightDriveMotorF.get() * rightDriveMotorF.getBusVoltage());
 
-    //drivetrain.setInputs(leftDriveMotorF.getAppliedOutput(), rightDriveMotorF.getAppliedOutput());
     drivetrain.setInputs(leftAppliedOutput.get(), rightAppliedOutput.get());
     drivetrain.update(0.02);
 
     leftMotorSim.iterate(drivetrain.getLeftVelocityMetersPerSecond(), leftDriveMotorF.getBusVoltage(), 0.02);
     rightMotorSim.iterate(drivetrain.getRightVelocityMetersPerSecond(), rightDriveMotorF.getBusVoltage(), 0.02);
 
+    double lastYaw = yaw.get();
     yaw.set(drivetrain.getHeading().getDegrees());
+    yawVelocityRadPerSec.set((yaw.get() - lastYaw) / 0.02);
 
     super.updateInputs(inputs);
   }

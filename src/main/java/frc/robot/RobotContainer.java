@@ -4,7 +4,6 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -45,10 +44,11 @@ public class RobotContainer {
         // Lighter sim with no devices
         drive = new Drive(new DriveIOSimLite(), new GyroIO() {});
       } else {
-        var driveIO = new DriveIOSim();
+        var gyroIO = new GyroIOSim();
+        var driveIO = new DriveIOSim(gyroIO);
 
         // Experimental sim with devices
-        drive = new Drive(driveIO, new GyroIOSim(() -> driveIO.getYaw()));
+        drive = new Drive(driveIO, new GyroIOSim());
       }
     }
 
