@@ -64,6 +64,11 @@ public class DriveIOSim implements DriveIO {
   }
 
   @Override
+  public DifferentialDrive getDifferentialDrive() {
+    return differentialDrive;
+  }
+
+  @Override
   public void updateInputs(DriveIOInputs inputs) {
     if (closedLoop) {
       leftAppliedVolts = leftFFVolts

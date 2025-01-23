@@ -29,6 +29,9 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -58,10 +61,14 @@ public class Drive extends SubsystemBase {
   private double lastRightPositionMeters = 0.0;
   private double scale = 1.0;
 
+  ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
+  Field2d field = new Field2d();
+
   public Drive(DriveIO io, GyroIO gyroIO) {
     this.io = io;
     this.gyroIO = gyroIO;
     this.differentialDrive = io.getDifferentialDrive();
+    dashboard.add("Field2d", field);
 
     AutoBuilder.configure(
         this::getPose,
@@ -130,6 +137,7 @@ public class Drive extends SubsystemBase {
 
     // Update odometry
     poseEstimator.update(rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters());
+    field.setRobotPose(poseEstimator.getEstimatedPosition());
   }
 
   /**
