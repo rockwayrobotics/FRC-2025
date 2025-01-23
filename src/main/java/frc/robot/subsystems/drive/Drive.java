@@ -156,15 +156,13 @@ public class Drive extends SubsystemBase {
 
   /** Runs the drive at the desired left and right velocities. */
   public void runClosedLoop(double leftMetersPerSec, double rightMetersPerSec) {
-    double leftRadPerSec = leftMetersPerSec / Constants.Drive.WHEEL_RADIUS_METERS;
-    double rightRadPerSec = rightMetersPerSec / Constants.Drive.WHEEL_RADIUS_METERS;
     // FIXME: Logging
-    // Logger.recordOutput("Drive/LeftSetpointRadPerSec", leftRadPerSec);
-    // Logger.recordOutput("Drive/RightSetpointRadPerSec", rightRadPerSec);
+    // Logger.recordOutput("Drive/LeftSetpointMetersPerSec", leftMetersPerSec);
+    // Logger.recordOutput("Drive/RightSetpointMetersPerSec", rightMetersPerSec);
 
-    double leftFFVolts = kS * Math.signum(leftRadPerSec) + kV * leftRadPerSec;
-    double rightFFVolts = kS * Math.signum(rightRadPerSec) + kV * rightRadPerSec;
-    io.setVelocity(leftRadPerSec, rightRadPerSec, leftFFVolts, rightFFVolts);
+    double leftFFVolts = kS * Math.signum(leftMetersPerSec) + kV * leftMetersPerSec;
+    double rightFFVolts = kS * Math.signum(rightMetersPerSec) + kV * rightMetersPerSec;
+    io.setVelocity(leftMetersPerSec, rightMetersPerSec, leftFFVolts, rightFFVolts);
   }
 
   /** Runs the drive in open loop. */
@@ -224,29 +222,29 @@ public class Drive extends SubsystemBase {
   /** Returns the position of the left wheels in meters. */
   // FIXME: Could use @AutoLogOutput
   public double getLeftPositionMeters() {
-    return inputs.leftPositionRad * Constants.Drive.WHEEL_RADIUS_METERS;
+    return inputs.leftPositionMeters;
   }
 
   /** Returns the position of the right wheels in meters. */
   // FIXME: Could use @AutoLogOutput
   public double getRightPositionMeters() {
-    return inputs.rightPositionRad * Constants.Drive.WHEEL_RADIUS_METERS;
+    return inputs.rightPositionMeters;
   }
 
   /** Returns the velocity of the left wheels in meters/second. */
   // FIXME: Could use @AutoLogOutput
   public double getLeftVelocityMetersPerSec() {
-    return inputs.leftVelocityRadPerSec * Constants.Drive.WHEEL_RADIUS_METERS;
+    return inputs.leftVelocityMetersPerSec;
   }
 
   /** Returns the velocity of the right wheels in meters/second. */
   // FIXME: Could use @AutoLogOutput
   public double getRightVelocityMetersPerSec() {
-    return inputs.rightVelocityRadPerSec * Constants.Drive.WHEEL_RADIUS_METERS;
+    return inputs.rightVelocityMetersPerSec;
   }
 
-  /** Returns the average velocity in radians/second. */
+  /** Returns the average velocity in meters/second. */
   public double getCharacterizationVelocity() {
-    return (inputs.leftVelocityRadPerSec + inputs.rightVelocityRadPerSec) / 2.0;
+    return (inputs.leftVelocityMetersPerSec + inputs.rightVelocityMetersPerSec) / 2.0;
   }
 }

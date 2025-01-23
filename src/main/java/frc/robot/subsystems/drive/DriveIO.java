@@ -21,13 +21,13 @@ public interface DriveIO {
    * We could use @AutoLog for that if we decide to use AdvantageKit.
    */
   public static class DriveIOInputs {
-    public double leftPositionRad = 0.0;
-    public double leftVelocityRadPerSec = 0.0;
+    public double leftPositionMeters = 0.0;
+    public double leftVelocityMetersPerSec = 0.0;
     public double leftAppliedVolts = 0.0;
     public double[] leftCurrentAmps = new double[] {};
 
-    public double rightPositionRad = 0.0;
-    public double rightVelocityRadPerSec = 0.0;
+    public double rightPositionMeters = 0.0;
+    public double rightVelocityMetersPerSec = 0.0;
     public double rightAppliedVolts = 0.0;
     public double[] rightCurrentAmps = new double[] {};
   }
@@ -42,7 +42,7 @@ public interface DriveIO {
 
   /** Run closed loop at the specified velocity. */
   public default void setVelocity(
-      double leftRadPerSec, double rightRadPerSec, double leftFFVolts, double rightFFVolts) {
+      double leftMetersPerSec, double rightMetersPerSec, double leftFFVolts, double rightFFVolts) {
   }
 
   public default DifferentialDrive getDifferentialDrive() {

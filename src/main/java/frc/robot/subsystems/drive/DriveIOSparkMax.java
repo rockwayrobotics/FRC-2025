@@ -23,18 +23,18 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import frc.robot.Constants;
 
 public class DriveIOSparkMax implements DriveIO {
-  private final DifferentialDrive differentialDrive;
+  protected final DifferentialDrive differentialDrive;
 
-  private final SparkMax leftDriveMotorF = new SparkMax(Constants.CAN.LEFT_DRIVE_MOTOR_F, MotorType.kBrushless);
-  private final SparkMax leftDriveMotorR = new SparkMax(Constants.CAN.LEFT_DRIVE_MOTOR_R, MotorType.kBrushless);
-  private final SparkMax rightDriveMotorF = new SparkMax(Constants.CAN.RIGHT_DRIVE_MOTOR_F, MotorType.kBrushless);
-  private final SparkMax rightDriveMotorR = new SparkMax(Constants.CAN.RIGHT_DRIVE_MOTOR_R, MotorType.kBrushless);
+  protected final SparkMax leftDriveMotorF = new SparkMax(Constants.CAN.LEFT_DRIVE_MOTOR_F, MotorType.kBrushless);
+  protected final SparkMax leftDriveMotorR = new SparkMax(Constants.CAN.LEFT_DRIVE_MOTOR_R, MotorType.kBrushless);
+  protected final SparkMax rightDriveMotorF = new SparkMax(Constants.CAN.RIGHT_DRIVE_MOTOR_F, MotorType.kBrushless);
+  protected final SparkMax rightDriveMotorR = new SparkMax(Constants.CAN.RIGHT_DRIVE_MOTOR_R, MotorType.kBrushless);
 
-  private final RelativeEncoder leftEncoder = leftDriveMotorF.getEncoder();
-  private final RelativeEncoder rightEncoder = rightDriveMotorF.getEncoder();
+  protected final RelativeEncoder leftEncoder = leftDriveMotorF.getEncoder();
+  protected final RelativeEncoder rightEncoder = rightDriveMotorF.getEncoder();
 
-  private final SparkClosedLoopController leftController = leftDriveMotorF.getClosedLoopController();
-  private final SparkClosedLoopController rightController = rightDriveMotorF.getClosedLoopController();
+  protected final SparkClosedLoopController leftController = leftDriveMotorF.getClosedLoopController();
+  protected final SparkClosedLoopController rightController = rightDriveMotorF.getClosedLoopController();
 
   public DriveIOSparkMax() {
     var config = new SparkMaxConfig();
@@ -80,8 +80,8 @@ public class DriveIOSparkMax implements DriveIO {
 
   @Override
   public void updateInputs(DriveIOInputs inputs) {
-    ifOk(leftDriveMotorF, leftEncoder::getPosition, (value) -> inputs.leftPositionRad = value);
-    ifOk(leftDriveMotorF, leftEncoder::getVelocity, (value) -> inputs.leftVelocityRadPerSec = value);
+    ifOk(leftDriveMotorF, leftEncoder::getPosition, (value) -> inputs.leftPositionMeters = value);
+    ifOk(leftDriveMotorF, leftEncoder::getVelocity, (value) -> inputs.leftVelocityMetersPerSec = value);
     ifOk(leftDriveMotorF, new DoubleSupplier[] {
         leftDriveMotorF::getAppliedOutput, leftDriveMotorF::getBusVoltage
     }, (values) -> inputs.leftAppliedVolts = values[0] * values[1]);
@@ -89,8 +89,8 @@ public class DriveIOSparkMax implements DriveIO {
       leftDriveMotorF::getOutputCurrent, leftDriveMotorR::getOutputCurrent
   }, (values) -> inputs.leftCurrentAmps = values);
 
-    ifOk(rightDriveMotorF, rightEncoder::getPosition, (value) -> inputs.rightPositionRad = value);
-    ifOk(rightDriveMotorF, rightEncoder::getVelocity, (value) -> inputs.rightVelocityRadPerSec = value);
+    ifOk(rightDriveMotorF, rightEncoder::getPosition, (value) -> inputs.rightPositionMeters = value);
+    ifOk(rightDriveMotorF, rightEncoder::getVelocity, (value) -> inputs.rightVelocityMetersPerSec = value);
     ifOk(rightDriveMotorF, new DoubleSupplier[] {
         rightDriveMotorF::getAppliedOutput, rightDriveMotorF::getBusVoltage
     }, (values) -> inputs.rightAppliedVolts = values[0] * values[1]);
@@ -106,9 +106,9 @@ public class DriveIOSparkMax implements DriveIO {
   }
 
   @Override
-  public void setVelocity(double leftRadPerSec, double rightRadPerSec, double leftFFVolts, double rightFFVolts) {
-    leftController.setReference(leftRadPerSec, ControlType.kVelocity, ClosedLoopSlot.kSlot0, leftFFVolts);
-    rightController.setReference(rightRadPerSec, ControlType.kVelocity, ClosedLoopSlot.kSlot0, rightFFVolts);
+  public void setVelocity(double leftMetersPerSec, double rightMetersPerSec, double leftFFVolts, double rightFFVolts) {
+    leftController.setReference(leftMetersPerSec, ControlType.kVelocity, ClosedLoopSlot.kSlot0, leftFFVolts);
+    rightController.setReference(rightMetersPerSec, ControlType.kVelocity, ClosedLoopSlot.kSlot0, rightFFVolts);
   }
 
   /**

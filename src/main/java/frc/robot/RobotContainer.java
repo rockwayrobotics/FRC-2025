@@ -17,9 +17,11 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveForward;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOSim;
+import frc.robot.subsystems.drive.DriveIOSimLite;
 import frc.robot.subsystems.drive.DriveIOSparkMax;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
+import frc.robot.subsystems.drive.GyroIOSim;
 
 public class RobotContainer {
   // Subsystems are listed here
@@ -27,41 +29,44 @@ public class RobotContainer {
 
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
-  private final CommandXboxController operatorController =  new CommandXboxController(Constants.Gamepads.OPERATOR);
+  private final CommandXboxController operatorController = new CommandXboxController(Constants.Gamepads.OPERATOR);
 
   // Dashboard inputs
   private final SendableChooser<Command> autoChooser = new SendableChooser<>();
   private final ShuffleboardTab dashboard = Shuffleboard.getTab("RobotContainer");
   private final GenericEntry driveScale = dashboard.addPersistent("Drivescale", 1).getEntry();
-    
+
   public RobotContainer() {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
     } else {
-      drive = new Drive(new DriveIOSim(), new GyroIO() {
-        // FIXME: Decide if we need a simulation version of the gyro
-      });
+      var useSimLite = false;
+      if (useSimLite) {
+        // Lighter sim with no devices
+        drive = new Drive(new DriveIOSimLite(), new GyroIO() {});
+      } else {
+        var driveIO = new DriveIOSim();
+
+        // Experimental sim with devices
+        drive = new Drive(driveIO, new GyroIOSim(() -> driveIO.getYaw()));
+      }
     }
 
     // Set up auto routines
     // Set up SysId routines
-    autoChooser.addOption(
-        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption("Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    autoChooser.addOption("Drive SysId (Quasistatic Forward)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption("Drive SysId (Quasistatic Reverse)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption("Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
+    dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
     configureBindings();
+
   }
 
-    /**
+  /**
    * Use this method to define your trigger->command mappings. Triggers can be
    * created via the
    * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with
