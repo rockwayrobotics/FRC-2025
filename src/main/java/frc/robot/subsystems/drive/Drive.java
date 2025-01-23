@@ -26,6 +26,8 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -61,6 +63,11 @@ public class Drive extends SubsystemBase {
   private double lastRightPositionMeters = 0.0;
   private double scale = 1.0;
 
+  // FIXME: Stop publishing twice to save bandwidth
+  // Publish RobotPose for AdvantageScope
+  StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault().getStructTopic("/Robot/Pose", Pose2d.struct).publish();
+
+  // Publish RobotPose for Shuffleboard.
   ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
   Field2d field = new Field2d();
 
@@ -137,7 +144,9 @@ public class Drive extends SubsystemBase {
 
     // Update odometry
     poseEstimator.update(rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters());
-    field.setRobotPose(poseEstimator.getEstimatedPosition());
+    var robotPose = poseEstimator.getEstimatedPosition();
+    field.setRobotPose(robotPose);
+    robotPosePublisher.set(robotPose);
   }
 
   /**
