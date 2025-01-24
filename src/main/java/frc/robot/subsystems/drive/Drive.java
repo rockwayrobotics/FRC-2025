@@ -15,6 +15,9 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.controllers.PPLTVController;
 import com.pathplanner.lib.util.PathPlannerLogging;
@@ -38,14 +41,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
-import frc.robot.subsystems.drive.DriveIO.DriveIOInputs;
-import frc.robot.subsystems.drive.GyroIO.GyroIOInputs;
 
 public class Drive extends SubsystemBase {
   private final DriveIO io;
-  private final DriveIOInputs inputs = new DriveIOInputs();
+  private final DriveIOInputsAutoLogged inputs = new DriveIOInputsAutoLogged();
   private final GyroIO gyroIO;
-  private final GyroIOInputs gyroInputs = new GyroIOInputs();
+  private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
   private final DifferentialDrive differentialDrive;
   private final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(
@@ -65,7 +66,8 @@ public class Drive extends SubsystemBase {
 
   // FIXME: Stop publishing twice to save bandwidth
   // Publish RobotPose for AdvantageScope
-  StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault().getStructTopic("/Robot/Pose", Pose2d.struct).publish();
+  StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault()
+      .getStructTopic("/Robot/Pose", Pose2d.struct).publish();
 
   // Publish RobotPose for Shuffleboard.
   ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
@@ -100,8 +102,7 @@ public class Drive extends SubsystemBase {
         });
     PathPlannerLogging.setLogTargetPoseCallback(
         (targetPose) -> {
-          // FIXME: Logging
-          // Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+          Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
         });
 
     // Configure SysId
@@ -109,11 +110,8 @@ public class Drive extends SubsystemBase {
         new SysIdRoutine.Config(
             null,
             null,
-            null/*
-                 * ,
-                 * // FIXME: Logging
-                 * (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())
-                 */),
+            null,
+            (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
         new SysIdRoutine.Mechanism(
             (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), null, this));
   }
@@ -122,15 +120,15 @@ public class Drive extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     gyroIO.updateInputs(gyroInputs);
-    // FIXME: Logging
-    // Logger.processInputs("Drive", inputs);
-    // Logger.processInputs("Drive/Gyro", inputs);
+    Logger.processInputs("Drive", inputs);
+    Logger.processInputs("Drive/Gyro", gyroInputs);
 
     if (gyroInputs.connected) {
       // Use the real gyro angle
       rawGyroRotation = gyroInputs.yawPosition;
     } else {
-      // FIXME: This is used for simulator, because we pretend the gyro is not connected
+      // FIXME: This is used for simulator, because we pretend the gyro is not
+      // connected
       // FIXME: Fix this so that the gyro is actually simulated and we avoid checking
       // in periodic if the gyro is connected.
       // Use the angle delta from the kinematics and module deltas
@@ -151,6 +149,7 @@ public class Drive extends SubsystemBase {
 
   /**
    * Sets the drive and rotate speeds.
+   * 
    * @param scale double from 0 to 1
    */
   public void setScale(double scale) {
@@ -165,9 +164,8 @@ public class Drive extends SubsystemBase {
 
   /** Runs the drive at the desired left and right velocities. */
   public void runClosedLoop(double leftMetersPerSec, double rightMetersPerSec) {
-    // FIXME: Logging
-    // Logger.recordOutput("Drive/LeftSetpointMetersPerSec", leftMetersPerSec);
-    // Logger.recordOutput("Drive/RightSetpointMetersPerSec", rightMetersPerSec);
+    Logger.recordOutput("Drive/LeftSetpointMetersPerSec", leftMetersPerSec);
+    Logger.recordOutput("Drive/RightSetpointMetersPerSec", rightMetersPerSec);
 
     double leftFFVolts = kS * Math.signum(leftMetersPerSec) + kV * leftMetersPerSec;
     double rightFFVolts = kS * Math.signum(rightMetersPerSec) + kV * rightMetersPerSec;
@@ -180,7 +178,8 @@ public class Drive extends SubsystemBase {
   }
 
   /**
-   * This was the method used for setting speed/rotation for manual driving before.
+   * This was the method used for setting speed/rotation for manual driving
+   * before.
    */
   public void set(double speed, double rotation) {
     differentialDrive.curvatureDrive(speed * scale, rotation * scale, true);
@@ -202,7 +201,7 @@ public class Drive extends SubsystemBase {
   }
 
   /** Returns the current odometry pose. */
-  // FIXME: Could use @AutoLogOutput(key = "Odometry/Robot")
+  @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {
     return poseEstimator.getEstimatedPosition();
   }
@@ -229,25 +228,25 @@ public class Drive extends SubsystemBase {
   }
 
   /** Returns the position of the left wheels in meters. */
-  // FIXME: Could use @AutoLogOutput
+  @AutoLogOutput
   public double getLeftPositionMeters() {
     return inputs.leftPositionMeters;
   }
 
   /** Returns the position of the right wheels in meters. */
-  // FIXME: Could use @AutoLogOutput
+  @AutoLogOutput
   public double getRightPositionMeters() {
     return inputs.rightPositionMeters;
   }
 
   /** Returns the velocity of the left wheels in meters/second. */
-  // FIXME: Could use @AutoLogOutput
+  @AutoLogOutput
   public double getLeftVelocityMetersPerSec() {
     return inputs.leftVelocityMetersPerSec;
   }
 
   /** Returns the velocity of the right wheels in meters/second. */
-  // FIXME: Could use @AutoLogOutput
+  @AutoLogOutput
   public double getRightVelocityMetersPerSec() {
     return inputs.rightVelocityMetersPerSec;
   }

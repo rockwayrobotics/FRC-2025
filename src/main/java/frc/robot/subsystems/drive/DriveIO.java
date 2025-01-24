@@ -13,13 +13,13 @@
 
 package frc.robot.subsystems.drive;
 
+import org.littletonrobotics.junction.AutoLog;
+
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 public interface DriveIO {
-  /**
-   * These inputs are separated so that they can be logged for later playback.
-   * We could use @AutoLog for that if we decide to use AdvantageKit.
-   */
+
+  @AutoLog
   public static class DriveIOInputs {
     public double leftPositionMeters = 0.0;
     public double leftVelocityMetersPerSec = 0.0;
