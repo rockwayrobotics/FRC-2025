@@ -13,6 +13,7 @@
 
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -31,6 +32,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -110,10 +112,13 @@ public class Drive extends SubsystemBase {
         new SysIdRoutine.Config(
             null,
             null,
-            null,
-            (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
+            Time.ofBaseUnits(10, Seconds),
+            //(state) -> Logger.recordOutput("Drive/SysIdState", state.toString())
+        ),
         new SysIdRoutine.Mechanism(
-            (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), null, this));
+            (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), (log) -> {
+
+            }, this));
   }
 
   @Override

@@ -12,7 +12,6 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import frc.robot.Constants;
-import frc.robot.sim.DrivebaseSim;
 
 public class DriveIOSim extends DriveIOSparkMax {
   // Suggested code from
@@ -81,9 +80,9 @@ public class DriveIOSim extends DriveIOSparkMax {
         .getSimDeviceHandle("SPARK MAX [" + rightDriveMotorF.getDeviceId() + "]");
 
     leftAppliedOutput = new SimDouble(
-        SimDeviceDataJNI.getSimValueHandle(leftMotorDeviceHandle, DrivebaseSim.APPLIED_OUTPUT));
+        SimDeviceDataJNI.getSimValueHandle(leftMotorDeviceHandle, APPLIED_OUTPUT));
     rightAppliedOutput = new SimDouble(
-        SimDeviceDataJNI.getSimValueHandle(rightMotorDeviceHandle, DrivebaseSim.APPLIED_OUTPUT));
+        SimDeviceDataJNI.getSimValueHandle(rightMotorDeviceHandle, APPLIED_OUTPUT));
 
     yaw = new SimDouble(SimDeviceDataJNI.getSimValueHandle(gyroIO.getGyroDeviceSim().getNativeHandle(), "Yaw"));
     yawVelocityRadPerSec = new SimDouble(SimDeviceDataJNI.getSimValueHandle(gyroIO.getGyroDeviceSim().getNativeHandle(), "Velocity Z"));

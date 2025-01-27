@@ -16,7 +16,7 @@ import frc.robot.subsystems.drive.Drive;
 
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
-  private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
+  private static final double FF_RAMP_RATE = 0.2; // Volts/Sec
 
   private DriveCommands() {
   }
