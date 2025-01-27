@@ -58,8 +58,10 @@ public class Drive extends SubsystemBase {
   // FIXME: kS and kV are feed-forward constants that should be measured
   // empirically and
   // should vary between simulator and real.
-  private final double kS = 0.0;
-  private final double kV = 0.0;
+  // private final double kS = 0.21124;
+  // private final double kV = 2.278;
+  private final double kS = 0;
+  private final double kV = 0;
   private final SysIdRoutine sysId;
   private final DifferentialDrivePoseEstimator poseEstimator = new DifferentialDrivePoseEstimator(kinematics,
       new Rotation2d(), 0, 0, new Pose2d());

@@ -42,7 +42,7 @@ public class DriveIOSparkMax implements DriveIO {
     // FIXME: Do we want to be able to switch out of brake mode?
     config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     // FIXME: Measure this and consider using it?
-    config.closedLoop.pidf(0.0, 0.0, 0.0, 0.0);
+    config.closedLoop.pidf(1, 0.0, 0.0, 0.0);
     config.encoder
         // Encoder rotations in radians converted to meters
         .positionConversionFactor(Constants.Drive.WHEEL_CIRCUM_CM / 100 / Constants.Drive.WHEEL_GEAR_RATIO)
@@ -103,12 +103,14 @@ public class DriveIOSparkMax implements DriveIO {
   public void setVoltage(double leftVolts, double rightVolts) {
     leftDriveMotorF.setVoltage(leftVolts);
     rightDriveMotorF.setVoltage(rightVolts);
+    differentialDrive.feed();
   }
 
   @Override
   public void setVelocity(double leftMetersPerSec, double rightMetersPerSec, double leftFFVolts, double rightFFVolts) {
     leftController.setReference(leftMetersPerSec, ControlType.kVelocity, ClosedLoopSlot.kSlot0, leftFFVolts);
     rightController.setReference(rightMetersPerSec, ControlType.kVelocity, ClosedLoopSlot.kSlot0, rightFFVolts);
+    differentialDrive.feed();
   }
 
   /**

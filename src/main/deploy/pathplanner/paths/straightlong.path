@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.0,
-        "y": 7.0
+        "x": 3.0181470784524738,
+        "y": 6.994120486154656
       },
       "isLocked": false,
       "linkedName": null
@@ -20,8 +20,8 @@
         "y": 7.0
       },
       "prevControl": {
-        "x": 7.0,
-        "y": 7.0
+        "x": 7.131242862014989,
+        "y": 6.997723404261911
       },
       "nextControl": null,
       "isLocked": false,
@@ -45,7 +45,7 @@
     "rotation": 0.0
   },
   "reversed": false,
-  "folder": "hallPathTests",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
     "rotation": 0.0
