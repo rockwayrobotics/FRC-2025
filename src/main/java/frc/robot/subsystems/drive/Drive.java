@@ -33,6 +33,8 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -110,15 +112,12 @@ public class Drive extends SubsystemBase {
     // Configure SysId
     sysId = new SysIdRoutine(
         new SysIdRoutine.Config(
-            null,
-            null,
+            Voltage.ofBaseUnits(0.2, Volts).div(Time.ofBaseUnits(1, Seconds)),
+            Voltage.ofBaseUnits(3, Volts),
             Time.ofBaseUnits(10, Seconds),
-            //(state) -> Logger.recordOutput("Drive/SysIdState", state.toString())
-        ),
+            (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
         new SysIdRoutine.Mechanism(
-            (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), (log) -> {
-
-            }, this));
+            (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), null, this));
   }
 
   @Override
