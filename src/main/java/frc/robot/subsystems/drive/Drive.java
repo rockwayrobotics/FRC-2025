@@ -194,6 +194,13 @@ public class Drive extends SubsystemBase {
     runOpenLoop(0.0, 0.0);
   }
 
+  public Command sysIDRunAll(){
+    return sysId.quasistatic(SysIdRoutine.Direction.kReverse)
+        .andThen(sysId.quasistatic(SysIdRoutine.Direction.kForward))
+        .andThen(sysId.dynamic(SysIdRoutine.Direction.kReverse))
+        .andThen(sysId.dynamic(SysIdRoutine.Direction.kForward));
+  }
+  
   /** Returns a command to run a quasistatic test in the specified direction. */
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
     return sysId.quasistatic(direction);
