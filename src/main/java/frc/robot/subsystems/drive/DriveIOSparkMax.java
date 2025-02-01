@@ -4,6 +4,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 import java.util.function.Consumer;
@@ -42,7 +43,8 @@ public class DriveIOSparkMax implements DriveIO {
     // FIXME: Do we want to be able to switch out of brake mode?
     config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     // FIXME: Measure this and consider using it?
-    config.closedLoop.pidf(1, 0.0, 0.0, 0.0);
+    // FIXME: make FF a constant?
+    config.closedLoop.pidf(0.5, 0, 0, 1 / 473);
     config.encoder
         // Encoder rotations in radians converted to meters
         .positionConversionFactor(Constants.Drive.WHEEL_CIRCUM_CM / 100 / Constants.Drive.WHEEL_GEAR_RATIO)
@@ -71,6 +73,7 @@ public class DriveIOSparkMax implements DriveIO {
         () -> rightDriveMotorR.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
     differentialDrive = new DifferentialDrive(leftDriveMotorF, rightDriveMotorF);
+
   }
 
   @Override
@@ -86,8 +89,8 @@ public class DriveIOSparkMax implements DriveIO {
         leftDriveMotorF::getAppliedOutput, leftDriveMotorF::getBusVoltage
     }, (values) -> inputs.leftAppliedVolts = values[0] * values[1]);
     ifOk(leftDriveMotorF, new DoubleSupplier[] {
-      leftDriveMotorF::getOutputCurrent, leftDriveMotorR::getOutputCurrent
-  }, (values) -> inputs.leftCurrentAmps = values);
+        leftDriveMotorF::getOutputCurrent, leftDriveMotorR::getOutputCurrent
+    }, (values) -> inputs.leftCurrentAmps = values);
 
     ifOk(rightDriveMotorF, rightEncoder::getPosition, (value) -> inputs.rightPositionMeters = value);
     ifOk(rightDriveMotorF, rightEncoder::getVelocity, (value) -> inputs.rightVelocityMetersPerSec = value);
@@ -95,8 +98,8 @@ public class DriveIOSparkMax implements DriveIO {
         rightDriveMotorF::getAppliedOutput, rightDriveMotorF::getBusVoltage
     }, (values) -> inputs.rightAppliedVolts = values[0] * values[1]);
     ifOk(rightDriveMotorF, new DoubleSupplier[] {
-      rightDriveMotorF::getOutputCurrent, rightDriveMotorR::getOutputCurrent
-  }, (values) -> inputs.rightCurrentAmps = values);
+        rightDriveMotorF::getOutputCurrent, rightDriveMotorR::getOutputCurrent
+    }, (values) -> inputs.rightCurrentAmps = values);
   }
 
   @Override
@@ -108,8 +111,16 @@ public class DriveIOSparkMax implements DriveIO {
 
   @Override
   public void setVelocity(double leftMetersPerSec, double rightMetersPerSec, double leftFFVolts, double rightFFVolts) {
-    leftController.setReference(leftMetersPerSec, ControlType.kVelocity, ClosedLoopSlot.kSlot0, leftFFVolts);
-    rightController.setReference(rightMetersPerSec, ControlType.kVelocity, ClosedLoopSlot.kSlot0, rightFFVolts);
+    leftController.setReference(leftMetersPerSec, ControlType.kVelocity,
+        ClosedLoopSlot.kSlot0, leftFFVolts);
+    rightController.setReference(rightMetersPerSec, ControlType.kVelocity,
+        ClosedLoopSlot.kSlot0, rightFFVolts);
+
+    // leftController.setReference(leftMetersPerSec, ControlType.kVelocity);
+    // rightController.setReference(rightMetersPerSec, ControlType.kVelocity);
+
+    // leftDriveMotorF.setVoltage(leftFFVolts);
+    // rightDriveMotorF.setVoltage(rightFFVolts);
     differentialDrive.feed();
   }
 

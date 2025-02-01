@@ -23,6 +23,8 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.controllers.PPLTVController;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -58,10 +60,11 @@ public class Drive extends SubsystemBase {
   // FIXME: kS and kV are feed-forward constants that should be measured
   // empirically and
   // should vary between simulator and real.
-  // private final double kS = 0.21124;
-  // private final double kV = 2.278;
-  private final double kS = 0;
-  private final double kV = 0;
+  // probably measureed correctly
+  private final double kS = 0.21124;
+  private final double kV = 2.278;
+  // private final double kS = 0;
+  // private final double kV = 0;
   private final SysIdRoutine sysId;
   private final DifferentialDrivePoseEstimator poseEstimator = new DifferentialDrivePoseEstimator(kinematics,
       new Rotation2d(), 0, 0, new Pose2d());
@@ -92,10 +95,16 @@ public class Drive extends SubsystemBase {
             new DifferentialDriveWheelSpeeds(
                 getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec())),
         (ChassisSpeeds speeds) -> runClosedLoop(speeds),
-        new PPLTVController(0.02, Constants.Drive.MAX_SPEED_MPS),
+        // (ChassisSpeeds speeds) -> setTankDrive(speeds),
+        new PPLTVController(
+            VecBuilder.fill(0.0625, 0.125, 2), 
+            VecBuilder.fill(4, 2),
+            0.02,
+            Constants.Drive.MAX_SPEED_MPS),
         Constants.PathPlanner.CONFIG,
         () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
         this);
+
     // This is for logging pathfinding, by setting up our own pathfinder that
     // intercepts
     // the calls to log them.
@@ -106,6 +115,7 @@ public class Drive extends SubsystemBase {
           // Logger.recordOutput(
           // "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
         });
+
     PathPlannerLogging.setLogTargetPoseCallback(
         (targetPose) -> {
           Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
@@ -175,6 +185,8 @@ public class Drive extends SubsystemBase {
 
     double leftFFVolts = kS * Math.signum(leftMetersPerSec) + kV * leftMetersPerSec;
     double rightFFVolts = kS * Math.signum(rightMetersPerSec) + kV * rightMetersPerSec;
+    // FIXME: use SimpleMotorFeedForward class instead
+
     io.setVelocity(leftMetersPerSec, rightMetersPerSec, leftFFVolts, rightFFVolts);
   }
 
@@ -191,18 +203,25 @@ public class Drive extends SubsystemBase {
     differentialDrive.curvatureDrive(speed * scale, rotation * scale, true);
   }
 
+  public void setTankDrive(ChassisSpeeds speeds) {
+    DifferentialDriveWheelSpeeds wheelSpeeds = kinematics.toWheelSpeeds(speeds);
+    wheelSpeeds.desaturate(Constants.Drive.MAX_SPEED_MPS);
+    differentialDrive.tankDrive(wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS,
+        wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS, false);
+  }
+
   /** Stops the drive. */
   public void stop() {
     runOpenLoop(0.0, 0.0);
   }
 
-  public Command sysIDRunAll(){
+  public Command sysIDRunAll() {
     return sysId.quasistatic(SysIdRoutine.Direction.kReverse)
         .andThen(sysId.quasistatic(SysIdRoutine.Direction.kForward))
         .andThen(sysId.dynamic(SysIdRoutine.Direction.kReverse))
         .andThen(sysId.dynamic(SysIdRoutine.Direction.kForward));
   }
-  
+
   /** Returns a command to run a quasistatic test in the specified direction. */
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
     return sysId.quasistatic(direction);

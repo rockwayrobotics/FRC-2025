@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -41,7 +42,8 @@ public class RobotContainer {
       var useSimLite = false;
       if (useSimLite) {
         // Lighter sim with no devices
-        drive = new Drive(new DriveIOSimLite(), new GyroIO() {});
+        drive = new Drive(new DriveIOSimLite(), new GyroIO() {
+        });
       } else {
         var gyroIO = new GyroIOSim();
         var driveIO = new DriveIOSim(gyroIO);
@@ -59,6 +61,7 @@ public class RobotContainer {
     autoChooser.addOption("Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption("SysID All (Rev then Fwd)", drive.sysIDRunAll());
+    autoChooser.addOption("Set speed = 1", new RunCommand(() -> drive.runClosedLoop(2, 2), drive));
     autoChooser.addOption("Pathplanner", new PathPlannerAuto("straightlong"));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
