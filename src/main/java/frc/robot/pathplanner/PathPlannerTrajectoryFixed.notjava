@@ -1,0 +1,49 @@
+package frc.robot.pathplanner;
+
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.events.*;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.trajectory.*;
+
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+
+import java.util.Collections;
+import java.util.List;
+
+public class PathPlannerTrajectoryFixed extends PathPlannerTrajectory {
+  
+  /**
+   * Create a trajectory with pre-generated states and list of events
+   *
+   * @param states Pre-generated states
+   * @param events Events for this trajectory
+   */
+  public PathPlannerTrajectoryFixed(List<PathPlannerTrajectoryState> states, List<Event> events) {
+    this.states = states;
+    this.events = events;
+  }
+
+  /**
+   * Create a trajectory with pre-generated states
+   *
+   * @param states Pre-generated states
+   */
+  public PathPlannerTrajectoryFixed(List<PathPlannerTrajectoryState> states) {
+    this(states, Collections.emptyList());
+  }
+
+  /**
+   * Generate a new trajectory for a given path
+   *
+   * @param path The path to generate a trajectory for
+   * @param startingSpeeds The starting robot-relative chassis speeds of the robot
+   * @param startingRotation The starting field-relative rotation of the robot
+   * @param config The {@link RobotConfig} describing the robot
+   */
+  public PathPlannerTrajectoryFixed(
+      PathPlannerPath path,
+      ChassisSpeeds startingSpeeds,
+      Rotation2d startingRotation,
+      RobotConfig config) {
+}

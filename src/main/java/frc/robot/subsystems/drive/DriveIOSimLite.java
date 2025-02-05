@@ -64,6 +64,7 @@ public class DriveIOSimLite implements DriveIO {
     }, (double rightSpeed) -> {
       rightAppliedVolts = rightSpeed * MAX_VOLTAGE;
     });
+    differentialDrive.setSafetyEnabled(false);
   }
 
   @Override
@@ -77,7 +78,7 @@ public class DriveIOSimLite implements DriveIO {
       leftAppliedVolts = leftFFVolts
           + leftPID.calculate(sim.getLeftVelocityMetersPerSecond());
       rightAppliedVolts = rightFFVolts
-          + leftPID.calculate(sim.getRightVelocityMetersPerSecond());
+          + rightPID.calculate(sim.getRightVelocityMetersPerSecond());
     }
 
     // Update simulation state

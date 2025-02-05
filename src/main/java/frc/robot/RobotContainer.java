@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.pathplanner.fix.PathPlannerAutoFix;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOSim;
 import frc.robot.subsystems.drive.DriveIOSimLite;
@@ -39,7 +40,7 @@ public class RobotContainer {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
     } else {
-      var useSimLite = false;
+      var useSimLite = true;
       if (useSimLite) {
         // Lighter sim with no devices
         drive = new Drive(new DriveIOSimLite(), new GyroIO() {

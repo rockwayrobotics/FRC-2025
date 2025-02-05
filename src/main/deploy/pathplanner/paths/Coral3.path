@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.0,
-        "y": 7.0
+        "x": 4.061299650624113,
+        "y": 5.874758552155404
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.0,
-        "y": 7.0
+        "x": 4.792286806286506,
+        "y": 5.403130862397967
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Algae Backup"
     },
     {
       "anchor": {
-        "x": 8.0,
-        "y": 7.0
+        "x": 4.960333075613345,
+        "y": 5.235748703974598
       },
       "prevControl": {
-        "x": 7.0,
-        "y": 7.0
+        "x": 4.118332345530672,
+        "y": 5.7670854271582845
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "CoralScore"
     }
   ],
   "rotationTargets": [],
