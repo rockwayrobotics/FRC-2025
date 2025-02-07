@@ -47,8 +47,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
-import frc.robot.pathplanner.fix.AutoBuilderFix;
-import frc.robot.pathplanner.fix.PathPlannerAutoFix;
 
 public class Drive extends SubsystemBase {
   private final DriveIO io;
