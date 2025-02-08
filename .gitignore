@@ -188,3 +188,6 @@ ctre_sim/
 *.bak
 
 .DS_Store
+
+# Generated source file
+BuildConstants.java

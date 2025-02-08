@@ -1,65 +1,73 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.Gamepads;
-import frc.robot.commands.DriveCommand;
-import frc.robot.commands.DriveForward;
-import frc.robot.subsystems.DrivebaseSubsystem;
-import frc.robot.subsystems.LedSubsystem;
-import com.pathplanner.lib.commands.PathPlannerAuto;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveIOSim;
+import frc.robot.subsystems.drive.DriveIOSimLite;
+import frc.robot.subsystems.drive.DriveIOSparkMax;
+import frc.robot.subsystems.drive.GyroIO;
+import frc.robot.subsystems.drive.GyroIONavX;
+import frc.robot.subsystems.drive.GyroIOSim;
 
-/**
- * This class is where the bulk of the robot should be declared. Since
- * Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in
- * the {@link Robot}
- * periodic methods (other than the scheduler calls). Instead, the structure of
- * the robot (including
- * subsystems, commands, and trigger mappings) should be declared here.
- */
 public class RobotContainer {
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController m_driverController = new CommandXboxController(Gamepads.DRIVER);
-  private final CommandXboxController m_operatorController = new CommandXboxController(Gamepads.OPERATOR);
+  // Subsystems are listed here
+  private final Drive drive;
 
-  public final DrivebaseSubsystem m_drivebase = new DrivebaseSubsystem(Robot.isSimulation());
-  public final LedSubsystem m_led = new LedSubsystem();
+  // Control devices
+  private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
+  private final CommandXboxController operatorController = new CommandXboxController(Constants.Gamepads.OPERATOR);
 
-  SendableChooser<String> m_autoChooser = new SendableChooser<>();
+  // Dashboard inputs
+  private final SendableChooser<Command> autoChooser = new SendableChooser<>();
+  private final ShuffleboardTab dashboard = Shuffleboard.getTab("RobotContainer");
+  private final GenericEntry driveScale = dashboard.addPersistent("Drivescale", 1).getEntry();
 
-  ShuffleboardTab dashboard = Shuffleboard.getTab("RobotContainer");
-
-  GenericEntry drivescale = dashboard.addPersistent("Drivescale", 1)
-      .getEntry();
-
-  /**
-   * 
-   * The container for the robot. Contains subsystems, OI devices, and commands.
-   */
   public RobotContainer() {
+    if (RobotBase.isReal()) {
+      drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
+    } else {
+      var useSimLite = true;
+      if (useSimLite) {
+        // Lighter sim with no devices
+        drive = new Drive(new DriveIOSimLite(), new GyroIO() {
+        });
+      } else {
+        var gyroIO = new GyroIOSim();
+        var driveIO = new DriveIOSim(gyroIO);
 
-    m_autoChooser.setDefaultOption("Drive Forward", "driveForward");
-    m_autoChooser.addOption("Path Planner Example", "pathPlannerExample");
-    m_autoChooser.addOption("Path Planner Straight", "pathPlannerStraight");
-    dashboard.add("Auto Routine", m_autoChooser).withSize(2, 1).withPosition(8, 0);
+        // Experimental sim with devices
+        drive = new Drive(driveIO, new GyroIOSim());
+      }
+    }
 
-    m_drivebase
-        .setDefaultCommand(new DriveCommand(m_driverController::getLeftY, m_driverController::getRightX, m_drivebase));
+    // Set up auto routines
+    // Set up SysId routines
+    autoChooser.addOption("Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    autoChooser.addOption("Drive SysId (Quasistatic Forward)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption("Drive SysId (Quasistatic Reverse)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption("Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption("SysID All (Rev then Fwd)", drive.sysIDRunAll());
+    autoChooser.addOption("Set speed = 1", new RunCommand(() -> drive.runClosedLoop(2, 2), drive));
+    autoChooser.addOption("Pathplanner", new PathPlannerAuto("straightlong"));
+
+    dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
     configureBindings();
+
   }
 
   /**
@@ -77,24 +85,11 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-
     // left bumper -> set drive scale to 0.3 when held
-    m_driverController.leftBumper().onTrue(new InstantCommand(() -> m_drivebase.setScale(drivescale.getDouble(0.3))));
-    m_driverController.leftBumper().onFalse(new InstantCommand(() -> m_drivebase.setScale(1)));
+    driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
+    driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-  }
-
-  public void onDisable() {
-    m_drivebase.disable();
-  }
-
-  public void onTeleopInit() {
-    m_drivebase.setDrivebaseIdle(IdleMode.kBrake);
-    m_led.setMode(Constants.LED.modes.Rainbow);
-  }
-
-  public void onSimulationInit() {
-    m_drivebase.onSimulationInit();
+    drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
   }
 
   /**
@@ -103,14 +98,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // The selected command will be run in autonomous
-
-    return switch (m_autoChooser.getSelected()) {
-      case "pathPlannerExample" -> new PathPlannerAuto("New Auto");
-      case "pathPlannerStraight" -> new PathPlannerAuto("New New Auto");
-      case "driveForward" -> new DriveForward(m_drivebase);
-      default -> null;
-      // FIXME
-    };
+    return autoChooser.getSelected();
   }
 }

@@ -3,45 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.0,
-        "y": 7.0
+        "x": 7.608341249429954,
+        "y": 7.217074794589348
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.0,
-        "y": 7.0
+        "x": 6.683876766348784,
+        "y": 6.680216129770819
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 3.0,
-        "y": 7.0
+        "x": 5.1778323965252575,
+        "y": 5.18051065588897
       },
       "prevControl": {
-        "x": 2.5,
-        "y": 7.0
-      },
-      "nextControl": {
-        "x": 3.25,
-        "y": 7.0
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 3.5,
-        "y": 6.5
-      },
-      "prevControl": {
-        "x": 3.5,
-        "y": 6.75
+        "x": 5.7283446509883085,
+        "y": 6.159477391332949
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Algae High"
     }
   ],
   "rotationTargets": [],
