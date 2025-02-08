@@ -49,8 +49,15 @@ public final class Constants {
     public static final int RIGHT_FLYWHEEL = 10; // negative on one flywheel?
     public static final int CLIMB = 11;
 
-    // Imaginary motors for 2025
+    // FIXME: Imaginary motors for 2025
     public static final int ELEVATOR_MOTOR = 12;
+    public static final int CORAL_PIVOT_MOTOR = 13;
+    public static final int CORAL_SHOOT_MOTOR = 14;
+  }
+
+  public static final class Digital {
+    // FIXME: Imaginary inputs for 2025
+    public static final int CORAL_SHOOT_SENSOR = 0;
   }
 
   public static final class Drive {
@@ -70,6 +77,14 @@ public final class Constants {
     public final static boolean RIGHT_DRIVE_INVERTED = true;
 
     public final static double rotation_kP = 0.3;
+  }
+
+  public static final class Coral {
+    // FIXME: Complete guess
+    public static final double PIVOT_GEAR_RATIO = 6;
+    // FIXME: Complete guess
+    public static final double MOI = 3;
+    public static final double CHUTE_LENGTH_METERS = 0.66;
   }
 
   public static final class Elevator {

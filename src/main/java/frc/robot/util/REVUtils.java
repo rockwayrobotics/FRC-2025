@@ -9,6 +9,8 @@ import com.revrobotics.REVLibError;
 import com.revrobotics.spark.SparkMax;
 
 public class REVUtils {
+  public static final double SPARK_MAX_FF = 1.0 / 473.0;
+
   private static int failureCount = 0;
 
   public static int getFailureCount() {

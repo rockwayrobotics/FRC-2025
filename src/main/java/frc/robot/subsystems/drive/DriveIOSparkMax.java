@@ -39,7 +39,7 @@ public class DriveIOSparkMax implements DriveIO {
     config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     // FIXME: Measure this and consider using it?
     // FIXME: make FF a constant?
-    config.closedLoop.pidf(0.5, 0, 0, 1.0 / 473);
+    config.closedLoop.pidf(0.5, 0, 0, REVUtils.SPARK_MAX_FF);
     config.encoder
         // Encoder rotations in radians converted to meters
         .positionConversionFactor(Constants.Drive.WHEEL_CIRCUM_CM / 100 / Constants.Drive.WHEEL_GEAR_RATIO)

@@ -14,6 +14,12 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.chute.Chute;
+import frc.robot.subsystems.chute.ChuteIOReal;
+import frc.robot.subsystems.chute.ChuteIOSim;
+import frc.robot.subsystems.climp.Climp;
+import frc.robot.subsystems.climp.ClimpIOReal;
+import frc.robot.subsystems.climp.ClimpIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOSim;
 import frc.robot.subsystems.drive.DriveIOSimLite;
@@ -21,10 +27,20 @@ import frc.robot.subsystems.drive.DriveIOSparkMax;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.GyroIOSim;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.elevator.ElevatorIOSparkMax;
+import frc.robot.subsystems.grabber.Grabber;
+import frc.robot.subsystems.grabber.GrabberIOReal;
+import frc.robot.subsystems.grabber.GrabberIOSim;
 
 public class RobotContainer {
   // Subsystems are listed here
   private final Drive drive;
+  private final Elevator elevator;
+  private final Chute chute;
+  private final Grabber grabber;
+  private final Climp climp;
 
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
@@ -38,6 +54,10 @@ public class RobotContainer {
   public RobotContainer() {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
+      elevator = new Elevator(new ElevatorIOSparkMax());
+      chute = new Chute(new ChuteIOReal());
+      grabber = new Grabber(new GrabberIOReal());
+      climp = new Climp(new ClimpIOReal());
     } else {
       var useSimLite = true;
       if (useSimLite) {
@@ -51,6 +71,10 @@ public class RobotContainer {
         // Experimental sim with devices
         drive = new Drive(driveIO, new GyroIOSim());
       }
+      elevator = new Elevator(new ElevatorIOSim(0, 0));
+      chute = new Chute(new ChuteIOSim());
+      grabber = new Grabber(new GrabberIOSim());
+      climp = new Climp(new ClimpIOSim());
     }
 
     // Set up auto routines
