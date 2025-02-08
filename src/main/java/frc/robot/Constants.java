@@ -48,6 +48,9 @@ public final class Constants {
     public static final int LEFT_FLYWHEEL = 9; // negative on one flywheel?
     public static final int RIGHT_FLYWHEEL = 10; // negative on one flywheel?
     public static final int CLIMB = 11;
+
+    // Imaginary motors for 2025
+    public static final int ELEVATOR_MOTOR = 12;
   }
 
   public static final class Drive {
@@ -67,6 +70,15 @@ public final class Constants {
     public final static boolean RIGHT_DRIVE_INVERTED = true;
 
     public final static double rotation_kP = 0.3;
+  }
+
+  public static final class Elevator {
+    // FIXME: Complete guesses
+    public static final double DRUM_RADIUS_METERS = 0.05;
+    public static final double CARRIAGE_MASS_KG = 20.0;
+    // FIXME: Blindly estimated from
+    // https://ambcalc.com/mechanism?=&mot_num=1&motor=NEO&load-u=9.81&load=20&lin_l-c=%5E&lin_l=5
+    public static final double GEAR_RATIO = 6.81;
   }
 
   public static final class PathPlanner {
