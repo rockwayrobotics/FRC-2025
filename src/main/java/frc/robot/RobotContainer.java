@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.simulation.WorldSimulation;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chute.ChuteIOReal;
 import frc.robot.subsystems.chute.ChuteIOSim;
@@ -22,6 +23,7 @@ import frc.robot.subsystems.climp.ClimpIOReal;
 import frc.robot.subsystems.climp.ClimpIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOSim;
+import frc.robot.subsystems.drive.DriveIOSimComplex;
 import frc.robot.subsystems.drive.DriveIOSimLite;
 import frc.robot.subsystems.drive.DriveIOSparkMax;
 import frc.robot.subsystems.drive.GyroIO;
@@ -51,6 +53,9 @@ public class RobotContainer {
   private final ShuffleboardTab dashboard = Shuffleboard.getTab("RobotContainer");
   private final GenericEntry driveScale = dashboard.addPersistent("Drivescale", 1).getEntry();
 
+  // Simulation only
+  protected WorldSimulation simulation = null;
+
   public RobotContainer() {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
@@ -59,22 +64,12 @@ public class RobotContainer {
       grabber = new Grabber(new GrabberIOReal());
       climp = new Climp(new ClimpIOReal());
     } else {
-      var useSimLite = true;
-      if (useSimLite) {
-        // Lighter sim with no devices
-        drive = new Drive(new DriveIOSimLite(), new GyroIO() {
-        });
-      } else {
-        var gyroIO = new GyroIOSim();
-        var driveIO = new DriveIOSim(gyroIO);
-
-        // Experimental sim with devices
-        drive = new Drive(driveIO, new GyroIOSim());
-      }
-      elevator = new Elevator(new ElevatorIOSim(0, 0));
-      chute = new Chute(new ChuteIOSim());
-      grabber = new Grabber(new GrabberIOSim());
-      climp = new Climp(new ClimpIOSim());
+      simulation = new WorldSimulation();
+      drive = new Drive(simulation.getDrive(), simulation.getGyro());
+      elevator = new Elevator(simulation.getElevator());
+      chute = new Chute(simulation.getChute());
+      grabber = new Grabber(simulation.getGrabber());
+      climp = new Climp(simulation.getClimp());
     }
 
     // Set up auto routines
@@ -137,5 +132,9 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
+  }
+
+  public WorldSimulation getWorldSimulation() {
+    return simulation;
   }
 }

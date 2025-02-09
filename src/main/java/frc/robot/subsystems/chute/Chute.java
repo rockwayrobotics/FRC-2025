@@ -3,7 +3,6 @@ package frc.robot.subsystems.chute;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.coral.CoralIOInputsAutoLogged;
 
 public class Chute extends SubsystemBase {
   private final ChuteIO io;
