@@ -15,6 +15,6 @@ public class Chute extends SubsystemBase {
   @Override
   public void periodic() {
     io.updateInputs(inputs);
-    Logger.processInputs("Coral", inputs);
+    Logger.processInputs("Chute", inputs);
   }
 }
