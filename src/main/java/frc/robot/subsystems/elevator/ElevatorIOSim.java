@@ -7,18 +7,19 @@ import frc.robot.Constants;
 
 public class ElevatorIOSim implements ElevatorIO {
   protected final ElevatorSim sim;
-  protected final PIDController controller = new PIDController(0, 0, 0);
+  protected final PIDController controller = new PIDController(0.5, 0, 0);
   private double inputVoltage = 0;
 
-  public ElevatorIOSim(double startHeightMeters, double maxHeightMeters) {
-    sim = new ElevatorSim(DCMotor.getNEO(1), Constants.Elevator.GEAR_RATIO, Constants.Elevator.CARRIAGE_MASS_KG,
-        Constants.Elevator.DRUM_RADIUS_METERS, 0.0, 2.0, false, 0.0);
+  public ElevatorIOSim(double startHeightMeters) {
+    sim = new ElevatorSim(DCMotor.getNeoVortex(2), Constants.Elevator.GEAR_RATIO, Constants.Elevator.CARRIAGE_MASS_KG,
+        Constants.Elevator.DRUM_RADIUS_METERS, 0.0, Constants.Elevator.MAX_HEIGHT_METERS, false, 0.0);
     sim.setState(startHeightMeters, 0.0);
   }
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
     inputVoltage = controller.calculate(sim.getVelocityMetersPerSecond());
+    sim.setInputVoltage(inputVoltage);
 
     sim.update(0.02);
     inputs.appliedVoltage = inputVoltage;
@@ -36,5 +37,9 @@ public class ElevatorIOSim implements ElevatorIO {
   public void stop() {
     inputVoltage = 0;
     sim.setInputVoltage(inputVoltage);
+  }
+
+  public double getChutePivotHeightMeters() {
+    return sim.getPositionMeters() + Constants.Elevator.MIN_PIVOT_HEIGHT_METERS;
   }
 }
