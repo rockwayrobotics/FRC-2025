@@ -30,7 +30,7 @@ public class ChuteIOReal implements ChuteIO {
   public ChuteIOReal() {
     SparkMaxConfig pivotConfig = new SparkMaxConfig();
     pivotConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
-    pivotConfig.encoder.positionConversionFactor(1 / Constants.Coral.PIVOT_GEAR_RATIO);
+    pivotConfig.encoder.positionConversionFactor(1 / Constants.Chute.PIVOT_GEAR_RATIO);
     pivotConfig.closedLoop.pidf(0.5, 0, 0, REVUtils.SPARK_MAX_FF);
     REVUtils.tryUntilOk(() -> pivotMotor.configure(pivotConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 

@@ -17,4 +17,8 @@ public class Chute extends SubsystemBase {
     io.updateInputs(inputs);
     Logger.processInputs("Chute", inputs);
   }
+
+  public void setPivotGoal(double pivotAngleRadians) {
+    io.setPivotGoal(pivotAngleRadians);
+  }
 }

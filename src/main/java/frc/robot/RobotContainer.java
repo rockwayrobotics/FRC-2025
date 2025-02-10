@@ -1,13 +1,18 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radians;
+
 import com.pathplanner.lib.commands.PathPlannerAuto;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -65,7 +70,7 @@ public class RobotContainer {
       climp = new Climp(new ClimpIOReal());
     } else {
       simulation = new WorldSimulation();
-      drive = new Drive(simulation.getDrive(), simulation.getGyro());
+      drive = simulation.getDrive();
       elevator = new Elevator(simulation.getElevator());
       chute = new Chute(simulation.getChute());
       grabber = new Grabber(simulation.getGrabber());
@@ -123,6 +128,12 @@ public class RobotContainer {
     driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
     drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
+
+    if (RobotBase.isSimulation()) {
+      operatorController.a().onTrue(Commands.runOnce(() -> simulation.addCoral()));
+      operatorController.b().onTrue(Commands.runOnce(() -> chute.setPivotGoal(Radians.convertFrom(30, Degrees)), chute));
+      operatorController.x().onTrue(Commands.runOnce(() -> elevator.setGoalHeightMeters(1.5), elevator));
+    }
   }
 
   /**

@@ -60,6 +60,12 @@ public final class Constants {
     public static final int CORAL_SHOOT_SENSOR = 0;
   }
 
+  public static final class Dimensions {
+    // Dimensions of frame without bumpers
+    public static final double FRAME_X_LENGTH_METERS = 0.816;
+    public static final double FRAME_Y_WIDTH_METERS = 0.66;
+  }
+
   public static final class Drive {
     public static final double TRACK_WIDTH_METERS = 0.56;
     public static final double MAX_SPEED_MPS = 4.;
@@ -79,12 +85,19 @@ public final class Constants {
     public final static double rotation_kP = 0.3;
   }
 
-  public static final class Coral {
+  public static final class Chute {
     // FIXME: Complete guess
     public static final double PIVOT_GEAR_RATIO = 6;
     // FIXME: Complete guess
-    public static final double MOI = 3;
+    public static final double MOI = 0.1;
     public static final double CHUTE_LENGTH_METERS = 0.66;
+    // Distance from loading end of chute to center of wheel, measured only along y-axis
+    public static final double CHUTE_WHEEL_POSITION_METERS = 0.568;
+    public static final double SHOOTER_WHEEL_RADIUS_METERS = 0.05715 / 2.0;
+    // Thickness of chute along robot drive axis
+    public static final double CHUTE_X_THICKNESS_METERS = 0.107;
+    // Measured with 0 as the center of the robot frame, positive x forwards
+    public static final double CHUTE_CENTER_X_POSITION_METERS = Dimensions.FRAME_X_LENGTH_METERS / 2 - 0.276 + CHUTE_X_THICKNESS_METERS / 2;
   }
 
   public static final class Elevator {
@@ -94,6 +107,10 @@ public final class Constants {
     // FIXME: Blindly estimated from
     // https://ambcalc.com/mechanism?=&mot_num=1&motor=NEO&load-u=9.81&load=20&lin_l-c=%5E&lin_l=5
     public static final double GEAR_RATIO = 6.81;
+    // FIXME: Approximate measurement from OnShape from center of pivot to bottom of wheel
+    public static final double MIN_PIVOT_HEIGHT_METERS = 0.24;
+    // FIXME: Complete guess
+    public static final double MAX_HEIGHT_METERS = 1.5;
   }
 
   public static final class PathPlanner {
