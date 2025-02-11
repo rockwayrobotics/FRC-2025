@@ -85,6 +85,20 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
+
+    // driver & operator A              -> Coral.Pivot (swap side)
+    // driver & operator B              -> Coral.shoot
+    // driver & operator X              -> Elevator.set-L2
+    // driver & operator Y              -> Elevator.set-L3
+    // driver & operator left trigger   -> Algae.intake
+    // driver & operator right trigger  -> Algae.shoot
+    // driver & operator D-pad up       -> Coral.shift-up
+    // driver & operator D-pad down     -> Coral.shift-down
+    // driver & operator D-pad left     -> Algae.up
+    // driver & operator D-pad right    -> Algae.down
+    
+    // driver & operator right bumper held -> landing sequence
+
     // left bumper -> set drive scale to 0.3 when held
     driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
     driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
