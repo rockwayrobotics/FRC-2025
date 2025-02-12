@@ -112,7 +112,7 @@ class PiCam:
 
         vid1 = self.cam.create_video_configuration(
             main=dict(size=SIZE, format='RGB888'),
-            lores=dict(size=SIZE, format='YUV420'),
+            lores=dict(size=[320,240], format='RGB888'),
             controls=dict(FrameRate=args.fps), # FrameDurationLimits=(1, 5000)),
             queue=False,
             buffer_count=1,
@@ -303,14 +303,14 @@ def main():
         height = SIZE[1] * 2 // 3
         print('SIZE', SIZE, 'height', height)
         while now - start < args.time:
-            # arr = cam.capture_array('lores')
             arr = cam.capture_array('main')
             # img = arr[:height,:]
             s = time.monotonic()
             img = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
             elapsed = time.monotonic() - s
-            cv2.rectangle(arr, (10, 10), (110, 110), (0, 0, 255), -1)
-            source.putFrame(arr)
+            dashboard_arr = cam.capture_array('lores')
+            cv2.rectangle(dashboard_arr, (10, 10), (110, 110), (0, 0, 255), -1)
+            source.putFrame(dashboard_arr)
             print(f'Elapsed {round(elapsed * 1000,3)} ms')
             tags = det.detect(img)
             count += 1
