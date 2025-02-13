@@ -1,13 +1,22 @@
 package frc.robot.simulation;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Millimeters;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.Constants;
+import frc.robot.RobotTracker;
 import frc.robot.subsystems.chute.ChuteIO;
 import frc.robot.subsystems.chute.ChuteIOSim;
 import frc.robot.subsystems.climp.ClimpIO;
@@ -23,8 +32,33 @@ import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.grabber.GrabberIO;
 import frc.robot.subsystems.grabber.GrabberIOSim;
+import frc.robot.subsystems.tof.ToFIO;
+import frc.robot.subsystems.tof.ToFIOSim;
 
 public class WorldSimulation {
+  public static final class FieldObstacles {
+    public final double fieldWidthMeters = 17.548;
+    public final Translation2d[] blueReefVertices;
+    public final Translation2d[] redReefVertices;
+
+    public FieldObstacles() {
+      blueReefVertices = new Translation2d[] {
+          new Translation2d(3.658, 3.546),
+          new Translation2d(3.658, 4.506),
+          new Translation2d(4.489, 4.987),
+          new Translation2d(5.3213, 4.506),
+          new Translation2d(5.3213, 3.546),
+          new Translation2d(4.489, 3.065),
+      };
+
+      redReefVertices = Arrays.stream(blueReefVertices)
+          .map(blueVertex -> new Translation2d(fieldWidthMeters - blueVertex.getX(), blueVertex.getY()))
+          .toArray(Translation2d[]::new);
+    }
+  }
+
+  private FieldObstacles fieldObstacles = new FieldObstacles();
+
   private GyroIO gyro;
   private DriveIOSim driveIO;
   private Drive drive;
@@ -32,6 +66,7 @@ public class WorldSimulation {
   private ClimpIOSim climp;
   private ElevatorIOSim elevator;
   private GrabberIOSim grabber;
+  private ToFIOSim tof;
 
   private ArrayList<Coral> corals = new ArrayList<>();
 
@@ -54,6 +89,7 @@ public class WorldSimulation {
     this.climp = new ClimpIOSim();
     this.elevator = new ElevatorIOSim(0);
     this.grabber = new GrabberIOSim();
+    this.tof = new ToFIOSim();
   }
 
   public Drive getDrive() {
@@ -84,13 +120,65 @@ public class WorldSimulation {
     return grabber;
   }
 
+  public ToFIO getToF() {
+    return tof;
+  }
+
   public void addCoral() {
     var coral = new Coral();
     coral.insertIntoChute(0);
     corals.add(coral);
   }
 
+  private void simulateToF(Pose2d robotPose) {
+    Translation2d frontLeftSensor = robotPose
+        .transformBy(new Transform2d(Constants.ToFSensor.FRONT_LEFT.getTranslation(), robotPose.getRotation()))
+        .getTranslation();
+    double frontLeftAngle = robotPose.getRotation().getRadians() + Constants.ToFSensor.FRONT_LEFT.getRotation().getRadians();
+
+    double distance = ToFSimUtils.simulateSensor(frontLeftSensor, frontLeftAngle, fieldObstacles);
+    if (distance < Double.POSITIVE_INFINITY) {
+      tof.simulateFrontLeft(distance);
+    }
+
+    Translation2d backLeftSensor = robotPose
+        .transformBy(new Transform2d(Constants.ToFSensor.BACK_LEFT.getTranslation(), robotPose.getRotation()))
+        .getTranslation();
+    double backLeftAngle = robotPose.getRotation().getRadians() + Constants.ToFSensor.BACK_LEFT.getRotation().getRadians();
+
+    distance = ToFSimUtils.simulateSensor(backLeftSensor, backLeftAngle, fieldObstacles);
+    if (distance < Double.POSITIVE_INFINITY) {
+      tof.simulateBackLeft(distance);
+    }
+
+    Translation2d frontRightSensor = robotPose
+        .transformBy(new Transform2d(Constants.ToFSensor.FRONT_RIGHT.getTranslation(), robotPose.getRotation()))
+        .getTranslation();
+    double frontRightAngle = robotPose.getRotation().getRadians() + Constants.ToFSensor.FRONT_RIGHT.getRotation().getRadians();
+
+    distance = ToFSimUtils.simulateSensor(frontRightSensor, frontRightAngle, fieldObstacles);
+    if (distance < Double.POSITIVE_INFINITY) {
+      tof.simulateFrontRight(distance);
+    }
+
+    Translation2d backRightSensor = robotPose
+        .transformBy(new Transform2d(Constants.ToFSensor.BACK_RIGHT.getTranslation(), robotPose.getRotation()))
+        .getTranslation();
+    double backRightAngle = robotPose.getRotation().getRadians() + Constants.ToFSensor.BACK_RIGHT.getRotation().getRadians();
+
+    distance = ToFSimUtils.simulateSensor(backRightSensor, backRightAngle, fieldObstacles);
+    if (distance < Double.POSITIVE_INFINITY) {
+      tof.simulateBackRight(distance);
+    }
+  }
+
   public void simulationPeriodic() {
+    // FIXME: Simulation should really simulate where the robot is, and not use
+    // odometry for it
+    // so we can simulate errors.
+    Pose2d robotPose = RobotTracker.getInstance().getEstimatedPose();
+    simulateToF(robotPose);
+
     List<Coral> coralToRemove = new ArrayList<>();
     final List<Pose3d> coralPoses = new ArrayList<>();
     for (Coral coral : corals) {
@@ -98,7 +186,7 @@ public class WorldSimulation {
       if (!coral.isInChute()) {
         coralToRemove.add(coral);
       } else {
-        coralPoses.add(coral.getPose(drive.getPose(), elevator, chute));
+        coralPoses.add(coral.getPose(robotPose, elevator, chute));
       }
     }
 

@@ -40,6 +40,8 @@ import frc.robot.subsystems.elevator.ElevatorIOSparkMax;
 import frc.robot.subsystems.grabber.Grabber;
 import frc.robot.subsystems.grabber.GrabberIOReal;
 import frc.robot.subsystems.grabber.GrabberIOSim;
+import frc.robot.subsystems.tof.ToF;
+import frc.robot.subsystems.tof.ToFIOPi5;
 
 public class RobotContainer {
   // Subsystems are listed here
@@ -48,6 +50,7 @@ public class RobotContainer {
   private final Chute chute;
   private final Grabber grabber;
   private final Climp climp;
+  private final ToF tof;
 
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
@@ -68,6 +71,7 @@ public class RobotContainer {
       chute = new Chute(new ChuteIOReal());
       grabber = new Grabber(new GrabberIOReal());
       climp = new Climp(new ClimpIOReal());
+      tof = new ToF(new ToFIOPi5());
     } else {
       simulation = new WorldSimulation();
       drive = simulation.getDrive();
@@ -75,6 +79,7 @@ public class RobotContainer {
       chute = new Chute(simulation.getChute());
       grabber = new Grabber(simulation.getGrabber());
       climp = new Climp(simulation.getClimp());
+      tof = new ToF(simulation.getToF());
     }
 
     // Set up auto routines
@@ -137,10 +142,10 @@ public class RobotContainer {
     operatorController.y().onTrue(Commands.runOnce(() -> elevator.setGoalHeightMeters(1.51), elevator));
     // operator D-pad up -> Coral angle up
     operatorController.povUp().onTrue(Commands
-        .runOnce(() -> chute.setPivotGoalRads(chute.getPivotGoalRads() + Radians.convertFrom(2.5, Degrees)), chute));
+        .runOnce(() -> chute.setPivotGoalRads(chute.getPivotGoalRads() - Radians.convertFrom(2.5, Degrees)), chute));
     // operator D-pad down -> Coral angle down
     operatorController.povDown().onTrue(Commands
-        .runOnce(() -> chute.setPivotGoalRads(chute.getPivotGoalRads() - Radians.convertFrom(2.5, Degrees)), chute));
+        .runOnce(() -> chute.setPivotGoalRads(chute.getPivotGoalRads() + Radians.convertFrom(2.5, Degrees)), chute));
 
     drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
 

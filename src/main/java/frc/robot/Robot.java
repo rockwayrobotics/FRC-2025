@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -50,6 +51,8 @@ public class Robot extends LoggedRobot {
       // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
     }
 
+    AutoLogOutputManager.addObject(RobotTracker.getInstance());
+
     Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may
                     // be added.
 
@@ -92,6 +95,9 @@ public class Robot extends LoggedRobot {
     // robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+
+    // Log robot state
+    RobotTracker.getInstance().periodic();
 
     // Back to normal priority
     Threads.setCurrentThreadPriority(false, 10);

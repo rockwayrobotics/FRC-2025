@@ -7,6 +7,10 @@ package frc.robot;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 
 /**
@@ -83,6 +87,17 @@ public final class Constants {
     public final static boolean RIGHT_DRIVE_INVERTED = true;
 
     public final static double rotation_kP = 0.3;
+  }
+
+  public static final class ToFSensor {
+    // Values from VL53L1X datasheet
+    public static final double MAX_DISTANCE_METERS = 1.35;
+    public static final double MIN_DISTANCE_METERS = 0.04;
+
+    public static final Transform2d FRONT_LEFT = new Transform2d(new Translation2d(0.5, 0.5), Rotation2d.fromDegrees(90));
+    public static final Transform2d BACK_LEFT = new Transform2d(new Translation2d(-0.5, 0.5), Rotation2d.fromDegrees(90));
+    public static final Transform2d FRONT_RIGHT = new Transform2d(new Translation2d(0.5, -0.5), Rotation2d.fromDegrees(-90));
+    public static final Transform2d BACK_RIGHT = new Transform2d(new Translation2d(-0.5,- 0.5), Rotation2d.fromDegrees(-90));
   }
 
   public static final class Chute {
