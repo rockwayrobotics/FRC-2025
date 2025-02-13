@@ -1,12 +1,13 @@
 package frc.robot.simulation;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.subsystems.chute.ChuteIO;
 import frc.robot.subsystems.chute.ChuteIOSim;
 import frc.robot.subsystems.climp.ClimpIO;
@@ -100,6 +101,22 @@ public class WorldSimulation {
         coralPoses.add(coral.getPose(drive.getPose(), elevator, chute));
       }
     }
+
+    // new Pose3d(0, 0, elevator.getChutePivotHeightMeters(), new
+    // Rotation3d(chute.getPivotAngleRads(), 0, 0)),
+    // Offset for chute origin is 0.236 up in z.
+    Pose3d chutePose = new Pose3d(0, 0, elevator.getChutePivotHeightMeters(), new Rotation3d())
+        .transformBy(new Transform3d(0, 0, 0.236, new Rotation3d()))
+        .transformBy(new Transform3d(0, 0, 0, new Rotation3d(chute.getPivotAngleRads(), 0, 0)))
+        .transformBy(new Transform3d(0, 0, -0.236, new Rotation3d()));
+    Logger.recordOutput("Robot/Components", new Pose3d[] {
+        // Elevator box
+        new Pose3d(0, 0, elevator.getChutePivotHeightMeters(), new Rotation3d(0, 0, 0)),
+        // Chute
+        chutePose,
+        // Climber arm
+        new Pose3d(0, 0, 0, new Rotation3d()),
+    });
 
     corals.removeAll(coralToRemove);
     Logger.recordOutput("FieldSimulation/Corals", coralPoses.toArray(Pose3d[]::new));

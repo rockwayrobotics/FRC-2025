@@ -127,12 +127,26 @@ public class RobotContainer {
     driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
     driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
+    // operator left-stick up/down -> Elevator up/down
+
+    // operator B -> Coral shoot
+    operatorController.b().onTrue(Commands.runOnce(() -> chute.shoot(), chute));
+    // operator X -> Elevator set L2
+    operatorController.x().onTrue(Commands.runOnce(() -> elevator.setGoalHeightMeters(1.106), elevator));
+    // operator Y -> Elevator set L3
+    operatorController.y().onTrue(Commands.runOnce(() -> elevator.setGoalHeightMeters(1.51), elevator));
+    // operator D-pad up -> Coral angle up
+    operatorController.povUp().onTrue(Commands
+        .runOnce(() -> chute.setPivotGoalRads(chute.getPivotGoalRads() + Radians.convertFrom(2.5, Degrees)), chute));
+    // operator D-pad down -> Coral angle down
+    operatorController.povDown().onTrue(Commands
+        .runOnce(() -> chute.setPivotGoalRads(chute.getPivotGoalRads() - Radians.convertFrom(2.5, Degrees)), chute));
+
     drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
 
     if (RobotBase.isSimulation()) {
-      operatorController.a().onTrue(Commands.runOnce(() -> simulation.addCoral()));
-      operatorController.b().onTrue(Commands.runOnce(() -> chute.setPivotGoal(Radians.convertFrom(30, Degrees)), chute));
-      operatorController.x().onTrue(Commands.runOnce(() -> elevator.setGoalHeightMeters(1.5), elevator));
+      // Add coral with driver right bumper
+      driverController.rightBumper().onTrue(Commands.runOnce(() -> simulation.addCoral()));
     }
   }
 

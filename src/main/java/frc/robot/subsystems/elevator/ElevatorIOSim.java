@@ -7,7 +7,7 @@ import frc.robot.Constants;
 
 public class ElevatorIOSim implements ElevatorIO {
   protected final ElevatorSim sim;
-  protected final PIDController controller = new PIDController(0.5, 0, 0);
+  protected final PIDController controller = new PIDController(12, 0, 0);
   private double inputVoltage = 0;
 
   public ElevatorIOSim(double startHeightMeters) {
@@ -18,7 +18,7 @@ public class ElevatorIOSim implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    inputVoltage = controller.calculate(sim.getVelocityMetersPerSecond());
+    inputVoltage = controller.calculate(sim.getPositionMeters());
     sim.setInputVoltage(inputVoltage);
 
     sim.update(0.02);
@@ -40,6 +40,6 @@ public class ElevatorIOSim implements ElevatorIO {
   }
 
   public double getChutePivotHeightMeters() {
-    return sim.getPositionMeters() + Constants.Elevator.MIN_PIVOT_HEIGHT_METERS;
+    return sim.getPositionMeters();
   }
 }

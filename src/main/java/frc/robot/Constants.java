@@ -110,7 +110,7 @@ public final class Constants {
     // FIXME: Approximate measurement from OnShape from center of pivot to bottom of wheel
     public static final double MIN_PIVOT_HEIGHT_METERS = 0.24;
     // FIXME: Complete guess
-    public static final double MAX_HEIGHT_METERS = 1.5;
+    public static final double MAX_HEIGHT_METERS = 1.51;
   }
 
   public static final class PathPlanner {
