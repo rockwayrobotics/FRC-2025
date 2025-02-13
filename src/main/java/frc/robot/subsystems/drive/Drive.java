@@ -38,6 +38,7 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -47,6 +48,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.RobotTracker;
 
 public class Drive extends SubsystemBase {
   private final DriveIO io;
@@ -55,8 +57,6 @@ public class Drive extends SubsystemBase {
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
   private final DifferentialDrive differentialDrive;
-  private final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(
-      Constants.Drive.TRACK_WIDTH_METERS);
   // FIXME: kS and kV are feed-forward constants that should be measured
   // empirically and
   // should vary between simulator and real.
@@ -68,17 +68,10 @@ public class Drive extends SubsystemBase {
   private final double kS;
   private final double kV;
   private final SysIdRoutine sysId;
-  private final DifferentialDrivePoseEstimator poseEstimator = new DifferentialDrivePoseEstimator(kinematics,
-      new Rotation2d(), 0, 0, new Pose2d());
   private Rotation2d rawGyroRotation = new Rotation2d();
   private double lastLeftPositionMeters = 0.0;
   private double lastRightPositionMeters = 0.0;
   private double scale = 1.0;
-
-  // FIXME: Stop publishing twice to save bandwidth
-  // Publish RobotPose for AdvantageScope
-  StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault()
-      .getStructTopic("/Robot/Pose", Pose2d.struct).publish();
 
   // Publish RobotPose for Shuffleboard.
   ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
@@ -95,14 +88,10 @@ public class Drive extends SubsystemBase {
     double rElem0 = 1;
     Logger.recordOutput("VelocityControlFF", rElem0);
     AutoBuilder.configure(
-        this::getPose,
+        () -> RobotTracker.getInstance().getEstimatedPose(),
         this::setPose,
-        () -> kinematics.toChassisSpeeds(
-            new DifferentialDriveWheelSpeeds(
-                getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec())),
-        //(ChassisSpeeds speeds) -> runClosedLoopNoFF(speeds),
+        () -> RobotTracker.getInstance().getRobotRelativeSpeeds(),
         (ChassisSpeeds speeds) -> runClosedLoop(speeds),
-        // (ChassisSpeeds speeds) -> setTankDrive(speeds),
         new PPLTVController(
             VecBuilder.fill(0.0625, 0.125, 0.5),
             VecBuilder.fill(rElem0, 2),
@@ -155,7 +144,7 @@ public class Drive extends SubsystemBase {
       // FIXME: Fix this so that the gyro is actually simulated and we avoid checking
       // in periodic if the gyro is connected.
       // Use the angle delta from the kinematics and module deltas
-      Twist2d twist = kinematics.toTwist2d(
+      Twist2d twist = RobotTracker.getInstance().getDriveKinematics().toTwist2d(
           getLeftPositionMeters() - lastLeftPositionMeters,
           getRightPositionMeters() - lastRightPositionMeters);
       rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
@@ -164,10 +153,10 @@ public class Drive extends SubsystemBase {
     }
 
     // Update odometry
-    poseEstimator.update(rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters());
-    var robotPose = poseEstimator.getEstimatedPosition();
-    field.setRobotPose(robotPose);
-    robotPosePublisher.set(robotPose);
+    RobotTracker.getInstance().recordOdometry(rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters());
+    RobotTracker.getInstance().addDriveSpeeds(getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec());
+
+    field.setRobotPose(RobotTracker.getInstance().getEstimatedPose());
   }
 
   /**
@@ -180,7 +169,7 @@ public class Drive extends SubsystemBase {
   }
 
   public void runClosedLoopNoFF(ChassisSpeeds speeds) {
-    var wheelSpeeds = kinematics.toWheelSpeeds(speeds);
+    var wheelSpeeds = RobotTracker.getInstance().getDriveKinematics().toWheelSpeeds(speeds);
     Logger.recordOutput("Drive/LeftSetpointMetersPerSec", wheelSpeeds.leftMetersPerSecond);
     Logger.recordOutput("Drive/RightSetpointMetersPerSec", wheelSpeeds.rightMetersPerSecond);
     wheelSpeeds.desaturate(Constants.Drive.MAX_SPEED_MPS);
@@ -190,7 +179,7 @@ public class Drive extends SubsystemBase {
 
   /** Runs the drive at the desired velocity. */
   public void runClosedLoop(ChassisSpeeds speeds) {
-    var wheelSpeeds = kinematics.toWheelSpeeds(speeds);
+    var wheelSpeeds = RobotTracker.getInstance().getDriveKinematics().toWheelSpeeds(speeds);
     runClosedLoop(wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond);
   }
 
@@ -234,7 +223,7 @@ public class Drive extends SubsystemBase {
   }
 
   public void setTankDrive(ChassisSpeeds speeds) {
-    DifferentialDriveWheelSpeeds wheelSpeeds = kinematics.toWheelSpeeds(speeds);
+    DifferentialDriveWheelSpeeds wheelSpeeds = RobotTracker.getInstance().getDriveKinematics().toWheelSpeeds(speeds);
     wheelSpeeds.desaturate(Constants.Drive.MAX_SPEED_MPS);
     differentialDrive.tankDrive(wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS,
         wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS, false);
@@ -262,31 +251,9 @@ public class Drive extends SubsystemBase {
     return sysId.dynamic(direction);
   }
 
-  /** Returns the current odometry pose. */
-  @AutoLogOutput(key = "Odometry/Robot")
-  public Pose2d getPose() {
-    return poseEstimator.getEstimatedPosition();
-  }
-
-  /** Returns the current odometry rotation. */
-  public Rotation2d getRotation() {
-    return getPose().getRotation();
-  }
-
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
-    poseEstimator.resetPosition(
-        rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters(), pose);
-  }
-
-  /**
-   * Adds a vision measurement to the pose estimator.
-   *
-   * @param visionPose The pose of the robot as measured by the vision camera.
-   * @param timestamp  The timestamp of the vision measurement in seconds.
-   */
-  public void addVisionMeasurement(Pose2d visionPose, double timestamp) {
-    poseEstimator.addVisionMeasurement(visionPose, timestamp);
+    RobotTracker.getInstance().resetPose(pose, rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters());
   }
 
   /** Returns the position of the left wheels in meters. */
