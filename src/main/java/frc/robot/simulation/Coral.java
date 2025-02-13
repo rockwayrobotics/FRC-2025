@@ -43,13 +43,13 @@ public class Coral {
   public Pose3d getPose(Pose2d robotPose, ElevatorIOSim elevator, ChuteIOSim chuteIOSim) {
     return new Pose3d(robotPose)
     // Move the coral up by the height of the pivot
-      .plus(new Transform3d(0, 0, elevator.getChutePivotHeightMeters(), new Rotation3d()))
+      .plus(new Transform3d(0, 0, Constants.Elevator.MIN_PIVOT_HEIGHT_METERS + elevator.getChutePivotHeightMeters(), new Rotation3d()))
       // Rotate it 90 degrees around the z-axis
       .plus(new Transform3d(0, 0, 0, new Rotation3d(0, 0, Math.PI / 2)))
       // Rotate it to match the pitch of the chute
-      .plus(new Transform3d(0, 0, 0, new Rotation3d(0, chuteIOSim.getPivotAngleRads(), 0)))
+      .plus(new Transform3d(0, 0, 0, new Rotation3d(0, -chuteIOSim.getPivotAngleRads(), 0)))
       // Move it along the chute
-      .plus(new Transform3d(- Constants.Chute.CHUTE_LENGTH_METERS / 2 + chutePosition, 0, 0, new Rotation3d()));
+      .plus(new Transform3d(Constants.Chute.CHUTE_LENGTH_METERS / 2 - chutePosition, 0, 0, new Rotation3d()));
   }
 
   public void periodic(ChuteIOSim chuteIOSim) {
@@ -63,7 +63,10 @@ public class Coral {
     }
 
     double chuteAngleRads = chuteIOSim.getPivotAngleRads();
-    if (chutePosition < Constants.Chute.CHUTE_WHEEL_POSITION_METERS) {
+    if (chutePosition < 0) {
+      inChute = false;
+      System.out.println("Coral fell out of chute");
+    } else if (chutePosition < Constants.Chute.CHUTE_WHEEL_POSITION_METERS) {
       double normalForce = CORAL_MASS_KG * GRAVITY * Math.cos(chuteAngleRads);
       double gravityForce = CORAL_MASS_KG * GRAVITY * Math.sin(chuteAngleRads);
 
@@ -89,7 +92,7 @@ public class Coral {
       chuteVelocity = chuteIOSim.getShooterVelocityRadPerSec() * Constants.Chute.SHOOTER_WHEEL_RADIUS_METERS;
       chutePosition += chuteVelocity * dt;
 
-      if (chutePosition + CORAL_LENGTH_METERS >= Constants.Chute.CHUTE_LENGTH_METERS) {
+      if (chutePosition >= Constants.Chute.CHUTE_LENGTH_METERS) {
         inChute = false;
         chuteIOSim.setCoralLoaded(false);
       }

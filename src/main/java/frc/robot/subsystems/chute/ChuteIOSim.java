@@ -11,7 +11,7 @@ import frc.robot.Constants;
 
 public class ChuteIOSim implements ChuteIO {
   SingleJointedArmSim chuteSim;
-  protected final PIDController pivotPid = new PIDController(0.2, 0, 0.1);
+  protected final PIDController pivotPid = new PIDController(0.8, 0, 0.1);
   private double pivotVoltage = 0;
   private double shooterVoltage = 0;
   private boolean coralLoaded = false;
