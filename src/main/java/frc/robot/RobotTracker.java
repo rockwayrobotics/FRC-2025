@@ -127,13 +127,14 @@ public class RobotTracker {
   /**
    * FIXME: Add side parameter?
    */
-  public void startRecordingToF(ToFSide side) {
+  public void startRecordingToF(ToFSide side, double speedMetersPerSec) {
     recordingSide = side;
     // FIXME: Would be better to reset?
     // FIXME: These parameters are random
     // These values were good for 1.5 m/s speeds
     // frontCornerDetector = new CornerDetector(3, 2000, 1000, 2);
-    frontCornerDetector = new CornerDetector(3, 400, 200, 2);
+    frontCornerDetector = new CornerDetector(speedMetersPerSec);
+    // frontCornerDetector = new CornerDetector(3, 400, 200, 2);
     // backCornerDetector = new CornerDetector(7, 0.1, 0.5, 0.05, 3);
   }
 

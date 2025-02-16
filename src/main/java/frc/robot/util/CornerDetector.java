@@ -77,6 +77,10 @@ public class CornerDetector {
     this.slopes = new CircularBuffer<>(windowSize - 1);
   }
 
+  public CornerDetector(double speedMetersPerSec) {
+    this(3, 1400 * speedMetersPerSec, 700 * speedMetersPerSec, 2);
+  }
+
   public void recordDistance(double distance, double timestamp) {
     // Add new measurement to buffers
     rawDistances.addFirst(distance);

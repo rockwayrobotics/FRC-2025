@@ -19,7 +19,7 @@ public class DockingCommand extends Command {
   private TimeInterpolatableBuffer<Double> positions;
   private ToFSide side;
   private Drive drive;
-  private double speed;
+  private double speedMetersPerSec;
 
   public static final double MIN_SPEED = 0.3; // m/s
   public static final double MAX_SPEED = 0.5; // m/s
@@ -37,11 +37,11 @@ public class DockingCommand extends Command {
   @Override
   public void initialize() {
     positions = TimeInterpolatableBuffer.createDoubleBuffer(5);
-    RobotTracker.getInstance().startRecordingToF(side);
 
-    speed = MathUtil.clamp((drive.getLeftVelocityMetersPerSec() + drive.getRightVelocityMetersPerSec()) / 2, MIN_SPEED,
+    speedMetersPerSec = MathUtil.clamp((drive.getLeftVelocityMetersPerSec() + drive.getRightVelocityMetersPerSec()) / 2, MIN_SPEED,
         MAX_SPEED);
-    System.out.printf("Speed: %.2f%n", speed);
+    System.out.printf("Speed: %.2f%n", speedMetersPerSec);
+    RobotTracker.getInstance().startRecordingToF(side, speedMetersPerSec);
   }
 
   @Override
@@ -55,11 +55,14 @@ public class DockingCommand extends Command {
       System.out.printf("Found front corner: %.2f%n", frontCornerTimestamp.get());
       Optional<Double> positionAtCorner = positions.getSample(frontCornerTimestamp.get());
       if (positionAtCorner.isPresent()) {
+        // FIXME: This has the obvious problem that we may have already passed our point.
+        // FIXME: This also has the problem that if we are on an angle, we may want to shoot when we are
+        // not precisely in front of the bar, so we can hit the bar with the coral on an angle.
         System.out.printf("Position at corner: %.2f, now: %.2f%n", positionAtCorner.get(), positionNow);
         double parallelDistanceFromCorner = METERS_TO_NEAR_POST + Constants.ToFSensor.FRONT_LEFT.getX()
             - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         double nonParallelDistanceTravelled = positionNow - positionAtCorner.get();
-        double wallAngle = RobotTracker.getInstance().getFrontCornerDetector().getWallAngle(speed);
+        double wallAngle = RobotTracker.getInstance().getFrontCornerDetector().getWallAngle(speedMetersPerSec);
         double nonParallelDesiredDistance = parallelDistanceFromCorner / Math.cos(wallAngle);
         double difference = nonParallelDesiredDistance - nonParallelDistanceTravelled;
         System.out.printf("Need to travel %.3f (%.3f - %.3f) (%.2f degrees)%n", difference, nonParallelDesiredDistance,
@@ -72,9 +75,11 @@ public class DockingCommand extends Command {
       }
     }
 
-    drive.setTankDrive(new ChassisSpeeds(speed, speed, 0));
+    // Tank drive is the only way to set a speed in m/s at the moment, set(speed) is -1 to 1.
+    drive.setTankDrive(new ChassisSpeeds(speedMetersPerSec, speedMetersPerSec, 0));
     //drive.set(speed, 0);
     /*
+     * Not sure what to do with back corner detector
      * Optional<Double> backCornerTimestamp =
      * RobotTracker.getInstance().getBackCornerDetector().getCornerTimestamp();
      * if (backCornerTimestamp.isPresent()) {
