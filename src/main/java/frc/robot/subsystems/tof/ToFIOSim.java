@@ -1,7 +1,6 @@
 package frc.robot.subsystems.tof;
 
 import edu.wpi.first.wpilibj.Timer;
-import frc.robot.RobotTracker;
 
 public class ToFIOSim implements ToFIO {
   private double[] frontLeft = new double[] {0, 0};
@@ -23,8 +22,6 @@ public class ToFIOSim implements ToFIO {
     inputs.frontRight[1] = frontRight[1];
     inputs.backRight[0] = backRight[0];
     inputs.backRight[1] = backRight[1];
-
-    RobotTracker.getInstance().recordToF(frontLeft, backLeft, frontRight, backRight);
   }
 
   public void simulateFrontLeft(double distanceInMm) {

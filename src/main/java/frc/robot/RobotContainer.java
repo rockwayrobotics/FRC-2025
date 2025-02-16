@@ -18,6 +18,8 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.RobotTracker.ToFSide;
+import frc.robot.commands.DockingCommand;
 import frc.robot.commands.DriveCommands;
 import frc.robot.simulation.WorldSimulation;
 import frc.robot.subsystems.chute.Chute;
@@ -127,6 +129,7 @@ public class RobotContainer {
     // driver & operator D-pad right    -> Algae.down
     
     // driver & operator right bumper held -> landing sequence
+    driverController.rightBumper().whileTrue(new DockingCommand(ToFSide.LEFT, drive));
 
     // left bumper -> set drive scale to 0.3 when held
     driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));

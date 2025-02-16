@@ -94,10 +94,10 @@ public final class Constants {
     public static final double MAX_DISTANCE_METERS = 1.35;
     public static final double MIN_DISTANCE_METERS = 0.04;
 
-    public static final Transform2d FRONT_LEFT = new Transform2d(new Translation2d(0.5, 0.5), Rotation2d.fromDegrees(90));
-    public static final Transform2d BACK_LEFT = new Transform2d(new Translation2d(-0.5, 0.5), Rotation2d.fromDegrees(90));
-    public static final Transform2d FRONT_RIGHT = new Transform2d(new Translation2d(0.5, -0.5), Rotation2d.fromDegrees(-90));
-    public static final Transform2d BACK_RIGHT = new Transform2d(new Translation2d(-0.5,- 0.5), Rotation2d.fromDegrees(-90));
+    public static final Transform2d FRONT_LEFT = new Transform2d(new Translation2d(0.4, 0.3), Rotation2d.fromDegrees(90));
+    public static final Transform2d BACK_LEFT = new Transform2d(new Translation2d(-0.4, 0.3), Rotation2d.fromDegrees(90));
+    public static final Transform2d FRONT_RIGHT = new Transform2d(new Translation2d(0.4, -0.3), Rotation2d.fromDegrees(-90));
+    public static final Transform2d BACK_RIGHT = new Transform2d(new Translation2d(-0.4,- 0.3), Rotation2d.fromDegrees(-90));
   }
 
   public static final class Chute {
