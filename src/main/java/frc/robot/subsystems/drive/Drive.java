@@ -16,6 +16,8 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.security.Timestamp;
+
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -32,12 +34,15 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.networktables.FloatArraySubscriber;
+import edu.wpi.first.networktables.FloatArrayTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -79,14 +84,17 @@ public class Drive extends SubsystemBase {
   // Publish RobotPose for AdvantageScope
   StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault()
       .getStructTopic("/Robot/Pose", Pose2d.struct).publish();
+  FloatArraySubscriber tofSubscriber = NetworkTableInstance.getDefault().getFloatArrayTopic("/tof/sensors")
+      .subscribe(new float[] {});
+  int noDataCounter = 0;
 
   // Publish RobotPose for Shuffleboard.
   ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
   Field2d field = new Field2d();
 
   public Drive(DriveIO io, GyroIO gyroIO) {
-    this.kS = simkS;
-    this.kV = simkV;
+    this.kS = realkS;
+    this.kV = realkV;
     this.io = io;
     this.gyroIO = gyroIO;
     this.differentialDrive = io.getDifferentialDrive();
@@ -100,7 +108,7 @@ public class Drive extends SubsystemBase {
         () -> kinematics.toChassisSpeeds(
             new DifferentialDriveWheelSpeeds(
                 getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec())),
-        //(ChassisSpeeds speeds) -> runClosedLoopNoFF(speeds),
+        // (ChassisSpeeds speeds) -> runClosedLoopNoFF(speeds),
         (ChassisSpeeds speeds) -> runClosedLoop(speeds),
         // (ChassisSpeeds speeds) -> setTankDrive(speeds),
         new PPLTVController(
@@ -145,6 +153,19 @@ public class Drive extends SubsystemBase {
     gyroIO.updateInputs(gyroInputs);
     Logger.processInputs("Drive", inputs);
     Logger.processInputs("Drive/Gyro", gyroInputs);
+    float[] tofOutputs = tofSubscriber.get();
+    double lastChangeTime = tofSubscriber.getLastChange() / 1000000.0;
+    if (tofOutputs.length >= 5) {
+      double now = Timer.getFPGATimestamp();
+      Logger.recordOutput("ToF/Timestamps", new float[] { tofOutputs[0], tofOutputs[1], tofOutputs[2] });
+      Logger.recordOutput("ToF/Distance", new float[] { tofOutputs[3], tofOutputs[4] });
+      Logger.recordOutput("ToF/NT_Time", lastChangeTime);
+      Logger.recordOutput("ToF/FPGA", now);
+      Logger.recordOutput("ToF/NT_Delta", now - lastChangeTime);
+    } else {
+      noDataCounter++;
+      Logger.recordOutput("ToF/NoData", tofOutputs.length);
+    }
 
     if (gyroInputs.connected) {
       // Use the real gyro angle
