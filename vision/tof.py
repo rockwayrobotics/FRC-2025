@@ -79,7 +79,7 @@ def main(args):
     else:
         in_test_mode = False
 
-    detector = cd.CornerDetector(20)
+    detector = cd.CornerDetector(160)
     running = True
     start = time.monotonic()
     while running:
