@@ -13,12 +13,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
 import frc.robot.RobotTracker.ToFSide;
+import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.drive.Drive;
 
 public class DockingCommand extends Command {
   private TimeInterpolatableBuffer<Double> positions;
   private ToFSide side;
   private Drive drive;
+  private Chute chute;
   private double speedMetersPerSec;
 
   public static final double MIN_SPEED = 0.3; // m/s
@@ -28,9 +30,10 @@ public class DockingCommand extends Command {
   public static final double METERS_TO_NEAR_POST = 0.3061;
   public static final double METERS_TO_FAR_POST = 0.6347;
 
-  public DockingCommand(ToFSide side, Drive drive) {
+  public DockingCommand(ToFSide side, Drive drive, Chute chute) {
     this.side = side;
     this.drive = drive;
+    this.chute = chute;
     addRequirements(drive);
   }
 
@@ -68,7 +71,7 @@ public class DockingCommand extends Command {
         System.out.printf("Need to travel %.3f (%.3f - %.3f) (%.2f degrees)%n", difference, nonParallelDesiredDistance,
             nonParallelDistanceTravelled, Degrees.convertFrom(wallAngle, Radians));
         if (difference <= 0) {
-          drive.stop();
+          chute.shoot();
           this.cancel();
           return;
         }

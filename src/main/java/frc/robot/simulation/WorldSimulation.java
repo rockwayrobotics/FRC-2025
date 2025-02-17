@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -182,11 +183,12 @@ public class WorldSimulation {
     List<Coral> coralToRemove = new ArrayList<>();
     final List<Pose3d> coralPoses = new ArrayList<>();
     for (Coral coral : corals) {
-      coral.periodic(chute);
+      coral.periodic(robotPose, elevator, chute);
       if (!coral.isInChute()) {
         coralToRemove.add(coral);
+        SimulatedArena.getInstance().addGamePieceProjectile(coral.getFlyingCoral());
       } else {
-        coralPoses.add(coral.getPose(robotPose, elevator, chute));
+        coralPoses.add(coral.getPose());
       }
     }
 
@@ -208,5 +210,9 @@ public class WorldSimulation {
 
     corals.removeAll(coralToRemove);
     Logger.recordOutput("FieldSimulation/Corals", coralPoses.toArray(Pose3d[]::new));
+
+    SimulatedArena.getInstance().simulationPeriodic();
+    Logger.recordOutput("FieldSimulation/FlyingCoral", SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"));
+    Logger.recordOutput("FieldSimulation/Algae", SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"));
   }
 }
