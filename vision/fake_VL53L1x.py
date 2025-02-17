@@ -1,6 +1,10 @@
 import csv
 
-class fake_VL53L1x:
+class VL53L1xUserRoi:
+    def __init__(self, tl, tr, bl, br):
+        pass
+
+class VL53L1X:
 
     def __init__(self, i2c_bus=1, i2c_address=0x29, tca9548a_num=255, tca9548a_addr=0):
         """Initialize attributes to mimic a real VL53L1X ToF Sensor from ST"""
