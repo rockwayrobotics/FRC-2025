@@ -5,7 +5,9 @@ import time
 import sys
 import signal
 
+from ntcore import NetworkTableInstance, PubSubOptions
 import corner_detector as cd
+
 try:
   import VL53L1X
 except ImportError:
@@ -55,6 +57,15 @@ def tof_init(args, address):
     tof.start_ranging(1)
     return tof
 
+def nt_init():
+    global pub
+    global cornerpub
+    nt = NetworkTableInstance.getDefault()
+    nt.setServerTeam(8089)
+    nt.startClient4("cam1")
+    pub = nt.getFloatArrayTopic("/tof/sensors").publish(PubSubOptions())
+    cornerpub = nt.getFloatArrayTopic("/tof/corners").publish(PubSubOptions())
+
 def get_time_and_distance(tof):
     global in_test_mode
     if in_test_mode:
@@ -68,6 +79,10 @@ def main(args):
     global tof
     global tof2
     global in_test_mode
+    global pub
+    global cornerpub
+
+    nt_init()
 
     tof = tof_init(args, args.address)
     tof2 = tof_init(args, args.address2)
@@ -84,15 +99,22 @@ def main(args):
     start = time.monotonic()
     while running:
         (time1, distance_in_mm) = get_time_and_distance(tof)  # Grab the range in mm
-        (time2, distance_in_mm2) = get_time_and_distance(tof2)  # Grab the range in mm
+        # (time2, distance_in_mm2) = get_time_and_distance(tof2)  # Grab the range in mm
+        time2 = time1
+        distance_in_mm2 = 0.
+        time3 = time.monotonic()
         if distance_in_mm <= 0:
-            distance_in_mm = 0
+            distance_in_mm = 0.
         if distance_in_mm2 <= 0:
-            distance_in_mm2 = 0
+            distance_in_mm2 = 0.
         detector.add_record(time1, distance_in_mm)
         print(f'{time1},{distance_in_mm},{time2},{distance_in_mm2}', flush=True)
+        pub.set([time1, time2, time3, distance_in_mm, distance_in_mm2])
         if detector.found_corner():
           print(f'*** Found corner: {detector.corner_timestamp} ***')
+          cornerpub.set([time3, detector.corner_timestamp])
+          detector.reset()
+        NetworkTableInstance.getDefault().flush()
 
 if __name__ == '__main__':
     import argparse

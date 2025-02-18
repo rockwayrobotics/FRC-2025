@@ -31,6 +31,7 @@ import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Twist2d;
+import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
@@ -92,12 +93,20 @@ public class Drive extends SubsystemBase {
   ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
   Field2d field = new Field2d();
 
+  TimeInterpolatableBuffer<Double> positionBuffer;
+  TempBeamBreak beamBreak;
+
   public Drive(DriveIO io, GyroIO gyroIO) {
     this.kS = realkS;
     this.kV = realkV;
     this.io = io;
     this.gyroIO = gyroIO;
     this.differentialDrive = io.getDifferentialDrive();
+
+    // Temporary stuff for drive-by ToF measurement
+    beamBreak = new TempBeamBreak();
+    positionBuffer = TimeInterpolatableBuffer.createDoubleBuffer(60);
+
     dashboard.add("Field2d", field);
 
     double rElem0 = 1;
@@ -147,16 +156,27 @@ public class Drive extends SubsystemBase {
             (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), null, this));
   }
 
+  public void enable() {
+    beamBreak.enable();
+  }
+
+  public void disable() {
+    beamBreak.disable();
+  }
+
   @Override
   public void periodic() {
+    double now = Timer.getFPGATimestamp();
     io.updateInputs(inputs);
     gyroIO.updateInputs(gyroInputs);
     Logger.processInputs("Drive", inputs);
     Logger.processInputs("Drive/Gyro", gyroInputs);
+
+    beamBreak.periodic();
+
     float[] tofOutputs = tofSubscriber.get();
     double lastChangeTime = tofSubscriber.getLastChange() / 1000000.0;
     if (tofOutputs.length >= 5) {
-      double now = Timer.getFPGATimestamp();
       Logger.recordOutput("ToF/Timestamps", new float[] { tofOutputs[0], tofOutputs[1], tofOutputs[2] });
       Logger.recordOutput("ToF/Distance", new float[] { tofOutputs[3], tofOutputs[4] });
       Logger.recordOutput("ToF/NT_Time", lastChangeTime);
@@ -183,6 +203,9 @@ public class Drive extends SubsystemBase {
       lastLeftPositionMeters = getLeftPositionMeters();
       lastRightPositionMeters = getRightPositionMeters();
     }
+
+
+    positionBuffer.addSample(now, getLeftPositionMeters());
 
     // Update odometry
     poseEstimator.update(rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters());

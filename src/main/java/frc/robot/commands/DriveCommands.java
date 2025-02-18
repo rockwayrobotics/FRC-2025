@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -44,6 +45,15 @@ public class DriveCommands {
         }, drive).finallyDo((boolean interrupted) -> {
           drive.stop();
         });
+  }
+
+  public static Command driveForward(Drive drive) {
+    final double speed = 0.45;
+    return Commands.run(() -> {
+      drive.setTankDrive(new ChassisSpeeds(speed, speed, 0));
+    }, drive).withTimeout(4.5).finallyDo(() -> {
+      drive.stop();
+    });
   }
 
   /**

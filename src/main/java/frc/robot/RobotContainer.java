@@ -63,14 +63,20 @@ public class RobotContainer {
     autoChooser.addOption("SysID All (Rev then Fwd)", drive.sysIDRunAll());
     autoChooser.addOption("Set speed = 1", new RunCommand(() -> drive.runClosedLoop(2, 2), drive));
     autoChooser.addOption("Pathplanner", new PathPlannerAuto("straightlong"));
-    autoChooser.addOption("ToF", new PathPlannerAuto("tof"));
-    autoChooser.addOption("ToF-Forward", new PathPlannerAuto("ToF-forward"));
-    autoChooser.addOption("ToF-Reverse", new PathPlannerAuto("ToF-reverse"));
+    autoChooser.addOption("Forward", DriveCommands.driveForward(drive));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
     configureBindings();
 
+  }
+
+  public void enable() {
+    drive.enable();
+  }
+
+  public void disable() {
+    drive.disable();
   }
 
   /**
