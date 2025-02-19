@@ -50,8 +50,6 @@ public class Robot extends LoggedRobot {
       // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
     }
 
-    Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may
-                    // be added.
 
   }
 
@@ -101,6 +99,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     m_robotContainer.disable();
+    Logger.end();
   }
 
   @Override
@@ -113,6 +112,8 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void autonomousInit() {
+    Logger.start();
+
     m_robotContainer.enable();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
@@ -133,6 +134,8 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
+    Logger.start();
+
     m_robotContainer.enable();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
@@ -154,6 +157,8 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void testInit() {
+    Logger.start();
+
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
   }
@@ -166,6 +171,8 @@ public class Robot extends LoggedRobot {
   /** This function is called once when the robot is first started up. */
   @Override
   public void simulationInit() {
+    Logger.start();
+
   }
 
   /** This function is called periodically whilst in simulation. */
