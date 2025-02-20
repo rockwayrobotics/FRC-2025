@@ -295,6 +295,11 @@ public class Drive extends SubsystemBase {
     return kinematics;
   }
 
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(
+        getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec());
+  }
+
   public void runClosedLoopNoFF(ChassisSpeeds speeds) {
     var wheelSpeeds = kinematics.toWheelSpeeds(speeds);
     Logger.recordOutput("Drive/LeftSetpointMetersPerSec", wheelSpeeds.leftMetersPerSecond);

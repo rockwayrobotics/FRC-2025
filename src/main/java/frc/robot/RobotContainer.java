@@ -65,6 +65,9 @@ public class RobotContainer {
     autoChooser.addOption("Pathplanner", new PathPlannerAuto("straightlong"));
     autoChooser.addOption("Forward", DriveCommands.driveForward(drive));
     autoChooser.addOption("Auto1", DriveCommands.auto1(drive));
+    autoChooser.addOption("Auto2", DriveCommands.auto2(drive));
+    autoChooser.addOption("Auto3", DriveCommands.auto3(drive));
+    autoChooser.addOption("Auto4", DriveCommands.auto4(drive));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
