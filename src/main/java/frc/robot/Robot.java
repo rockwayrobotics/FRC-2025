@@ -49,7 +49,7 @@ public class Robot extends LoggedRobot {
       // Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
       // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
     }
-
+    Logger.start();
 
   }
 
@@ -111,7 +111,7 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void autonomousInit() {
-    Logger.start();
+    // Logger.start();
 
     m_robotContainer.enable();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
@@ -129,12 +129,12 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousExit() {
-    Logger.end();
+    // Logger.end();
   }
 
   @Override
   public void teleopInit() {
-    Logger.start();
+    // Logger.start();
 
     m_robotContainer.enable();
     // This makes sure that the autonomous stops running when
@@ -153,12 +153,12 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopExit() {
-    Logger.end();
+    //Logger.end();
   }
 
   @Override
   public void testInit() {
-    Logger.start();
+    // Logger.start();
 
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
@@ -171,7 +171,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void testExit() {
-    Logger.end();
+    // Logger.end();
   }
 
   /** This function is called once when the robot is first started up. */

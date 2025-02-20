@@ -204,7 +204,6 @@ public class Drive extends SubsystemBase {
       lastRightPositionMeters = getRightPositionMeters();
     }
 
-
     positionBuffer.addSample(now, getLeftPositionMeters());
 
     // Update odometry
@@ -225,6 +224,11 @@ public class Drive extends SubsystemBase {
 
   public DifferentialDriveKinematics getKinematics() {
     return kinematics;
+  }
+
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(
+        getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec());
   }
 
   public void runClosedLoopNoFF(ChassisSpeeds speeds) {

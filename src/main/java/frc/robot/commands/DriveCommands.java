@@ -8,10 +8,14 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.LTVUnicycleController;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.Timer;
@@ -55,18 +59,92 @@ public class DriveCommands {
   }
 
   public static Command auto1(Drive drive) {
-    var config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS, Constants.Drive.MAX_ACCEL_MPSS)
+    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS, Constants.Drive.MAX_ACCEL_MPSS)
         .setKinematics(drive.getKinematics());
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
-    var exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(),
+    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(0, 0, new Rotation2d()),
         List.of(new Translation2d(1, 0), new Translation2d(2, 0)), new Pose2d(3, 0, new Rotation2d()), config);
 
-    var ltvController = new LTVUnicycleController(0.02);
+    LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
 
     drive.setPose(exampleTrajectory.getInitialPose());
     return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, drive.getKinematics(),
         (Double leftMetersPerSecond, Double rightMetersPerSecond) -> {
-          drive.setTankDrive(new ChassisSpeeds(leftMetersPerSecond, rightMetersPerSecond, 0));
+          drive.setTankDrive(drive.getKinematics().toChassisSpeeds(new DifferentialDriveWheelSpeeds(leftMetersPerSecond, rightMetersPerSecond)));
+        }, drive);
+  }
+
+  public static Command auto2(Drive drive) {
+    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS, Constants.Drive.MAX_ACCEL_MPSS)
+        .setKinematics(drive.getKinematics());
+    // TODO: Add voltage constraint with feedforward: .addConstraint(null);
+    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(),
+        List.of(new Translation2d(1, 0), new Translation2d(2, 0)), new Pose2d(3, 0, new Rotation2d()), config);
+
+    LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
+
+    double kS = 0.0;
+    double kV = 0.0;
+    SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(kS, kV);
+
+    double kP = 1.7;
+    double kI = 0.0;
+    double kD = 0.0;
+    PIDController leftController = new PIDController(kP, kI, kD);
+    PIDController rightController = new PIDController(kP, kI, kD);
+
+    drive.setPose(exampleTrajectory.getInitialPose());
+    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, feedForward, drive.getKinematics(),
+        () -> drive.getWheelSpeeds(),
+        leftController,
+        rightController,
+        (Double leftVoltage, Double rightVoltage) -> {
+          drive.runOpenLoop(leftVoltage, rightVoltage);
+        }, drive);
+  }
+
+  public static Command auto3(Drive drive) {
+    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS, Constants.Drive.MAX_ACCEL_MPSS)
+        .setKinematics(drive.getKinematics());
+    // TODO: Add voltage constraint with feedforward: .addConstraint(null);
+    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(),
+        List.of(new Translation2d(1, 1), new Translation2d(2, -1)), new Pose2d(3, 0, new Rotation2d()), config);
+
+    LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
+
+    drive.setPose(exampleTrajectory.getInitialPose());
+    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, drive.getKinematics(),
+        (Double leftMetersPerSecond, Double rightMetersPerSecond) -> {
+          drive.setTankDrive(drive.getKinematics().toChassisSpeeds(new DifferentialDriveWheelSpeeds(leftMetersPerSecond, rightMetersPerSecond)));
+        }, drive);
+  }
+
+  public static Command auto4(Drive drive) {
+    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS, Constants.Drive.MAX_ACCEL_MPSS)
+        .setKinematics(drive.getKinematics());
+    // TODO: Add voltage constraint with feedforward: .addConstraint(null);
+    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(),
+        List.of(new Translation2d(1, 1), new Translation2d(2, -1)), new Pose2d(3, 0, new Rotation2d()), config);
+
+    LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
+
+    double kS = 0.0;
+    double kV = 0.0;
+    SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(kS, kV);
+
+    double kP = 1.7;
+    double kI = 0.0;
+    double kD = 0.0;
+    PIDController leftController = new PIDController(kP, kI, kD);
+    PIDController rightController = new PIDController(kP, kI, kD);
+
+    drive.setPose(exampleTrajectory.getInitialPose());
+    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, feedForward, drive.getKinematics(),
+        () -> drive.getWheelSpeeds(),
+        leftController,
+        rightController,
+        (Double leftVoltage, Double rightVoltage) -> {
+          drive.runOpenLoop(leftVoltage, rightVoltage);
         }, drive);
   }
 

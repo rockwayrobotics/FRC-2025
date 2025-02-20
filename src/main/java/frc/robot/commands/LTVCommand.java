@@ -19,6 +19,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 /**
  * A command that uses a RAMSETE controller ({@link RamseteController}) to follow a trajectory
  * {@link Trajectory} with a differential drive.
@@ -166,9 +168,11 @@ public class LTVCommand extends Command {
       return;
     }
 
+    Logger.recordOutput("Trajectory/Sample", m_trajectory.sample(curTime));
     var targetWheelSpeeds =
         m_kinematics.toWheelSpeeds(
             m_follower.calculate(m_pose.get(), m_trajectory.sample(curTime)));
+    Logger.recordOutput("Trajectory/TargetWheelSpeeds", targetWheelSpeeds);
 
     double leftSpeedSetpoint = targetWheelSpeeds.leftMetersPerSecond;
     double rightSpeedSetpoint = targetWheelSpeeds.rightMetersPerSecond;
