@@ -99,7 +99,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     m_robotContainer.disable();
-    Logger.end();
   }
 
   @Override
@@ -130,6 +129,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousExit() {
+    Logger.end();
   }
 
   @Override
@@ -153,6 +153,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopExit() {
+    Logger.end();
   }
 
   @Override
@@ -166,6 +167,11 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {
+  }
+
+  @Override
+  public void testExit() {
+    Logger.end();
   }
 
   /** This function is called once when the robot is first started up. */

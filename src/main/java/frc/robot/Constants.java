@@ -53,6 +53,7 @@ public final class Constants {
   public static final class Drive {
     public static final double TRACK_WIDTH_METERS = 0.56;
     public static final double MAX_SPEED_MPS = 4.;
+    public static final double MAX_ACCEL_MPSS = 2.;
 
     public final static double WHEEL_CIRCUM_CM = 46.8;
     public final static double WHEEL_RADIUS_METERS = WHEEL_CIRCUM_CM / 100 / 2 / Math.PI;

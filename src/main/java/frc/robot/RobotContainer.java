@@ -64,6 +64,7 @@ public class RobotContainer {
     autoChooser.addOption("Set speed = 1", new RunCommand(() -> drive.runClosedLoop(2, 2), drive));
     autoChooser.addOption("Pathplanner", new PathPlannerAuto("straightlong"));
     autoChooser.addOption("Forward", DriveCommands.driveForward(drive));
+    autoChooser.addOption("Auto1", DriveCommands.auto1(drive));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
