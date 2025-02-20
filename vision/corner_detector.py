@@ -6,6 +6,14 @@ min_distance = 150
 max_distance = 600
 
 
+class CornerDetector2:
+  def __init__(self, slope_threshold):
+    self.slope_threshold = slope_threshold
+
+  def add_record(self, timestamp, distance):
+    pass
+    
+
 class CornerDetector:
     def __init__(self, slope_threshold, large_window=15, small_window=5, flat_slope_threshold=60):
         # Number of samples in window

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import datetime
+import logging
 import os
 import time
 import sys
@@ -66,6 +68,13 @@ def nt_init():
     pub = nt.getFloatArrayTopic("/tof/sensors").publish(PubSubOptions())
     cornerpub = nt.getFloatArrayTopic("/tof/corners").publish(PubSubOptions())
 
+def logging_init():
+    global logger
+    logger = logging.getLogger('tof')
+    filename=f"tof-log-{datetime.datetime.now().strftime('%Y-%m-%d.%H-%M-%S.log')}"
+    logging.basicConfig(filename=filename, encoding='utf-8', level=logging.DEBUG)
+    logger.info('Start')
+
 def get_time_and_distance(tof):
     global in_test_mode
     if in_test_mode:
@@ -81,7 +90,9 @@ def main(args):
     global in_test_mode
     global pub
     global cornerpub
+    global logger
 
+    logging_init()
     nt_init()
 
     tof = tof_init(args, args.address)
@@ -108,10 +119,10 @@ def main(args):
         if distance_in_mm2 <= 0:
             distance_in_mm2 = 0.
         detector.add_record(time1, distance_in_mm)
-        print(f'{time1},{distance_in_mm},{time2},{distance_in_mm2}', flush=True)
+        logger.info('%.3f,%d', time1, distance_in_mm)
         pub.set([time1, time2, time3, distance_in_mm, distance_in_mm2])
         if detector.found_corner():
-          print(f'*** Found corner: {detector.corner_timestamp} ***')
+          logger.info('CORNER: %.3f,%.3f', time3, detector.corner_timestamp)
           cornerpub.set([time3, detector.corner_timestamp])
           detector.reset()
         NetworkTableInstance.getDefault().flush()
