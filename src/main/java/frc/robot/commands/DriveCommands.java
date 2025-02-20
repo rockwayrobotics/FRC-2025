@@ -59,11 +59,11 @@ public class DriveCommands {
   }
 
   public static Command auto1(Drive drive) {
-    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS, Constants.Drive.MAX_ACCEL_MPSS)
+    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 10.0, Constants.Drive.MAX_ACCEL_MPSS / 10.0)
         .setKinematics(drive.getKinematics());
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(0, 0, new Rotation2d()),
-        List.of(new Translation2d(1, 0), new Translation2d(2, 0)), new Pose2d(3, 0, new Rotation2d()), config);
+        List.of(new Translation2d(1, 0), new Translation2d(1.5, 0)), new Pose2d(2, 0, new Rotation2d()), config);
 
     LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
 
@@ -75,11 +75,11 @@ public class DriveCommands {
   }
 
   public static Command auto2(Drive drive) {
-    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS, Constants.Drive.MAX_ACCEL_MPSS)
+    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 10.0, Constants.Drive.MAX_ACCEL_MPSS / 10.0)
         .setKinematics(drive.getKinematics());
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(),
-        List.of(new Translation2d(1, 0), new Translation2d(2, 0)), new Pose2d(3, 0, new Rotation2d()), config);
+        List.of(new Translation2d(1, 0), new Translation2d(1.5, 0)), new Pose2d(2, 0, new Rotation2d()), config);
 
     LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
 
