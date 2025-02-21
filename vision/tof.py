@@ -7,7 +7,11 @@ import time
 import sys
 import signal
 
-from ntcore import NetworkTableInstance, PubSubOptions
+try:
+  from ntcore import NetworkTableInstance, PubSubOptions
+except ImportError:
+  from fake_ntcore import NetworkTableInstance, PubSubOptions
+
 import corner_detector as cd
 
 try:
