@@ -37,9 +37,10 @@ class CornerDetector:
         # According to https://stackoverflow.com/questions/30399534/shift-elements-in-a-numpy-array
         # reallocating is likely faster
         result = np.zeros((buffer_size, 2), dtype="f")
-        result[: self.large_window - 1] = self.data[self.start_index : self.end_index]
+        count = self.end_index - self.start_index
+        result[: count] = self.data[self.start_index : self.end_index]
         self.start_index = 0
-        self.end_index = self.large_window
+        self.end_index = count #self.large_window
         self.data = result
 
     def add_record(self, timestamp, distance):

@@ -14,10 +14,10 @@ class TestCornerDetector(unittest.TestCase):
         self.assertEqual(detector.end_index, 999)
         detector.add_record(1000.0, 200.0 + float(1000.0) / 10.0)
         self.assertEqual(detector.start_index, 1)
-        self.assertEqual(detector.end_index, 16)
+        self.assertEqual(detector.end_index, 15)
         detector.add_record(1001.0, 200.0 + float(1001.0) / 10.0)
         self.assertEqual(detector.start_index, 2)
-        self.assertEqual(detector.end_index, 17)
+        self.assertEqual(detector.end_index, 16)
 
     def test_simple(self):
         detector = cd.CornerDetector(4)
