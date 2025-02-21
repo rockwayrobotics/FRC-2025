@@ -69,8 +69,8 @@ def nt_init():
     nt = NetworkTableInstance.getDefault()
     nt.setServerTeam(8089)
     nt.startClient4("cam1")
-    pub = nt.getFloatArrayTopic("/tof/sensors").publish(PubSubOptions())
-    cornerpub = nt.getFloatArrayTopic("/tof/corners").publish(PubSubOptions())
+    pub = nt.getFloatArrayTopic("/AdvantageKit/RealOutputs/Pi/tof/sensors").publish(PubSubOptions())
+    cornerpub = nt.getFloatArrayTopic("/AdvantageKit/RealOutputs/Pi/tof/corners").publish(PubSubOptions())
 
 def logging_init():
     global logger
