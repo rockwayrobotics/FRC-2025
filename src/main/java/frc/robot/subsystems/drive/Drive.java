@@ -17,6 +17,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.security.Timestamp;
+import java.util.Optional;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -53,6 +54,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.util.TimestampSynchronizer;
 
 public class Drive extends SubsystemBase {
   private final DriveIO io;
@@ -85,9 +87,14 @@ public class Drive extends SubsystemBase {
   // Publish RobotPose for AdvantageScope
   StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault()
       .getStructTopic("/Robot/Pose", Pose2d.struct).publish();
-  FloatArraySubscriber tofSubscriber = NetworkTableInstance.getDefault().getFloatArrayTopic("/tof/sensors")
+  FloatArraySubscriber tofSubscriber = NetworkTableInstance.getDefault()
+      .getFloatArrayTopic("/AdvantageKit/RealOutputs/Pi/tof/sensors")
+      .subscribe(new float[] {});
+  FloatArraySubscriber cornerSubscriber = NetworkTableInstance.getDefault()
+      .getFloatArrayTopic("/AdvantageKit/RealOutputs/Pi/tof/corners")
       .subscribe(new float[] {});
   int noDataCounter = 0;
+  TimestampSynchronizer timestampSynchronizer = new TimestampSynchronizer();
 
   // Publish RobotPose for Shuffleboard.
   ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
@@ -166,7 +173,6 @@ public class Drive extends SubsystemBase {
 
   @Override
   public void periodic() {
-    double now = Timer.getFPGATimestamp();
     io.updateInputs(inputs);
     gyroIO.updateInputs(gyroInputs);
     Logger.processInputs("Drive", inputs);
@@ -174,9 +180,13 @@ public class Drive extends SubsystemBase {
 
     beamBreak.periodic();
 
+    double now = Timer.getFPGATimestamp();
     float[] tofOutputs = tofSubscriber.get();
     double lastChangeTime = tofSubscriber.getLastChange() / 1000000.0;
     if (tofOutputs.length >= 5) {
+      // FIXME: We are still taking three timestamps when we probably only want
+      // tofOutputs[2]?
+      timestampSynchronizer.addTimes(tofOutputs[2], lastChangeTime);
       Logger.recordOutput("ToF/Timestamps", new float[] { tofOutputs[0], tofOutputs[1], tofOutputs[2] });
       Logger.recordOutput("ToF/Distance", new float[] { tofOutputs[3], tofOutputs[4] });
       Logger.recordOutput("ToF/NT_Time", lastChangeTime);
@@ -185,6 +195,20 @@ public class Drive extends SubsystemBase {
     } else {
       noDataCounter++;
       Logger.recordOutput("ToF/NoData", tofOutputs.length);
+    }
+
+    float[] cornerOutputs = cornerSubscriber.get();
+    lastChangeTime = cornerSubscriber.getLastChange() / 1000000.0;
+    if (cornerOutputs.length >= 2) {
+      timestampSynchronizer.addTimes(cornerOutputs[0], lastChangeTime);
+      double cornerFPGATimestamp = timestampSynchronizer.toFPGATimestamp(cornerOutputs[1], lastChangeTime);
+      Optional<Double> leftEncoderAtCorner = positionBuffer.getSample(cornerFPGATimestamp);
+      Logger.recordOutput("ToF/Corners", new double[] { cornerOutputs[0], cornerOutputs[1], cornerFPGATimestamp });
+      if (leftEncoderAtCorner.isPresent()) {
+        Logger.recordOutput("ToF/CornerPosition", leftEncoderAtCorner.get());
+      } else {
+        Logger.recordOutput("ToF/Errors", "No position for " + cornerFPGATimestamp);
+      }
     }
 
     if (gyroInputs.connected) {
@@ -203,7 +227,6 @@ public class Drive extends SubsystemBase {
       lastLeftPositionMeters = getLeftPositionMeters();
       lastRightPositionMeters = getRightPositionMeters();
     }
-
 
     positionBuffer.addSample(now, getLeftPositionMeters());
 
