@@ -15,8 +15,8 @@ try:
 except ImportError:
   import fake_VL53L1x as VL53L1X
 
-UPDATE_TIME_MICROS = 66000
-INTER_MEASUREMENT_PERIOD_MILLIS = 70
+UPDATE_TIME_MICROS = 20000
+INTER_MEASUREMENT_PERIOD_MILLIS = 25
 
 print("""tof.py
 
@@ -71,9 +71,10 @@ def nt_init():
 def logging_init():
     global logger
     logger = logging.getLogger('tof')
-    filename=f"tof-log-{datetime.datetime.now().strftime('%Y-%m-%d.%H-%M-%S.log')}"
+    filename=f"tof-log-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S.log')}"
     logging.basicConfig(filename=filename, encoding='utf-8', level=logging.DEBUG)
     logger.info('Start')
+    logger.info(f'args={args!r}')
 
 def get_time_and_distance(tof):
     global in_test_mode
@@ -114,9 +115,11 @@ def main(args):
         time2 = time1
         distance_in_mm2 = 0.
         time3 = time.monotonic()
-        if distance_in_mm <= 0:
+        if distance_in_mm < 0:
+            logger.error(f'error1={distance_in_mm}')
             distance_in_mm = 0.
-        if distance_in_mm2 <= 0:
+        if distance_in_mm2 < 0:
+            logger.error(f'error1={distance_in_mm2}')
             distance_in_mm2 = 0.
         detector.add_record(time1, distance_in_mm)
         logger.info('%.3f,%d', time1, distance_in_mm)
@@ -136,7 +139,7 @@ if __name__ == '__main__':
     # 0x29 ^ 0x60 = 0x49 = 73 (A5 off, A4 on)
     # 0x29 ^ 0x70 = 0x59 = 89 (A4 and A5 off)
     parser.add_argument('-a', '--address', type=int, default=0x29)
-    parser.add_argument('-a2', '--address2', type=int, default=0x69)
+    parser.add_argument('-a2', '--address2', type=int, default=0x59)
     parser.add_argument('--roi', default='0,15,15,0')
     parser.add_argument('-t', '--timingMS', type=int, default=int(UPDATE_TIME_MICROS / 1000))
     parser.add_argument('-i', '--interMS', type=int, default=INTER_MEASUREMENT_PERIOD_MILLIS)
