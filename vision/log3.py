@@ -1,28 +1,18 @@
 #!/usr/bin/env python
 
-import datetime
-import logging
 import os
 import time
 import sys
 import signal
 
-try:
-  from ntcore import NetworkTableInstance, PubSubOptions
-except ImportError:
-  from fake_ntcore import NetworkTableInstance, PubSubOptions
+from ntcore import NetworkTableInstance, PubSubOptions
 
-import corner_detector as cd
+import VL53L1X
 
-try:
-  import VL53L1X
-except ImportError:
-  import fake_VL53L1x as VL53L1X
+UPDATE_TIME_MICROS = 66000
+INTER_MEASUREMENT_PERIOD_MILLIS = 70
 
-UPDATE_TIME_MICROS = 20000
-INTER_MEASUREMENT_PERIOD_MILLIS = 25
-
-print("""tof.py
+print("""log3.py
 
 Log time and distance measurements for two sensors to stdout.
 
@@ -35,13 +25,9 @@ def exit_handler(signal, frame):
     global tof
     global tof2
     running = False
-    if tof is not None:
-        tof.stop_ranging()
-    if tof2 is not None:
-        tof2.stop_ranging()
+    tof.stop_ranging()
+    tof2.stop_ranging()
     sys.exit(0)
-
-signal.signal(signal.SIGINT, exit_handler)
 
 def tof_init(args, address):
     """
@@ -65,74 +51,45 @@ def tof_init(args, address):
 
 def nt_init():
     global pub
-    global cornerpub
     nt = NetworkTableInstance.getDefault()
     nt.setServerTeam(8089)
     nt.startClient4("cam1")
-    pub = nt.getFloatArrayTopic("/AdvantageKit/RealOutputs/Pi/tof/sensors").publish(PubSubOptions())
-    cornerpub = nt.getFloatArrayTopic("/AdvantageKit/RealOutputs/Pi/tof/corners").publish(PubSubOptions())
-
-def logging_init():
-    global logger
-    logger = logging.getLogger('tof')
-    filename=f"tof-log-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S.log')}"
-    logging.basicConfig(filename=filename, encoding='utf-8', level=logging.DEBUG)
-    logger.info('Start')
-    logger.info(f'args={args!r}')
-
-def get_time_and_distance(tof):
-    global in_test_mode
-    if in_test_mode:
-        # test mode returns both time and distance
-        return tof.get_distance()
-    else:
-        return (time.monotonic(), tof.get_distance())
+    pub = nt.getFloatArrayTopic("/tof/sensors").publish(PubSubOptions())
 
 def main(args):
     global running
     global tof
     global tof2
-    global in_test_mode
     global pub
-    global cornerpub
-    global logger
+    signal.signal(signal.SIGINT, exit_handler)
 
-    logging_init()
     nt_init()
 
     tof = tof_init(args, args.address)
     tof2 = tof_init(args, args.address2)
 
-    if args.fake is not None:
-        in_test_mode = True
-        tof.fake_init(1, args.fake)
-        tof2.fake_init(2, args.fake)
-    else:
-        in_test_mode = False
-
-    detector = cd.CornerDetector(400)
     running = True
     start = time.monotonic()
     while running:
-        (time1, distance_in_mm) = get_time_and_distance(tof)  # Grab the range in mm
-        # (time2, distance_in_mm2) = get_time_and_distance(tof2)  # Grab the range in mm
-        time2 = time1
-        distance_in_mm2 = 0.
-        time3 = time.monotonic()
-        if distance_in_mm < 0:
-            logger.error(f'error1={distance_in_mm}')
-            distance_in_mm = 0.
+        before = time.monotonic() - start
+        distance_in_mm = tof.get_distance()  # Grab the range in mm
+        between = time.monotonic() - start
+        distance_in_mm2 = tof2.get_distance()  # Grab the range in mm
         if distance_in_mm2 < 0:
-            logger.error(f'error1={distance_in_mm2}')
-            distance_in_mm2 = 0.
-        detector.add_record(time1, distance_in_mm)
-        logger.info('%.3f,%d', time1, distance_in_mm)
-        pub.set([time1, time2, time3, distance_in_mm, distance_in_mm2])
-        if detector.found_corner():
-          logger.info('CORNER: %.3f,%.3f', time3, detector.corner_timestamp)
-          cornerpub.set([time3, detector.corner_timestamp])
-          detector.reset()
+            distance_in_mm2 = 0
+        after = time.monotonic() - start
+        if (distance_in_mm >= 0) and (distance_in_mm2 >= 0):
+            print(f'{after},\t{distance_in_mm},\t{distance_in_mm2}', flush=True)
+            pub.set([before, between, after, distance_in_mm, distance_in_mm2])
+        elif distance_in_mm >= 0:
+            print(f'{after},\t{distance_in_mm},\t{distance_in_mm2},\tERROR2', flush=True)
+        elif distance_in_mm2 >= 0:
+            print(f'{after},\t{distance_in_mm},\t{distance_in_mm2},\tERROR1', flush=True)
+        else:
+            print(f'{after},\t{distance_in_mm},\t{distance_in_mm2},\tERROR3', flush=True)
         NetworkTableInstance.getDefault().flush()
+        # Sleep is not necessary because Python library waits for readiness
+        # time.sleep(args.interMS / 1000.0)
 
 if __name__ == '__main__':
     import argparse
@@ -143,11 +100,10 @@ if __name__ == '__main__':
     # 0x29 ^ 0x60 = 0x49 = 73 (A5 off, A4 on)
     # 0x29 ^ 0x70 = 0x59 = 89 (A4 and A5 off)
     parser.add_argument('-a', '--address', type=int, default=0x29)
-    parser.add_argument('-a2', '--address2', type=int, default=0x59)
+    parser.add_argument('-a2', '--address2', type=int, default=0x69)
     parser.add_argument('--roi', default='0,15,15,0')
     parser.add_argument('-t', '--timingMS', type=int, default=int(UPDATE_TIME_MICROS / 1000))
     parser.add_argument('-i', '--interMS', type=int, default=INTER_MEASUREMENT_PERIOD_MILLIS)
-    parser.add_argument('-f', '--fake')
 
     args = parser.parse_args()
     args.roi = tuple(int(x) for x in args.roi.split(','))
