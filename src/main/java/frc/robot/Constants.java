@@ -45,13 +45,10 @@ public final class Constants {
     public static final int LEFT_DRIVE_MOTOR_F = 2;
     public static final int RIGHT_DRIVE_MOTOR_R = 3;
     public static final int RIGHT_DRIVE_MOTOR_F = 4;
-    public static final int LEFT_INTAKE = 5; // brushed
-    public static final int RIGHT_INTAKE = 6; // brushed one opposite direction
-    public static final int BELT = 7; // indexer
-    public static final int GEAR = 8; // angle
-    public static final int LEFT_FLYWHEEL = 9; // negative on one flywheel?
-    public static final int RIGHT_FLYWHEEL = 10; // negative on one flywheel?
-    public static final int CLIMB = 11;
+    public static final int WRIST_MOTOR = 5;
+    public static final int LEFT_GRABBER_MOTOR = 6;
+    public static final int RIGHT_GRABBER_MOTOR = 7;
+
 
     // FIXME: Imaginary motors for 2025
     public static final int ELEVATOR_MOTOR = 12;
@@ -62,8 +59,18 @@ public final class Constants {
   public static final class Digital {
     // FIXME: Imaginary inputs for 2025
     public static final int CORAL_SHOOT_SENSOR = 0;
+    public static final int ALGAE_HOME_SWITCH = 1;
   }
 
+  public static final class Analog {
+    public static final int ALGAE_DISTANCE_SENSOR = 0;
+  }
+
+  public static final class Grabber {
+    public static final boolean LEFT_GRABBER_INVERTED = false;
+    public static final boolean RIGHT_GRABBER_INVERTED = true;
+  }
+  
   public static final class Dimensions {
     // Dimensions of frame without bumpers
     public static final double FRAME_X_LENGTH_METERS = 0.816;
