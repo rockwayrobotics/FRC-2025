@@ -72,6 +72,10 @@ public class DriveIOSparkMax implements DriveIO {
     tryUntilOk(
         () -> rightDriveMotorR.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
+    // At creation time, set encoder positions to 0
+    tryUntilOk(() -> leftEncoder.setPosition(0.0));
+    tryUntilOk(() -> rightEncoder.setPosition(0.0));
+
     differentialDrive = new DifferentialDrive(leftDriveMotorF, rightDriveMotorF);
 
   }

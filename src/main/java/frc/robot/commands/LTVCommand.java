@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
@@ -47,6 +48,7 @@ public class LTVCommand extends Command {
   private final PIDController m_leftController;
   private final PIDController m_rightController;
   private final BiConsumer<Double, Double> m_output;
+  private final Consumer<Pose2d> m_resetPose;
   private DifferentialDriveWheelSpeeds m_prevSpeeds = new DifferentialDriveWheelSpeeds();
   private double m_prevLeftSpeedSetpoint; // m/s
   private double m_prevRightSpeedSetpoint; // m/s
@@ -85,8 +87,10 @@ public class LTVCommand extends Command {
       PIDController leftController,
       PIDController rightController,
       BiConsumer<Double, Double> outputVolts,
+      Consumer<Pose2d> resetPose,
       Subsystem... requirements) {
     m_trajectory = requireNonNullParam(trajectory, "trajectory", "RamseteCommand");
+    m_resetPose = resetPose;
     m_pose = requireNonNullParam(pose, "pose", "RamseteCommand");
     m_follower = requireNonNullParam(controller, "controller", "RamseteCommand");
     m_feedforward = feedforward;
@@ -121,8 +125,10 @@ public class LTVCommand extends Command {
       LTVUnicycleController follower,
       DifferentialDriveKinematics kinematics,
       BiConsumer<Double, Double> outputMetersPerSecond,
+      Consumer<Pose2d> resetPose,
       Subsystem... requirements) {
     m_trajectory = requireNonNullParam(trajectory, "trajectory", "RamseteCommand");
+    m_resetPose = resetPose;
     m_pose = requireNonNullParam(pose, "pose", "RamseteCommand");
     m_follower = requireNonNullParam(follower, "follower", "RamseteCommand");
     m_kinematics = requireNonNullParam(kinematics, "kinematics", "RamseteCommand");
@@ -143,6 +149,7 @@ public class LTVCommand extends Command {
   public void initialize() {
     m_prevTime = -1;
     var initialState = m_trajectory.sample(0);
+    m_resetPose.accept(initialState.poseMeters);
     m_prevSpeeds =
         m_kinematics.toWheelSpeeds(
             new ChassisSpeeds(

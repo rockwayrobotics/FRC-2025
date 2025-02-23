@@ -357,6 +357,8 @@ public class Drive extends SubsystemBase {
   public void setTankDrive(ChassisSpeeds speeds) {
     DifferentialDriveWheelSpeeds wheelSpeeds = kinematics.toWheelSpeeds(speeds);
     wheelSpeeds.desaturate(Constants.Drive.MAX_SPEED_MPS);
+    Logger.recordOutput("Traj/TankDriveSpeed", new double[] {wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond});
+    Logger.recordOutput("Traj/TankDriveNormalized", new double[] {wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS, wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS});
     differentialDrive.tankDrive(wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS,
         wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS, false);
   }
