@@ -345,6 +345,9 @@ def parse_file(input, prefix, tomlfile):
         writing_csv = False
         corner_found = False
         distances = np.zeros((1000, 2), dtype="f")
+        shot_difference = None
+        beambreak_ts = None
+        shot_ts = None
         for i, record in enumerate(reader):
             # if i > 1e6 + 10000:
             #     break
@@ -405,6 +408,9 @@ def parse_file(input, prefix, tomlfile):
                             corner_found = False
                             distance_count = 0
                             approach_count += 1
+                            shot_difference = None
+                            beambreak_ts = None
+                            shot_ts = None
                         print(f"{timestamp:.3f},{cols}", file=csvfile)
                     elif writing_csv:
                         writing_csv = False
@@ -427,6 +433,10 @@ def parse_file(input, prefix, tomlfile):
                         elif writing_csv:
                             if mapping == "bb_irq_ts":
                                 print(f"bb_irq_ts={record.getDouble():.3f}", file=tomlfile)
+                                if beambreak_ts is None:
+                                    beambreak_ts = record.getDouble()
+                                    if shot_ts is not None:
+                                        print(f"shot_difference={shot_ts - beambreak_ts:.3f}", file=tomlfile)
                                 # we know that the beam break is hit when we are on the main face
                                 # so try to calculate the slope here to estimate our angle from the wall
                                 # These are not helpful
@@ -441,6 +451,10 @@ def parse_file(input, prefix, tomlfile):
                         value = f"{record.getInteger()}"
                         if mapping == "shoot_counter" and writing_csv:
                             print(f"shot_fpga_ts={timestamp:.3f}", file=tomlfile)
+                            if corner_found and shot_ts is None:
+                                shot_ts = timestamp
+                                if beambreak_ts is not None:
+                                    print(f"shot_difference={shot_ts - beambreak_ts:.3f}", file=tomlfile)
                     elif entry.type in ("string", "json"):
                         value = f"'{record.getString()}'"
                     elif entry.type == "msgpack":
