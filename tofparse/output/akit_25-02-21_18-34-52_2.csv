@@ -1,0 +1,6 @@
+time,yaw,left_pos,right_pos,left_vel,right_vel,auto,enabled,bb_irq_ts,corner_pos,corner_send_ts,corner_detect_ts,corner_detect_nt_ts,tof_first_ts,tof_ts,tof_dist,tof_nt_ts,tof_fpga_ts,shoot_counter
+23.263,-0.031,,,,0.005,,,,,,,,7008.052,7008.078,287,23.234,23.243
+23.283,-0.031,,,,,,,,,,,,7008.079,7008.104,287,23.259,23.263
+23.303,-0.031
+23.323,-0.032,,,,,,,,,,,,7008.104,7008.128,286,23.284,23.303
+23.342,-0.032,,,,,,,,,,,,7008.129,7008.155,287,23.311,23.323
