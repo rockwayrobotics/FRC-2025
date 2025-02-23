@@ -21,6 +21,7 @@ public class TempBeamBreak {
     Logger.recordOutput("DigitalIO/PeriodicValue", value);
     if (lastTimestamp > 0) {
       Logger.recordOutput("DigitalIO/Falling", lastTimestamp);
+      System.out.println("Beam break: " + lastTimestamp);
       lastTimestamp = 0;
     }
   }

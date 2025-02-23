@@ -49,6 +49,8 @@ public class TimestampSynchronizer {
     } else {
       medianOffset = offsets[offsets.length / 2];
     }
-    return monotonic - medianOffset;
+    System.out.println("MedianOffset: " + medianOffset);
+    System.out.println("Converted: " + monotonic + " to " + (monotonic + medianOffset));
+    return monotonic + medianOffset;
   }
 }

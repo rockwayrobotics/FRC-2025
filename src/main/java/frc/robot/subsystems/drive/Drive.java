@@ -83,6 +83,10 @@ public class Drive extends SubsystemBase {
   private double lastRightPositionMeters = 0.0;
   private double scale = 1.0;
 
+  private double leftPositionShootTarget = Double.NaN;
+  private double rightPositionShootTarget = Double.NaN;
+  private int shootCounter = 0;
+
   // FIXME: Stop publishing twice to save bandwidth
   // Publish RobotPose for AdvantageScope
   StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault()
@@ -93,6 +97,8 @@ public class Drive extends SubsystemBase {
   FloatArraySubscriber cornerSubscriber = NetworkTableInstance.getDefault()
       .getFloatArrayTopic("/AdvantageKit/RealOutputs/Pi/tof/corners")
       .subscribe(new float[] {});
+  double tofLastChangeTime = 0;
+  double cornerLastChangeTime = 0;
   int noDataCounter = 0;
   TimestampSynchronizer timestampSynchronizer = new TimestampSynchronizer();
 
@@ -100,7 +106,8 @@ public class Drive extends SubsystemBase {
   ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
   Field2d field = new Field2d();
 
-  TimeInterpolatableBuffer<Double> positionBuffer;
+  TimeInterpolatableBuffer<Double> leftPositionBuffer;
+  TimeInterpolatableBuffer<Double> rightPositionBuffer;
   TempBeamBreak beamBreak;
 
   public Drive(DriveIO io, GyroIO gyroIO) {
@@ -112,7 +119,8 @@ public class Drive extends SubsystemBase {
 
     // Temporary stuff for drive-by ToF measurement
     beamBreak = new TempBeamBreak();
-    positionBuffer = TimeInterpolatableBuffer.createDoubleBuffer(60);
+    leftPositionBuffer = TimeInterpolatableBuffer.createDoubleBuffer(60);
+    rightPositionBuffer = TimeInterpolatableBuffer.createDoubleBuffer(60);
 
     dashboard.add("Field2d", field);
 
@@ -183,32 +191,54 @@ public class Drive extends SubsystemBase {
     double now = Timer.getFPGATimestamp();
     float[] tofOutputs = tofSubscriber.get();
     double lastChangeTime = tofSubscriber.getLastChange() / 1000000.0;
-    if (tofOutputs.length >= 5) {
-      // FIXME: We are still taking three timestamps when we probably only want
-      // tofOutputs[2]?
-      timestampSynchronizer.addTimes(tofOutputs[2], lastChangeTime);
-      Logger.recordOutput("ToF/Timestamps", new float[] { tofOutputs[0], tofOutputs[1], tofOutputs[2] });
-      Logger.recordOutput("ToF/Distance", new float[] { tofOutputs[3], tofOutputs[4] });
-      Logger.recordOutput("ToF/NT_Time", lastChangeTime);
-      Logger.recordOutput("ToF/FPGA", now);
-      Logger.recordOutput("ToF/NT_Delta", now - lastChangeTime);
-    } else {
-      noDataCounter++;
-      Logger.recordOutput("ToF/NoData", tofOutputs.length);
+    if (lastChangeTime > tofLastChangeTime) {
+      if (tofOutputs.length >= 5) {
+        // FIXME: We are still taking three timestamps when we probably only want
+        // tofOutputs[2]?
+        timestampSynchronizer.addTimes(tofOutputs[2], lastChangeTime);
+        Logger.recordOutput("ToF/Everything", new float[] { tofOutputs[0], tofOutputs[1], tofOutputs[2], tofOutputs[3], tofOutputs[4], (float)lastChangeTime, (float)now, (float)(now - lastChangeTime) });
+        /*
+        Logger.recordOutput("ToF/Timestamps", new float[] { tofOutputs[0], tofOutputs[1], tofOutputs[2] });
+        Logger.recordOutput("ToF/Distance", new float[] { tofOutputs[3], tofOutputs[4] });
+        Logger.recordOutput("ToF/NT_Time", lastChangeTime);
+        Logger.recordOutput("ToF/FPGA", now);
+        Logger.recordOutput("ToF/NT_Delta", now - lastChangeTime);
+        */
+      } else {
+        noDataCounter++;
+        Logger.recordOutput("ToF/NoData", tofOutputs.length);
+      }
+      tofLastChangeTime = lastChangeTime;
     }
 
     float[] cornerOutputs = cornerSubscriber.get();
     lastChangeTime = cornerSubscriber.getLastChange() / 1000000.0;
-    if (cornerOutputs.length >= 2) {
-      timestampSynchronizer.addTimes(cornerOutputs[0], lastChangeTime);
-      double cornerFPGATimestamp = timestampSynchronizer.toFPGATimestamp(cornerOutputs[1], lastChangeTime);
-      Optional<Double> leftEncoderAtCorner = positionBuffer.getSample(cornerFPGATimestamp);
-      Logger.recordOutput("ToF/Corners", new double[] { cornerOutputs[0], cornerOutputs[1], cornerFPGATimestamp });
-      if (leftEncoderAtCorner.isPresent()) {
-        Logger.recordOutput("ToF/CornerPosition", leftEncoderAtCorner.get());
-      } else {
-        Logger.recordOutput("ToF/Errors", "No position for " + cornerFPGATimestamp);
+    if (lastChangeTime > cornerLastChangeTime) {
+      if (cornerOutputs.length >= 2) {
+        timestampSynchronizer.addTimes(cornerOutputs[0], lastChangeTime);
+        double cornerFPGATimestamp = timestampSynchronizer.toFPGATimestamp(cornerOutputs[1], lastChangeTime);
+        Optional<Double> leftEncoderAtCorner = leftPositionBuffer.getSample(cornerFPGATimestamp);
+        Optional<Double> rightEncoderAtCorner = rightPositionBuffer.getSample(cornerFPGATimestamp);
+        Logger.recordOutput("ToF/Corners", new double[] { cornerOutputs[0], cornerOutputs[1], cornerFPGATimestamp });
+        if (leftEncoderAtCorner.isPresent()) {
+          double leftEncoderPosition = leftEncoderAtCorner.get();
+          Logger.recordOutput("ToF/CornerPosition", leftEncoderPosition);
+          leftPositionShootTarget = leftEncoderPosition + 0.35 + 0.2; // 35 cm from beam break to corner on reef, 20 cm between sensors
+          System.out.println("Shoot target: " + leftPositionShootTarget);
+        } else {
+          Logger.recordOutput("ToF/Errors", "No position for " + cornerFPGATimestamp);
+        }
+        if (rightEncoderAtCorner.isPresent()) {
+          double rightEncoderPosition = rightEncoderAtCorner.get();
+          Logger.recordOutput("ToF/RightCornerPosition", rightEncoderPosition);
+          rightPositionShootTarget = rightEncoderPosition + 0.35 + 0.2; // 35 cm from beam break to corner on reef, 20 cm between sensors
+          System.out.println("Shoot targetR: " + rightPositionShootTarget);
+        } else {
+          Logger.recordOutput("ToF/Errors", "No position for " + cornerFPGATimestamp);
+        }
+
       }
+      cornerLastChangeTime = lastChangeTime;
     }
 
     if (gyroInputs.connected) {
@@ -228,10 +258,25 @@ public class Drive extends SubsystemBase {
       lastRightPositionMeters = getRightPositionMeters();
     }
 
-    positionBuffer.addSample(now, getLeftPositionMeters());
+    double leftPositionMeters = getLeftPositionMeters();
+    double rightPositionMeters = getRightPositionMeters();
+    // FIXME: Figure out backwards
+    if (!Double.isNaN(leftPositionShootTarget) && leftPositionMeters > leftPositionShootTarget) {
+      System.out.println("Shooting now:" + now);
+      shootCounter++;
+      leftPositionShootTarget = Double.NaN;
+    }
+    if (!Double.isNaN(rightPositionShootTarget) && rightPositionMeters > rightPositionShootTarget) {
+      System.out.println("Shooting nowR:" + now);
+      shootCounter++;
+      rightPositionShootTarget = Double.NaN;
+    }
+    Logger.recordOutput("ToF/ShootCounter", shootCounter);
+    leftPositionBuffer.addSample(now, leftPositionMeters);
+    rightPositionBuffer.addSample(now, rightPositionMeters);
 
     // Update odometry
-    poseEstimator.update(rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters());
+    poseEstimator.update(rawGyroRotation, leftPositionMeters, rightPositionMeters);
     var robotPose = poseEstimator.getEstimatedPosition();
     field.setRobotPose(robotPose);
     robotPosePublisher.set(robotPose);
