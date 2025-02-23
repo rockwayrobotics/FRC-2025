@@ -56,6 +56,7 @@
 *.zip
 *.tar.gz
 *.rar
+*.tgz
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
@@ -175,8 +176,6 @@ simgui*.json
 networktables.json
 *.bck
 
-
-
 # Simulation data log directory
 logs/
 
@@ -193,3 +192,12 @@ ctre_sim/
 
 # Generated source file
 BuildConstants.java
+
+# Junk folder that never gets committed
+nonrepo_/
+
+# AdvantageKit stuff
+akit*.log
+akit*.csv
+akit*.wpilog
+akit*.toml

@@ -1,2 +1,0 @@
-time,yaw,left_pos,right_pos,left_vel,right_vel,auto,enabled,bb_irq_ts,corner_pos,corner_send_ts,corner_detect_ts,corner_detect_nt_ts,tof_first_ts,tof_ts,tof_dist,tof_nt_ts,tof_fpga_ts,shoot_counter
-726.548,-0.140,,,,0.005,,,,,,,,1400.370,1400.395,invalid,726.522,726.529
