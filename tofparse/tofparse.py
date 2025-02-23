@@ -4,6 +4,7 @@
 # the WPILib BSD license file in the root directory of this project.
 
 import os
+import numpy as np
 import array
 from collections import defaultdict
 import struct
@@ -342,6 +343,8 @@ def parse_file(input, prefix, tomlfile):
         auto = False
         enabled = False
         writing_csv = False
+        corner_found = False
+        distances = np.zeros((1000, 2), dtype="f")
         for i, record in enumerate(reader):
             # if i > 1e6 + 10000:
             #     break
@@ -399,6 +402,8 @@ def parse_file(input, prefix, tomlfile):
                             csvfile = start_csv_file(f"{prefix}_{approach_count}.csv")
                             print(f"\n[approach{approach_count}]", file=tomlfile)
                             writing_csv = True
+                            corner_found = False
+                            distance_count = 0
                             approach_count += 1
                         print(f"{timestamp:.3f},{cols}", file=csvfile)
                     elif writing_csv:
@@ -422,8 +427,15 @@ def parse_file(input, prefix, tomlfile):
                         elif writing_csv:
                             if mapping == "bb_irq_ts":
                                 print(f"bb_irq_ts={record.getDouble():.3f}", file=tomlfile)
+                                # we know that the beam break is hit when we are on the main face
+                                # so try to calculate the slope here to estimate our angle from the wall
+                                # These are not helpful
+                                # print("Distances:", distances[0:distance_count])
+                                # print("Gradient:", np.gradient(distances[0:distance_count,1], distances[0:distance_count,0]))
                             elif mapping == "corner_pos":
-                                print(f"corner_pos={record.getDouble():.3f}", file=tomlfile)
+                                if not corner_found:
+                                    print(f"corner_pos={record.getDouble():.3f}", file=tomlfile)
+                                    corner_found = True
                         value = f"{record.getDouble():.3f}"
                     elif entry.type == "int64":
                         value = f"{record.getInteger()}"
@@ -454,6 +466,10 @@ def parse_file(input, prefix, tomlfile):
                                         print(f"corner_detect_ts={arr[key]:.3f}", file=tomlfile)
                                     elif mapping[key] == "corner_detect_nt_ts":
                                         print(f"corner_detect_nt_ts={arr[key]:.3f}", file=tomlfile)
+                                    elif mapping[key] == "tof_dist":
+                                        distances[distance_count][0] = timestamp
+                                        distances[distance_count][1] = arr[key]
+                                        distance_count += 1
 
                                 if mapping[key] == "tof_dist":
                                     row[1][mapping[key]] = f"{arr[key]:.0f}"
