@@ -1,0 +1,17 @@
+[package]
+name = "vl53l1x-rs"
+version = "0.1.0"
+authors = ["Your Name <you@example.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+name = "vl53l1x"
+
+
+[dependencies]
+linux-embedded-hal = "0.3.2"
+embedded-hal = "0.2.7"
+pyo3 = { version = "0.19", features = ["extension-module"] }
+vl53l1x-uld = "2.0.1"
+# vl53l1x-uld = { path = "../vl53l1x-uld" }
