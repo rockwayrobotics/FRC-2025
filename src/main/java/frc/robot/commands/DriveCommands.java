@@ -9,6 +9,7 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.LTVUnicycleController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -27,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.subsystems.drive.Drive;
 
 public class DriveCommands {
@@ -166,7 +168,7 @@ public class DriveCommands {
   }
 
   public static Command toReef(Drive drive) {
-    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 10,
+    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 3,
         Constants.Drive.MAX_ACCEL_MPSS / 10)
         .setKinematics(drive.getKinematics()).addConstraint(new CentripetalAccelerationConstraint(0.5));
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
@@ -175,7 +177,47 @@ public class DriveCommands {
         List.of(), new Pose2d(3, 4, Rotation2d.fromDegrees(-90)), config);
     // Maybe 4,6 as intermediate?
 
-    LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
+    // LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
+    // LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
+    LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.125, 0.25, 4.0), VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
+
+    double kS = 0.18389;// 0.0; // 0.18607
+    double kV = 2.26057;// 0.0; // 2.25536
+    SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(kS, kV);
+
+    double kP = 1.7;
+    double kI = 0.0;
+    double kD = 0.0;
+    PIDController leftController = new PIDController(kP, kI, kD);
+    PIDController rightController = new PIDController(kP, kI, kD);
+
+    drive.setPose(exampleTrajectory.getInitialPose());
+    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, feedForward, drive.getKinematics(),
+        () -> drive.getWheelSpeeds(),
+        leftController,
+        rightController,
+        (Double leftVoltage, Double rightVoltage) -> {
+          drive.runOpenLoop(leftVoltage, rightVoltage);
+        }, (pose) -> {
+          drive.setPose(pose);
+        }, drive);
+  }
+
+  public static Command fromReef(Drive drive) {
+    TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 3,
+        Constants.Drive.MAX_ACCEL_MPSS / 10)
+        .setKinematics(drive.getKinematics()).addConstraint(new CentripetalAccelerationConstraint(0.5))
+        .setReversed(true);
+    // TODO: Add voltage constraint with feedforward: .addConstraint(null);
+    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(3, 4, Rotation2d.fromDegrees(-90)),
+        List.of(), new Pose2d(8.5, 7.5, Rotation2d.fromDegrees(180)), config);
+    // Maybe 4,6 as intermediate?
+
+    // LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
+    // this(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), dt, 9.0);
+    // LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
+    LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.125, 0.25, 4.0), VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
 
     double kS = 0.18389;// 0.0; // 0.18607
     double kV = 2.26057;// 0.0; // 2.25536

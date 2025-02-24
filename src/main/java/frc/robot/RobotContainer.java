@@ -69,6 +69,7 @@ public class RobotContainer {
     autoChooser.addOption("Auto3", DriveCommands.auto3(drive));
     autoChooser.addOption("Auto4", DriveCommands.auto4(drive));
     autoChooser.addOption("ToReef", DriveCommands.toReef(drive));
+    autoChooser.addOption("FromReef", DriveCommands.fromReef(drive));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
@@ -117,7 +118,7 @@ public class RobotContainer {
     driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
     driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-    driverController.a().onTrue(DriveCommands.driveForward(drive));
+    driverController.a().whileTrue(DriveCommands.driveForward(drive));
 
     drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
   }
