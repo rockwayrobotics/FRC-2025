@@ -3,15 +3,14 @@ import scipy as sp
 
 # distances in mm
 min_distance = 150
-max_distance = 600
+max_distance = 750
 
 # number of elements in full buffer
 buffer_size = 1000
 
-
 class CornerDetector:
     def __init__(
-        self, slope_threshold, large_window=15, small_window=5, flat_slope_threshold=60
+        self, slope_threshold, large_window=25, small_window=10, flat_slope_threshold=60
     ):
         # Number of samples in window
         self.large_window = large_window
