@@ -64,16 +64,6 @@ public class Drive extends SubsystemBase {
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
   private final DifferentialDrive differentialDrive;
-  // FIXME: kS and kV are feed-forward constants that should be measured
-  // empirically and
-  // should vary between simulator and real.
-  // probably measureed correctly
-  private final double realkS = 0.21124;
-  private final double realkV = 2.278;
-  private final double simkS = 0;
-  private final double simkV = 0.227;
-  private final double kS;
-  private final double kV;
   private final SysIdRoutine sysId;
   private Rotation2d rawGyroRotation = new Rotation2d();
   private double lastLeftPositionMeters = 0.0;
@@ -108,8 +98,6 @@ public class Drive extends SubsystemBase {
   TempBeamBreak beamBreak;
 
   public Drive(DriveIO io, GyroIO gyroIO) {
-    this.kS = realkS;
-    this.kV = realkV;
     this.io = io;
     this.gyroIO = gyroIO;
     this.differentialDrive = io.getDifferentialDrive();
@@ -143,9 +131,8 @@ public class Drive extends SubsystemBase {
         () -> RobotTracker.getInstance().getEstimatedPose(),
         this::setPose,
         () -> RobotTracker.getInstance().getDriveKinematics().toChassisSpeeds(getWheelSpeeds()),
-        // (ChassisSpeeds speeds) -> runClosedLoopNoFF(speeds),
-        (ChassisSpeeds speeds) -> runClosedLoop(speeds),
-        // (ChassisSpeeds speeds) -> setTankDrive(speeds),
+        // Could run closed loop here or add software PID
+        (ChassisSpeeds speeds) -> setTankDrive(speeds),
         new PPLTVController(
             VecBuilder.fill(0.0625, 0.125, 0.5),
             VecBuilder.fill(rElem0, 2),
@@ -309,38 +296,6 @@ public class Drive extends SubsystemBase {
   public DifferentialDriveWheelSpeeds getWheelSpeeds() {
     return new DifferentialDriveWheelSpeeds(
         getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec());
-  }
-
-  /** Runs the drive at the desired velocity. */
-  public void runClosedLoop(ChassisSpeeds speeds) {
-    var wheelSpeeds = RobotTracker.getInstance().getDriveKinematics().toWheelSpeeds(speeds);
-    runClosedLoop(wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond);
-  }
-
-  /** Runs the drive at the desired left and right velocities. */
-  public void runClosedLoop(double leftMetersPerSec, double rightMetersPerSec) {
-    /*
-     * // Originally this code did this:
-     * double leftRadPerSec = leftMetersPerSec / wheelRadiusMeters;
-     * double rightRadPerSec = rightMetersPerSec / wheelRadiusMeters;
-     * Logger.recordOutput("Drive/LeftSetpointRadPerSec", leftRadPerSec);
-     * Logger.recordOutput("Drive/RightSetpointRadPerSec", rightRadPerSec);
-     * 
-     * double leftFFVolts = kS * Math.signum(leftRadPerSec) + kV * leftRadPerSec;
-     * double rightFFVolts = kS * Math.signum(rightRadPerSec) + kV * rightRadPerSec;
-     * io.setVelocity(leftRadPerSec, rightRadPerSec, leftFFVolts, rightFFVolts);
-     */
-
-    Logger.recordOutput("Drive/LeftSetpointMetersPerSec", leftMetersPerSec);
-    Logger.recordOutput("Drive/RightSetpointMetersPerSec", rightMetersPerSec);
-
-    double leftRadPerSec = leftMetersPerSec / Constants.Drive.WHEEL_RADIUS_METERS;
-    double righttRadPerSec = rightMetersPerSec / Constants.Drive.WHEEL_RADIUS_METERS;
-    double leftFFVolts = kS * Math.signum(leftRadPerSec) + kV * leftRadPerSec;
-    double rightFFVolts = kS * Math.signum(righttRadPerSec) + kV * righttRadPerSec;
-    // FIXME: use SimpleMotorFeedForward class instead
-
-    io.setVelocity(leftMetersPerSec, rightMetersPerSec, leftFFVolts, rightFFVolts);
   }
 
   /** Runs the drive in open loop. */

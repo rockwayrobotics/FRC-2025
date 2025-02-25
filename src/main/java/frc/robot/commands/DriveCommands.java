@@ -245,29 +245,6 @@ public class DriveCommands {
     });
   }
 
-  /**
-   * Standard joystick drive, where X is the forward-backward axis (positive =
-   * forward) and Z is the
-   * left-right axis (positive = counter-clockwise).
-   */
-  public static Command arcadeDrive(
-      Drive drive, DoubleSupplier xSupplier, DoubleSupplier zSupplier) {
-    return Commands.run(
-        () -> {
-          // Apply deadband
-          double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), DEADBAND);
-          double z = MathUtil.applyDeadband(zSupplier.getAsDouble(), DEADBAND);
-
-          // Calculate speeds
-          var speeds = DifferentialDrive.arcadeDriveIK(x, z, true);
-
-          // Apply output
-          drive.runClosedLoop(
-              speeds.left * Constants.Drive.MAX_SPEED_MPS, speeds.right * Constants.Drive.MAX_SPEED_MPS);
-        },
-        drive);
-  }
-
   /** Measures the velocity feedforward constants for the drive. */
   public static Command feedforwardCharacterization(Drive drive) {
     List<Double> velocitySamples = new LinkedList<>();
