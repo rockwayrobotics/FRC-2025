@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import frc.robot.Constants;
 import frc.robot.Robot;
+import frc.robot.RobotTracker;
 import frc.robot.subsystems.drive.Drive;
 
 public class DriveCommands {
@@ -66,17 +67,18 @@ public class DriveCommands {
   public static Command auto1(Drive drive) {
     TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 10.0,
         Constants.Drive.MAX_ACCEL_MPSS / 10.0)
-        .setKinematics(drive.getKinematics());
+        .setKinematics(RobotTracker.getInstance().getDriveKinematics());
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(0, 0, new Rotation2d()),
         List.of(new Translation2d(1, 0), new Translation2d(1.5, 0)), new Pose2d(2, 0, new Rotation2d()), config);
 
     LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
 
-    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, drive.getKinematics(),
+    return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
+        RobotTracker.getInstance().getDriveKinematics(),
         (Double leftMetersPerSecond, Double rightMetersPerSecond) -> {
           Logger.recordOutput("Traj/Speed", new double[] { leftMetersPerSecond, rightMetersPerSecond });
-          drive.setTankDrive(drive.getKinematics()
+          drive.setTankDrive(RobotTracker.getInstance().getDriveKinematics()
               .toChassisSpeeds(new DifferentialDriveWheelSpeeds(leftMetersPerSecond, rightMetersPerSecond)));
         }, (pose) -> {
           drive.setPose(pose);
@@ -86,7 +88,7 @@ public class DriveCommands {
   public static Command auto2(Drive drive) {
     TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 1.0,
         Constants.Drive.MAX_ACCEL_MPSS / 2.0)
-        .setKinematics(drive.getKinematics());
+        .setKinematics(RobotTracker.getInstance().getDriveKinematics());
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(),
         List.of(new Translation2d(2, 0), new Translation2d(3, 0)), new Pose2d(4, 0, new Rotation2d()), config);
@@ -104,7 +106,8 @@ public class DriveCommands {
     PIDController rightController = new PIDController(kP, kI, kD);
 
     drive.setPose(exampleTrajectory.getInitialPose());
-    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, feedForward, drive.getKinematics(),
+    return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
+        feedForward, RobotTracker.getInstance().getDriveKinematics(),
         () -> drive.getWheelSpeeds(),
         leftController,
         rightController,
@@ -118,7 +121,7 @@ public class DriveCommands {
   public static Command auto3(Drive drive) {
     TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 10,
         Constants.Drive.MAX_ACCEL_MPSS / 10)
-        .setKinematics(drive.getKinematics());
+        .setKinematics(RobotTracker.getInstance().getDriveKinematics());
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(),
         List.of(new Translation2d(1, 1), new Translation2d(2, -1)), new Pose2d(3, 0, new Rotation2d()), config);
@@ -126,9 +129,10 @@ public class DriveCommands {
     LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
 
     drive.setPose(exampleTrajectory.getInitialPose());
-    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, drive.getKinematics(),
+    return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
+        RobotTracker.getInstance().getDriveKinematics(),
         (Double leftMetersPerSecond, Double rightMetersPerSecond) -> {
-          drive.setTankDrive(drive.getKinematics()
+          drive.setTankDrive(RobotTracker.getInstance().getDriveKinematics()
               .toChassisSpeeds(new DifferentialDriveWheelSpeeds(leftMetersPerSecond, rightMetersPerSecond)));
         }, (pose) -> {
           drive.setPose(pose);
@@ -138,7 +142,8 @@ public class DriveCommands {
   public static Command auto4(Drive drive) {
     TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 1,
         Constants.Drive.MAX_ACCEL_MPSS / 2)
-        .setKinematics(drive.getKinematics()).addConstraint(new CentripetalAccelerationConstraint(0.5));
+        .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+        .addConstraint(new CentripetalAccelerationConstraint(0.5));
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(),
         List.of(new Translation2d(1, 1), new Translation2d(2, -1)), new Pose2d(3, 0, new Rotation2d()), config);
@@ -156,7 +161,8 @@ public class DriveCommands {
     PIDController rightController = new PIDController(kP, kI, kD);
 
     drive.setPose(exampleTrajectory.getInitialPose());
-    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, feedForward, drive.getKinematics(),
+    return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
+        feedForward, RobotTracker.getInstance().getDriveKinematics(),
         () -> drive.getWheelSpeeds(),
         leftController,
         rightController,
@@ -170,7 +176,8 @@ public class DriveCommands {
   public static Command toReef(Drive drive) {
     TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 3,
         Constants.Drive.MAX_ACCEL_MPSS / 10)
-        .setKinematics(drive.getKinematics()).addConstraint(new CentripetalAccelerationConstraint(0.5));
+        .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+        .addConstraint(new CentripetalAccelerationConstraint(0.5));
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
         new Pose2d(8.5, 7.5, Rotation2d.fromDegrees(180)),
@@ -178,8 +185,11 @@ public class DriveCommands {
     // Maybe 4,6 as intermediate?
 
     // LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
-    // LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
-    LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.125, 0.25, 4.0), VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
+    // LTVUnicycleController ltvController = new
+    // LTVUnicycleController(VecBuilder.fill(0.0625, 0.125, 2.0),
+    // VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
+    LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.125, 0.25, 4.0),
+        VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
 
     double kS = 0.18389;// 0.0; // 0.18607
     double kV = 2.26057;// 0.0; // 2.25536
@@ -192,7 +202,8 @@ public class DriveCommands {
     PIDController rightController = new PIDController(kP, kI, kD);
 
     drive.setPose(exampleTrajectory.getInitialPose());
-    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, feedForward, drive.getKinematics(),
+    return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
+        feedForward, RobotTracker.getInstance().getDriveKinematics(),
         () -> drive.getWheelSpeeds(),
         leftController,
         rightController,
@@ -206,7 +217,8 @@ public class DriveCommands {
   public static Command fromReef(Drive drive) {
     TrajectoryConfig config = new TrajectoryConfig(Constants.Drive.MAX_SPEED_MPS / 3,
         Constants.Drive.MAX_ACCEL_MPSS / 10)
-        .setKinematics(drive.getKinematics()).addConstraint(new CentripetalAccelerationConstraint(0.5))
+        .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+        .addConstraint(new CentripetalAccelerationConstraint(0.5))
         .setReversed(true);
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
@@ -215,9 +227,13 @@ public class DriveCommands {
     // Maybe 4,6 as intermediate?
 
     // LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
-    // this(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), dt, 9.0);
-    // LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
-    LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.125, 0.25, 4.0), VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
+    // this(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), dt,
+    // 9.0);
+    // LTVUnicycleController ltvController = new
+    // LTVUnicycleController(VecBuilder.fill(0.0625, 0.125, 2.0),
+    // VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
+    LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.125, 0.25, 4.0),
+        VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
 
     double kS = 0.18389;// 0.0; // 0.18607
     double kV = 2.26057;// 0.0; // 2.25536
@@ -230,7 +246,8 @@ public class DriveCommands {
     PIDController rightController = new PIDController(kP, kI, kD);
 
     drive.setPose(exampleTrajectory.getInitialPose());
-    return new LTVCommand(exampleTrajectory, () -> drive.getPose(), ltvController, feedForward, drive.getKinematics(),
+    return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
+        feedForward, RobotTracker.getInstance().getDriveKinematics(),
         () -> drive.getWheelSpeeds(),
         leftController,
         rightController,

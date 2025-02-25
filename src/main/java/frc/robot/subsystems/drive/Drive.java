@@ -54,6 +54,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.RobotTracker;
 import frc.robot.util.TimestampSynchronizer;
 
 public class Drive extends SubsystemBase {
@@ -63,8 +64,6 @@ public class Drive extends SubsystemBase {
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
   private final DifferentialDrive differentialDrive;
-  private final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(
-      Constants.Drive.TRACK_WIDTH_METERS);
   // FIXME: kS and kV are feed-forward constants that should be measured
   // empirically and
   // should vary between simulator and real.
@@ -76,8 +75,6 @@ public class Drive extends SubsystemBase {
   private final double kS;
   private final double kV;
   private final SysIdRoutine sysId;
-  private final DifferentialDrivePoseEstimator poseEstimator = new DifferentialDrivePoseEstimator(kinematics,
-      new Rotation2d(), 0, 0, new Pose2d());
   private Rotation2d rawGyroRotation = new Rotation2d();
   private double lastLeftPositionMeters = 0.0;
   private double lastRightPositionMeters = 0.0;
@@ -124,12 +121,28 @@ public class Drive extends SubsystemBase {
 
     dashboard.add("Field2d", field);
 
+    // Configure SysId
+    sysId = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            Voltage.ofBaseUnits(0.2, Volts).div(Time.ofBaseUnits(1, Seconds)),
+            Voltage.ofBaseUnits(3, Volts),
+            Time.ofBaseUnits(10, Seconds),
+            (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
+        new SysIdRoutine.Mechanism(
+            (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), null, this));
+  }
+
+  /**
+   * Meant to be called in the Drive constructor if and when we try to re-enable
+   * PathPlanner.
+   */
+  private void setupPathPlanner() {
     double rElem0 = 1;
     Logger.recordOutput("VelocityControlFF", rElem0);
     AutoBuilder.configure(
-        this::getPose,
+        () -> RobotTracker.getInstance().getEstimatedPose(),
         this::setPose,
-        () -> kinematics.toChassisSpeeds(
+        () -> RobotTracker.getInstance().getDriveKinematics().toChassisSpeeds(
             new DifferentialDriveWheelSpeeds(
                 getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec())),
         // (ChassisSpeeds speeds) -> runClosedLoopNoFF(speeds),
@@ -159,16 +172,6 @@ public class Drive extends SubsystemBase {
         (targetPose) -> {
           Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
         });
-
-    // Configure SysId
-    sysId = new SysIdRoutine(
-        new SysIdRoutine.Config(
-            Voltage.ofBaseUnits(0.2, Volts).div(Time.ofBaseUnits(1, Seconds)),
-            Voltage.ofBaseUnits(3, Volts),
-            Time.ofBaseUnits(10, Seconds),
-            (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
-        new SysIdRoutine.Mechanism(
-            (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), null, this));
   }
 
   public void enable() {
@@ -177,6 +180,67 @@ public class Drive extends SubsystemBase {
 
   public void disable() {
     beamBreak.disable();
+  }
+
+  private void tofDistancePeriodic(double now) {
+    float[] tofOutputs = tofSubscriber.get();
+    double lastChangeTime = tofSubscriber.getLastChange() / 1000000.0;
+    if (lastChangeTime > tofLastChangeTime) {
+      if (tofOutputs.length >= 5) {
+        // FIXME: We are still taking three timestamps when we probably only want
+        // tofOutputs[2]?
+        timestampSynchronizer.addTimes(tofOutputs[2], lastChangeTime);
+        Logger.recordOutput("ToF/Everything", new float[] { tofOutputs[0], tofOutputs[1], tofOutputs[2], tofOutputs[3],
+            tofOutputs[4], (float) lastChangeTime, (float) now, (float) (now - lastChangeTime) });
+        /*
+         * Logger.recordOutput("ToF/Timestamps", new float[] { tofOutputs[0],
+         * tofOutputs[1], tofOutputs[2] });
+         * Logger.recordOutput("ToF/Distance", new float[] { tofOutputs[3],
+         * tofOutputs[4] });
+         * Logger.recordOutput("ToF/NT_Time", lastChangeTime);
+         * Logger.recordOutput("ToF/FPGA", now);
+         * Logger.recordOutput("ToF/NT_Delta", now - lastChangeTime);
+         */
+      } else {
+        noDataCounter++;
+        Logger.recordOutput("ToF/NoData", tofOutputs.length);
+      }
+      tofLastChangeTime = lastChangeTime;
+    }
+  }
+
+  private void tofCornerPeriodic() {
+    float[] cornerOutputs = cornerSubscriber.get();
+    double lastChangeTime = cornerSubscriber.getLastChange() / 1000000.0;
+    if (lastChangeTime > cornerLastChangeTime) {
+      if (cornerOutputs.length >= 2) {
+        timestampSynchronizer.addTimes(cornerOutputs[0], lastChangeTime);
+        double cornerFPGATimestamp = timestampSynchronizer.toFPGATimestamp(cornerOutputs[1], lastChangeTime);
+        Optional<Double> leftEncoderAtCorner = leftPositionBuffer.getSample(cornerFPGATimestamp);
+        Optional<Double> rightEncoderAtCorner = rightPositionBuffer.getSample(cornerFPGATimestamp);
+        Logger.recordOutput("ToF/Corners", new double[] { cornerOutputs[0], cornerOutputs[1], cornerFPGATimestamp });
+        if (leftEncoderAtCorner.isPresent()) {
+          double leftEncoderPosition = leftEncoderAtCorner.get();
+          Logger.recordOutput("ToF/CornerPosition", leftEncoderPosition);
+          leftPositionShootTarget = leftEncoderPosition + 0.35 + 0.2; // 35 cm from beam break to corner on reef, 20 cm
+                                                                      // between sensors
+          System.out.println("Shoot target: " + leftPositionShootTarget);
+        } else {
+          Logger.recordOutput("ToF/Errors", "No position for " + cornerFPGATimestamp);
+        }
+        if (rightEncoderAtCorner.isPresent()) {
+          double rightEncoderPosition = rightEncoderAtCorner.get();
+          Logger.recordOutput("ToF/RightCornerPosition", rightEncoderPosition);
+          rightPositionShootTarget = rightEncoderPosition + 0.35 + 0.2; // 35 cm from beam break to corner on reef, 20
+                                                                        // cm between sensors
+          System.out.println("Shoot targetR: " + rightPositionShootTarget);
+        } else {
+          Logger.recordOutput("ToF/Errors", "No position for " + cornerFPGATimestamp);
+        }
+
+      }
+      cornerLastChangeTime = lastChangeTime;
+    }
   }
 
   @Override
@@ -189,57 +253,8 @@ public class Drive extends SubsystemBase {
     beamBreak.periodic();
 
     double now = Timer.getFPGATimestamp();
-    float[] tofOutputs = tofSubscriber.get();
-    double lastChangeTime = tofSubscriber.getLastChange() / 1000000.0;
-    if (lastChangeTime > tofLastChangeTime) {
-      if (tofOutputs.length >= 5) {
-        // FIXME: We are still taking three timestamps when we probably only want
-        // tofOutputs[2]?
-        timestampSynchronizer.addTimes(tofOutputs[2], lastChangeTime);
-        Logger.recordOutput("ToF/Everything", new float[] { tofOutputs[0], tofOutputs[1], tofOutputs[2], tofOutputs[3], tofOutputs[4], (float)lastChangeTime, (float)now, (float)(now - lastChangeTime) });
-        /*
-        Logger.recordOutput("ToF/Timestamps", new float[] { tofOutputs[0], tofOutputs[1], tofOutputs[2] });
-        Logger.recordOutput("ToF/Distance", new float[] { tofOutputs[3], tofOutputs[4] });
-        Logger.recordOutput("ToF/NT_Time", lastChangeTime);
-        Logger.recordOutput("ToF/FPGA", now);
-        Logger.recordOutput("ToF/NT_Delta", now - lastChangeTime);
-        */
-      } else {
-        noDataCounter++;
-        Logger.recordOutput("ToF/NoData", tofOutputs.length);
-      }
-      tofLastChangeTime = lastChangeTime;
-    }
-
-    float[] cornerOutputs = cornerSubscriber.get();
-    lastChangeTime = cornerSubscriber.getLastChange() / 1000000.0;
-    if (lastChangeTime > cornerLastChangeTime) {
-      if (cornerOutputs.length >= 2) {
-        timestampSynchronizer.addTimes(cornerOutputs[0], lastChangeTime);
-        double cornerFPGATimestamp = timestampSynchronizer.toFPGATimestamp(cornerOutputs[1], lastChangeTime);
-        Optional<Double> leftEncoderAtCorner = leftPositionBuffer.getSample(cornerFPGATimestamp);
-        Optional<Double> rightEncoderAtCorner = rightPositionBuffer.getSample(cornerFPGATimestamp);
-        Logger.recordOutput("ToF/Corners", new double[] { cornerOutputs[0], cornerOutputs[1], cornerFPGATimestamp });
-        if (leftEncoderAtCorner.isPresent()) {
-          double leftEncoderPosition = leftEncoderAtCorner.get();
-          Logger.recordOutput("ToF/CornerPosition", leftEncoderPosition);
-          leftPositionShootTarget = leftEncoderPosition + 0.35 + 0.2; // 35 cm from beam break to corner on reef, 20 cm between sensors
-          System.out.println("Shoot target: " + leftPositionShootTarget);
-        } else {
-          Logger.recordOutput("ToF/Errors", "No position for " + cornerFPGATimestamp);
-        }
-        if (rightEncoderAtCorner.isPresent()) {
-          double rightEncoderPosition = rightEncoderAtCorner.get();
-          Logger.recordOutput("ToF/RightCornerPosition", rightEncoderPosition);
-          rightPositionShootTarget = rightEncoderPosition + 0.35 + 0.2; // 35 cm from beam break to corner on reef, 20 cm between sensors
-          System.out.println("Shoot targetR: " + rightPositionShootTarget);
-        } else {
-          Logger.recordOutput("ToF/Errors", "No position for " + cornerFPGATimestamp);
-        }
-
-      }
-      cornerLastChangeTime = lastChangeTime;
-    }
+    tofDistancePeriodic(now);
+    tofCornerPeriodic();
 
     if (gyroInputs.connected) {
       // Use the real gyro angle
@@ -250,7 +265,7 @@ public class Drive extends SubsystemBase {
       // FIXME: Fix this so that the gyro is actually simulated and we avoid checking
       // in periodic if the gyro is connected.
       // Use the angle delta from the kinematics and module deltas
-      Twist2d twist = kinematics.toTwist2d(
+      Twist2d twist = RobotTracker.getInstance().getDriveKinematics().toTwist2d(
           getLeftPositionMeters() - lastLeftPositionMeters,
           getRightPositionMeters() - lastRightPositionMeters);
       rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
@@ -276,8 +291,10 @@ public class Drive extends SubsystemBase {
     rightPositionBuffer.addSample(now, rightPositionMeters);
 
     // Update odometry
-    poseEstimator.update(rawGyroRotation, leftPositionMeters, rightPositionMeters);
-    var robotPose = poseEstimator.getEstimatedPosition();
+    RobotTracker.getInstance().recordOdometry(rawGyroRotation, leftPositionMeters, rightPositionMeters);
+    RobotTracker.getInstance().addDriveSpeeds(getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec());
+
+    Pose2d robotPose = RobotTracker.getInstance().getEstimatedPose();
     field.setRobotPose(robotPose);
     robotPosePublisher.set(robotPose);
   }
@@ -291,27 +308,14 @@ public class Drive extends SubsystemBase {
     this.scale = scale;
   }
 
-  public DifferentialDriveKinematics getKinematics() {
-    return kinematics;
-  }
-
   public DifferentialDriveWheelSpeeds getWheelSpeeds() {
     return new DifferentialDriveWheelSpeeds(
         getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec());
   }
 
-  public void runClosedLoopNoFF(ChassisSpeeds speeds) {
-    var wheelSpeeds = kinematics.toWheelSpeeds(speeds);
-    Logger.recordOutput("Drive/LeftSetpointMetersPerSec", wheelSpeeds.leftMetersPerSecond);
-    Logger.recordOutput("Drive/RightSetpointMetersPerSec", wheelSpeeds.rightMetersPerSecond);
-    wheelSpeeds.desaturate(Constants.Drive.MAX_SPEED_MPS);
-    differentialDrive.tankDrive(wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS,
-        wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS, false);
-  }
-
   /** Runs the drive at the desired velocity. */
   public void runClosedLoop(ChassisSpeeds speeds) {
-    var wheelSpeeds = kinematics.toWheelSpeeds(speeds);
+    var wheelSpeeds = RobotTracker.getInstance().getDriveKinematics().toWheelSpeeds(speeds);
     runClosedLoop(wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond);
   }
 
@@ -355,10 +359,13 @@ public class Drive extends SubsystemBase {
   }
 
   public void setTankDrive(ChassisSpeeds speeds) {
-    DifferentialDriveWheelSpeeds wheelSpeeds = kinematics.toWheelSpeeds(speeds);
+    DifferentialDriveWheelSpeeds wheelSpeeds = RobotTracker.getInstance().getDriveKinematics().toWheelSpeeds(speeds);
     wheelSpeeds.desaturate(Constants.Drive.MAX_SPEED_MPS);
-    Logger.recordOutput("Traj/TankDriveSpeed", new double[] {wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond});
-    Logger.recordOutput("Traj/TankDriveNormalized", new double[] {wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS, wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS});
+    Logger.recordOutput("Traj/TankDriveSpeed",
+        new double[] { wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond });
+    Logger.recordOutput("Traj/TankDriveNormalized",
+        new double[] { wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS,
+            wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS });
     differentialDrive.tankDrive(wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS,
         wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS, false);
   }
@@ -385,31 +392,9 @@ public class Drive extends SubsystemBase {
     return sysId.dynamic(direction);
   }
 
-  /** Returns the current odometry pose. */
-  @AutoLogOutput(key = "Odometry/Robot")
-  public Pose2d getPose() {
-    return poseEstimator.getEstimatedPosition();
-  }
-
-  /** Returns the current odometry rotation. */
-  public Rotation2d getRotation() {
-    return getPose().getRotation();
-  }
-
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
-    poseEstimator.resetPosition(
-        rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters(), pose);
-  }
-
-  /**
-   * Adds a vision measurement to the pose estimator.
-   *
-   * @param visionPose The pose of the robot as measured by the vision camera.
-   * @param timestamp  The timestamp of the vision measurement in seconds.
-   */
-  public void addVisionMeasurement(Pose2d visionPose, double timestamp) {
-    poseEstimator.addVisionMeasurement(visionPose, timestamp);
+    RobotTracker.getInstance().resetPose(pose, rawGyroRotation, getLeftPositionMeters(), getRightPositionMeters());
   }
 
   /** Returns the position of the left wheels in meters. */
