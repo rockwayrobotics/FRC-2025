@@ -17,8 +17,10 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.simulation.WorldSimulation;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chute.ChuteIOReal;
+import frc.robot.subsystems.chute.ChuteIOSim;
 import frc.robot.subsystems.climp.Climp;
 import frc.robot.subsystems.climp.ClimpIOReal;
+import frc.robot.subsystems.climp.ClimpIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOSimComplex;
 import frc.robot.subsystems.drive.DriveIOSimLite;
@@ -28,8 +30,10 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorIOReal;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.grabber.Grabber;
 import frc.robot.subsystems.grabber.GrabberIOReal;
+import frc.robot.subsystems.grabber.GrabberIOSim;
 
 public class RobotContainer {
   // Subsystems are listed here
@@ -54,10 +58,11 @@ public class RobotContainer {
   public RobotContainer() {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
-      elevator = new Elevator(new ElevatorIOReal());
-      chute = new Chute(new ChuteIOReal());
-      grabber = new Grabber(new GrabberIOReal());
-      climp = new Climp(new ClimpIOReal());
+      // FIXME: replace with real io once motors are on the robot
+      elevator = new Elevator(new ElevatorIOSim(0));
+      chute = new Chute(new ChuteIOSim());
+      grabber = new Grabber(new GrabberIOSim());
+      climp = new Climp(new ClimpIOSim());
     } else {
       simulation = new WorldSimulation();
       drive = simulation.getDrive();
@@ -125,7 +130,7 @@ public class RobotContainer {
     // driver & operator D-pad down     -> Coral.shift-down
     // driver & operator D-pad left     -> Algae.up
     // driver & operator D-pad right    -> Algae.down
-    
+
     // driver & operator right bumper held -> landing sequence
 
     // left bumper -> set drive scale to 0.3 when held
