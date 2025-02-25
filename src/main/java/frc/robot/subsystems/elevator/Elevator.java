@@ -2,6 +2,7 @@ package frc.robot.subsystems.elevator;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -10,7 +11,9 @@ public class Elevator extends SubsystemBase {
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private double goalHeightMeters = 0;
   private double heightMeters = 0;
-    
+  protected final double MIN_HEIGHT_METERS = 0;
+  protected final double MAX_HEIGHT_METERS = 0.5;
+
   public Elevator(ElevatorIO io) {
     this.io = io;
   }
@@ -23,16 +26,18 @@ public class Elevator extends SubsystemBase {
 
     if (DriverStation.isDisabled()) {
       io.stop();
+    } else {
+      io.moveTowardsGoal(goalHeightMeters, heightMeters);
     }
   }
 
   public void setGoalHeightMeters(double heightMeters) {
-    goalHeightMeters = heightMeters;
-    io.setGoal(goalHeightMeters);
+    goalHeightMeters = MathUtil.clamp(heightMeters, MIN_HEIGHT_METERS, MAX_HEIGHT_METERS);
   }
 
   public boolean atGoal() {
-    return heightMeters == goalHeightMeters;
+    // within 1 centimeter
+    return Math.abs(heightMeters - goalHeightMeters) < 0.01;
   }
 
   public void stop() {
