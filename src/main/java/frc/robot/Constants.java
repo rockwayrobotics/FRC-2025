@@ -45,12 +45,12 @@ public final class Constants {
     public static final int LEFT_DRIVE_MOTOR_F = 2;
     public static final int RIGHT_DRIVE_MOTOR_R = 3;
     public static final int RIGHT_DRIVE_MOTOR_F = 4;
+    
+    // FIXME: Imaginary motors for 2025
     public static final int WRIST_MOTOR = 5;
     public static final int LEFT_GRABBER_MOTOR = 6;
     public static final int RIGHT_GRABBER_MOTOR = 7;
-
-
-    // FIXME: Imaginary motors for 2025
+    public static final int CLIMP_MOTOR = 8;
     public static final int ELEVATOR_MOTOR = 12;
     public static final int CORAL_PIVOT_MOTOR = 13;
     public static final int CORAL_SHOOT_MOTOR = 14;

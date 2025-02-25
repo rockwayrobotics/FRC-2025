@@ -9,4 +9,6 @@ public interface ClimpIO {
   }
     
   public default void updateInputs(ClimpIOInputs inputs) {}
+
+  public default void setClimpMotor(double speed) {}
 }
