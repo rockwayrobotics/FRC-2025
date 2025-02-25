@@ -2,10 +2,14 @@ package frc.robot.subsystems.elevator;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
+import edu.wpi.first.math.controller.ElevatorFeedforward;
+
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -18,10 +22,11 @@ import frc.robot.util.REVUtils;
 
 public class ElevatorIOSparkMax implements ElevatorIO {
   protected final SparkMax motor = new SparkMax(Constants.CAN.ELEVATOR_MOTOR, MotorType.kBrushless);
-
   protected final RelativeEncoder encoder = motor.getEncoder();
-
   protected final SparkClosedLoopController controller = motor.getClosedLoopController();
+  // TODO: tune
+  protected final ElevatorFeedforward feedforward = new ElevatorFeedforward(0, 0, 0);
+  protected final double SPEED_METERS_PER_SECOND = 0.5;
 
   public ElevatorIOSparkMax() {
     var config = new SparkMaxConfig();
@@ -46,8 +51,10 @@ public class ElevatorIOSparkMax implements ElevatorIO {
   }
 
   @Override
-  public void setGoal(double positionMeters) {
-    controller.setReference(positionMeters, ControlType.kPosition);
+  public void moveTowardsGoal(double goalHeightMeters, double currentHeightMeters) {
+    var velocity = SPEED_METERS_PER_SECOND * Math.signum(goalHeightMeters - currentHeightMeters);
+    var ff = feedforward.calculate(velocity);
+    controller.setReference(goalHeightMeters, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff);
   }
 
   @Override
