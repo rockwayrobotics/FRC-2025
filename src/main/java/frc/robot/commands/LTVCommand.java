@@ -4,7 +4,6 @@ import static edu.wpi.first.util.ErrorMessages.requireNonNullParam;
 
 import edu.wpi.first.math.controller.LTVUnicycleController;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -23,7 +22,7 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * A command that uses a RAMSETE controller ({@link RamseteController}) to follow a trajectory
+ * A command that uses a LTV controller ({@link LTVController}) to follow a trajectory
  * {@link Trajectory} with a differential drive.
  *
  * <p>The command handles trajectory-following, PID calculations, and feedforwards internally. This
@@ -32,7 +31,7 @@ import org.littletonrobotics.junction.Logger;
  *
  * <p>Advanced teams seeking more flexibility (for example, those who wish to use the onboard PID
  * functionality of a "smart" motor controller) may use the secondary constructor that omits the PID
- * and feedforward functionality, returning only the raw wheel speeds from the RAMSETE controller.
+ * and feedforward functionality, returning only the raw wheel speeds from the LTV controller.
  *
  * <p>This class is provided by the NewCommands VendorDep
  */
@@ -55,7 +54,7 @@ public class LTVCommand extends Command {
   private double m_prevTime;
 
   /**
-   * Constructs a new RamseteCommand that, when executed, will follow the provided trajectory. PID
+   * Constructs a new LTVCommand that, when executed, will follow the provided trajectory. PID
    * control and feedforward are handled internally, and outputs are scaled -12 to 12 representing
    * units of volts.
    *
@@ -65,7 +64,7 @@ public class LTVCommand extends Command {
    * @param trajectory The trajectory to follow.
    * @param pose A function that supplies the robot pose - use one of the odometry classes to
    *     provide this.
-   * @param controller The RAMSETE controller used to follow the trajectory.
+   * @param controller The LTV controller used to follow the trajectory.
    * @param feedforward The feedforward to use for the drive.
    * @param kinematics The kinematics for the robot drivetrain.
    * @param wheelSpeeds A function that supplies the speeds of the left and right sides of the robot
@@ -89,16 +88,16 @@ public class LTVCommand extends Command {
       BiConsumer<Double, Double> outputVolts,
       Consumer<Pose2d> resetPose,
       Subsystem... requirements) {
-    m_trajectory = requireNonNullParam(trajectory, "trajectory", "RamseteCommand");
+    m_trajectory = requireNonNullParam(trajectory, "trajectory", "LTVCommand");
     m_resetPose = resetPose;
-    m_pose = requireNonNullParam(pose, "pose", "RamseteCommand");
-    m_follower = requireNonNullParam(controller, "controller", "RamseteCommand");
+    m_pose = requireNonNullParam(pose, "pose", "LTVCommand");
+    m_follower = requireNonNullParam(controller, "controller", "LTVCommand");
     m_feedforward = feedforward;
-    m_kinematics = requireNonNullParam(kinematics, "kinematics", "RamseteCommand");
-    m_speeds = requireNonNullParam(wheelSpeeds, "wheelSpeeds", "RamseteCommand");
-    m_leftController = requireNonNullParam(leftController, "leftController", "RamseteCommand");
-    m_rightController = requireNonNullParam(rightController, "rightController", "RamseteCommand");
-    m_output = requireNonNullParam(outputVolts, "outputVolts", "RamseteCommand");
+    m_kinematics = requireNonNullParam(kinematics, "kinematics", "LTVCommand");
+    m_speeds = requireNonNullParam(wheelSpeeds, "wheelSpeeds", "LTVCommand");
+    m_leftController = requireNonNullParam(leftController, "leftController", "LTVCommand");
+    m_rightController = requireNonNullParam(rightController, "rightController", "LTVCommand");
+    m_output = requireNonNullParam(outputVolts, "outputVolts", "LTVCommand");
 
     m_usePID = true;
 
@@ -106,14 +105,14 @@ public class LTVCommand extends Command {
   }
 
   /**
-   * Constructs a new RamseteCommand that, when executed, will follow the provided trajectory.
+   * Constructs a new LTVCommand that, when executed, will follow the provided trajectory.
    * Performs no PID control and calculates no feedforwards; outputs are the raw wheel speeds from
-   * the RAMSETE controller, and will need to be converted into a usable form by the user.
+   * the LTV controller, and will need to be converted into a usable form by the user.
    *
    * @param trajectory The trajectory to follow.
    * @param pose A function that supplies the robot pose - use one of the odometry classes to
    *     provide this.
-   * @param follower The RAMSETE follower used to follow the trajectory.
+   * @param follower The LTV follower used to follow the trajectory.
    * @param kinematics The kinematics for the robot drivetrain.
    * @param outputMetersPerSecond A function that consumes the computed left and right wheel speeds.
    * @param requirements The subsystems to require.
@@ -127,13 +126,13 @@ public class LTVCommand extends Command {
       BiConsumer<Double, Double> outputMetersPerSecond,
       Consumer<Pose2d> resetPose,
       Subsystem... requirements) {
-    m_trajectory = requireNonNullParam(trajectory, "trajectory", "RamseteCommand");
+    m_trajectory = requireNonNullParam(trajectory, "trajectory", "LTVCommand");
     m_resetPose = resetPose;
-    m_pose = requireNonNullParam(pose, "pose", "RamseteCommand");
-    m_follower = requireNonNullParam(follower, "follower", "RamseteCommand");
-    m_kinematics = requireNonNullParam(kinematics, "kinematics", "RamseteCommand");
+    m_pose = requireNonNullParam(pose, "pose", "LTVCommand");
+    m_follower = requireNonNullParam(follower, "follower", "LTVCommand");
+    m_kinematics = requireNonNullParam(kinematics, "kinematics", "LTVCommand");
     m_output =
-        requireNonNullParam(outputMetersPerSecond, "outputMetersPerSecond", "RamseteCommand");
+        requireNonNullParam(outputMetersPerSecond, "outputMetersPerSecond", "LTVCommand");
 
     m_feedforward = null;
     m_speeds = null;
