@@ -76,7 +76,8 @@ public class RobotContainer {
     autoChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption("SysID All (Rev then Fwd)", drive.sysIDRunAll());
     autoChooser.addOption("Set speed = 1", new RunCommand(() -> drive.runClosedLoop(2, 2), drive));
-    autoChooser.addOption("Pathplanner", new PathPlannerAuto("straightlong"));
+    // Remove Pathplanner paths for now
+    // autoChooser.addOption("Pathplanner", new PathPlannerAuto("straightlong"));
     autoChooser.addOption("Forward", DriveCommands.driveForward(drive));
     autoChooser.addOption("Auto1", DriveCommands.auto1(drive));
     autoChooser.addOption("Auto2", DriveCommands.auto2(drive));

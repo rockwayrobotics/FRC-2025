@@ -95,10 +95,6 @@ public class DriveCommands {
 
     LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
 
-    double kS = 0.18389;// 0.0; // 0.18607
-    double kV = 2.26057;// 0.0; // 2.25536
-    SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(kS, kV);
-
     double kP = 1.7;
     double kI = 0.0;
     double kD = 0.0;
@@ -107,7 +103,7 @@ public class DriveCommands {
 
     drive.setPose(exampleTrajectory.getInitialPose());
     return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
-        feedForward, RobotTracker.getInstance().getDriveKinematics(),
+        drive.getFeedForward(), RobotTracker.getInstance().getDriveKinematics(),
         () -> drive.getWheelSpeeds(),
         leftController,
         rightController,
@@ -150,10 +146,6 @@ public class DriveCommands {
 
     LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
 
-    double kS = 0.18389;// 0.0; // 0.18607
-    double kV = 2.26057;// 0.0; // 2.25536
-    SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(kS, kV);
-
     double kP = 1.7;
     double kI = 0.0;
     double kD = 0.0;
@@ -162,7 +154,7 @@ public class DriveCommands {
 
     drive.setPose(exampleTrajectory.getInitialPose());
     return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
-        feedForward, RobotTracker.getInstance().getDriveKinematics(),
+        drive.getFeedForward(), RobotTracker.getInstance().getDriveKinematics(),
         () -> drive.getWheelSpeeds(),
         leftController,
         rightController,
@@ -191,10 +183,6 @@ public class DriveCommands {
     LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.125, 0.25, 4.0),
         VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
 
-    double kS = 0.18389;// 0.0; // 0.18607
-    double kV = 2.26057;// 0.0; // 2.25536
-    SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(kS, kV);
-
     double kP = 1.7;
     double kI = 0.0;
     double kD = 0.0;
@@ -203,7 +191,7 @@ public class DriveCommands {
 
     drive.setPose(exampleTrajectory.getInitialPose());
     return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
-        feedForward, RobotTracker.getInstance().getDriveKinematics(),
+        drive.getFeedForward(), RobotTracker.getInstance().getDriveKinematics(),
         () -> drive.getWheelSpeeds(),
         leftController,
         rightController,
@@ -226,18 +214,8 @@ public class DriveCommands {
         List.of(), new Pose2d(8.5, 7.5, Rotation2d.fromDegrees(180)), config);
     // Maybe 4,6 as intermediate?
 
-    // LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
-    // this(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), dt,
-    // 9.0);
-    // LTVUnicycleController ltvController = new
-    // LTVUnicycleController(VecBuilder.fill(0.0625, 0.125, 2.0),
-    // VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
     LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.125, 0.25, 4.0),
         VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
-
-    double kS = 0.18389;// 0.0; // 0.18607
-    double kV = 2.26057;// 0.0; // 2.25536
-    SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(kS, kV);
 
     double kP = 1.7;
     double kI = 0.0;
@@ -247,7 +225,7 @@ public class DriveCommands {
 
     drive.setPose(exampleTrajectory.getInitialPose());
     return new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(), ltvController,
-        feedForward, RobotTracker.getInstance().getDriveKinematics(),
+        drive.getFeedForward(), RobotTracker.getInstance().getDriveKinematics(),
         () -> drive.getWheelSpeeds(),
         leftController,
         rightController,

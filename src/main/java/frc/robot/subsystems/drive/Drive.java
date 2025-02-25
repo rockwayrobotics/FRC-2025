@@ -142,9 +142,7 @@ public class Drive extends SubsystemBase {
     AutoBuilder.configure(
         () -> RobotTracker.getInstance().getEstimatedPose(),
         this::setPose,
-        () -> RobotTracker.getInstance().getDriveKinematics().toChassisSpeeds(
-            new DifferentialDriveWheelSpeeds(
-                getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec())),
+        () -> RobotTracker.getInstance().getDriveKinematics().toChassisSpeeds(getWheelSpeeds()),
         // (ChassisSpeeds speeds) -> runClosedLoopNoFF(speeds),
         (ChassisSpeeds speeds) -> runClosedLoop(speeds),
         // (ChassisSpeeds speeds) -> setTankDrive(speeds),
@@ -351,13 +349,16 @@ public class Drive extends SubsystemBase {
   }
 
   /**
-   * This was the method used for setting speed/rotation for manual driving
-   * before.
+   * This method is only used for defaultDrive.
    */
   public void set(double speed, double rotation) {
     differentialDrive.curvatureDrive(speed * scale, rotation * scale, true);
   }
 
+  /**
+   * This method is used for non-PID trajectory following.
+   * @param speeds in m/s
+   */
   public void setTankDrive(ChassisSpeeds speeds) {
     DifferentialDriveWheelSpeeds wheelSpeeds = RobotTracker.getInstance().getDriveKinematics().toWheelSpeeds(speeds);
     wheelSpeeds.desaturate(Constants.Drive.MAX_SPEED_MPS);
@@ -372,7 +373,7 @@ public class Drive extends SubsystemBase {
 
   /** Stops the drive. */
   public void stop() {
-    runOpenLoop(0.0, 0.0);
+    io.setVoltage(0.0, 0.0);
   }
 
   public Command sysIDRunAll() {
@@ -390,6 +391,10 @@ public class Drive extends SubsystemBase {
   /** Returns a command to run a dynamic test in the specified direction. */
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
     return sysId.dynamic(direction);
+  }
+
+  public SimpleMotorFeedforward getFeedForward() {
+    return io.getFeedForward();
   }
 
   /** Resets the current odometry pose. */

@@ -15,6 +15,7 @@ package frc.robot.subsystems.drive;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 public interface DriveIO {
@@ -47,5 +48,9 @@ public interface DriveIO {
 
   public default DifferentialDrive getDifferentialDrive() {
     return new DifferentialDrive((double leftOutput) -> {}, (double rightOutput) -> {});
+  }
+
+  public default SimpleMotorFeedforward getFeedForward() {
+    return null;
   }
 }

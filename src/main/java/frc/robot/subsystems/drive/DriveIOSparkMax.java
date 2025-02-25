@@ -4,6 +4,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 import java.util.function.DoubleSupplier;
@@ -32,6 +33,8 @@ public class DriveIOSparkMax implements DriveIO {
 
   protected final SparkClosedLoopController leftController = leftDriveMotorF.getClosedLoopController();
   protected final SparkClosedLoopController rightController = rightDriveMotorF.getClosedLoopController();
+
+  protected final SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(Constants.Drive.REAL_KS, Constants.Drive.REAL_KV);
 
   public DriveIOSparkMax() {
     var config = new SparkMaxConfig();
@@ -124,5 +127,9 @@ public class DriveIOSparkMax implements DriveIO {
     // leftDriveMotorF.setVoltage(leftFFVolts);
     // rightDriveMotorF.setVoltage(rightFFVolts);
     differentialDrive.feed();
+  }
+
+  public SimpleMotorFeedforward getFeedForward() {
+    return feedForward;
   }
 }

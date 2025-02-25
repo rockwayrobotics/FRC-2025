@@ -16,6 +16,7 @@ package frc.robot.subsystems.drive;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
@@ -54,6 +55,7 @@ public class DriveIOSimLite implements DriveIOSim {
   private static final double simKd = 0.0;
   private PIDController leftPID = new PIDController(simKp, 0.0, simKd);
   private PIDController rightPID = new PIDController(simKp, 0.0, simKd);
+  private SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(Constants.Drive.SIM_KS, Constants.Drive.SIM_KV);
 
   private double leftFFVolts = 0.0;
   private double rightFFVolts = 0.0;
@@ -113,5 +115,10 @@ public class DriveIOSimLite implements DriveIOSim {
     this.rightFFVolts = rightFFVolts;
     leftPID.setSetpoint(leftMetersPerSec);
     rightPID.setSetpoint(rightMetersPerSec);
+  }
+
+  @Override
+  public SimpleMotorFeedforward getFeedForward() {
+    return feedForward;
   }
 }
