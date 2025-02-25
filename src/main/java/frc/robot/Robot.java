@@ -128,7 +128,6 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousExit() {
-    // Logger.end();
   }
 
   @Override
@@ -150,7 +149,6 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopExit() {
-    //Logger.end();
   }
 
   @Override
@@ -166,7 +164,6 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void testExit() {
-    // Logger.end();
   }
 
   /** This function is called once when the robot is first started up. */

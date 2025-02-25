@@ -14,17 +14,30 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.simulation.WorldSimulation;
+import frc.robot.subsystems.chute.Chute;
+import frc.robot.subsystems.chute.ChuteIOReal;
+import frc.robot.subsystems.climp.Climp;
+import frc.robot.subsystems.climp.ClimpIOReal;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.DriveIOSim;
+import frc.robot.subsystems.drive.DriveIOSimComplex;
 import frc.robot.subsystems.drive.DriveIOSimLite;
 import frc.robot.subsystems.drive.DriveIOSparkMax;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.GyroIOSim;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIOReal;
+import frc.robot.subsystems.grabber.Grabber;
+import frc.robot.subsystems.grabber.GrabberIOReal;
 
 public class RobotContainer {
   // Subsystems are listed here
   private final Drive drive;
+  private final Chute chute;
+  private final Elevator elevator;
+  private final Climp climp;
+  private final Grabber grabber;
 
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
@@ -35,22 +48,23 @@ public class RobotContainer {
   private final ShuffleboardTab dashboard = Shuffleboard.getTab("RobotContainer");
   private final GenericEntry driveScale = dashboard.addPersistent("Drivescale", 1).getEntry();
 
+  // Simulation only
+  protected WorldSimulation simulation = null;
+
   public RobotContainer() {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
+      elevator = new Elevator(new ElevatorIOReal());
+      chute = new Chute(new ChuteIOReal());
+      grabber = new Grabber(new GrabberIOReal());
+      climp = new Climp(new ClimpIOReal());
     } else {
-      var useSimLite = true;
-      if (useSimLite) {
-        // Lighter sim with no devices
-        drive = new Drive(new DriveIOSimLite(), new GyroIO() {
-        });
-      } else {
-        var gyroIO = new GyroIOSim();
-        var driveIO = new DriveIOSim(gyroIO);
-
-        // Experimental sim with devices
-        drive = new Drive(driveIO, new GyroIOSim());
-      }
+      simulation = new WorldSimulation();
+      drive = simulation.getDrive();
+      elevator = new Elevator(simulation.getElevator());
+      chute = new Chute(simulation.getChute());
+      grabber = new Grabber(simulation.getGrabber());
+      climp = new Climp(simulation.getClimp());
     }
 
     // Set up auto routines

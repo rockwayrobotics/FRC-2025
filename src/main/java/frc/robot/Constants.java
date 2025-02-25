@@ -34,20 +34,51 @@ public final class Constants {
     public static final double JOY_ROTATE_SCALE = -0.3;
   }
 
+  public static final class Dimensions {
+    // Dimensions of frame without bumpers
+    public static final double FRAME_X_LENGTH_METERS = 0.816;
+    public static final double FRAME_Y_WIDTH_METERS = 0.66;
+  }
+
   public static final class CAN {
     // to switch the foward direction of the robot, switch the CAN ids for the left
     // and right drive
+    // NEO with Spark MAX
     public static final int LEFT_DRIVE_MOTOR_R = 1;
     public static final int LEFT_DRIVE_MOTOR_F = 2;
     public static final int RIGHT_DRIVE_MOTOR_R = 3;
     public static final int RIGHT_DRIVE_MOTOR_F = 4;
-    public static final int LEFT_INTAKE = 5; // brushed
-    public static final int RIGHT_INTAKE = 6; // brushed one opposite direction
-    public static final int BELT = 7; // indexer
-    public static final int GEAR = 8; // angle
-    public static final int LEFT_FLYWHEEL = 9; // negative on one flywheel?
-    public static final int RIGHT_FLYWHEEL = 10; // negative on one flywheel?
-    public static final int CLIMB = 11;
+
+    // Vortex with Spark Flex
+    public static final int ELEVATOR_MOTOR_LEFT = 5;
+    public static final int ELEVATOR_MOTOR_RIGHT = 6;
+
+    // NEO with Spark MAX
+    public static final int PIVOT_MOTOR = 7;
+    public static final int SHOOTER_MOTOR = 8;
+
+    // Vortex with Spark Flex
+    public static final int CLIMP_MOTOR = 9;
+
+    // NEO with Spark MAX
+    public static final int GRABBER_WRIST_MOTOR = 10;
+    public static final int GRABBER_LEFT_MOTOR = 11;
+    public static final int GRABBER_RIGHT_MOTOR = 12;
+  }
+
+  public static final class Chute {
+    public static final double PIVOT_GEAR_RATIO = 45; // 60/12 and 9:1 planetary
+
+    // FIXME: Complete guess
+    public static final double MOI = 0.1;
+    public static final double CHUTE_LENGTH_METERS = 0.66;
+    // Distance from loading end of chute to center of wheel, measured on y-axis only
+    public static final double CHUTE_WHEEL_POSITION_METERS = 0.568;
+    public static final double SHOOTER_WHEEL_RADIUS_METERS = 0.05715 / 2.0;
+    // Thickness of chute along robot drive axis
+    public static final double CHUTE_X_THICKNESS_METERS = 0.107;
+    // Measured with 0 as the center of the robot frame, positive x forwards
+    public static final double CHUTE_CENTER_X_POSITION_METERS = Dimensions.FRAME_X_LENGTH_METERS / 2 - 0.276 + CHUTE_X_THICKNESS_METERS / 2;
   }
 
   public static final class Drive {
@@ -68,6 +99,31 @@ public final class Constants {
     public final static boolean RIGHT_DRIVE_INVERTED = true;
 
     public final static double rotation_kP = 0.3;
+  }
+
+  public static final class Elevator {
+    public static final double SPROCKET_RADIUS_METERS = 0.042;
+    public static final double GEAR_RATIO = 2;
+    public static final double CARRIAGE_MASS_KG = 5;
+    // Minimum height of pivot center
+    public static final double MIN_PIVOT_HEIGHT_METERS = 0.24;
+    // Maximum extension height of elevator - FIXME: Not measured
+    public static final double MAX_HEIGHT_METERS = 1.5;
+  }
+
+  public static final class Grabber {
+    public static final boolean LEFT_GRABBER_INVERTED = false;
+    public static final boolean RIGHT_GRABBER_INVERTED = true;
+  }
+
+  public static final class Digital {
+    public static final int CORAL_LOAD_BEAMBREAK = 0;
+    public static final int CORAL_SHOOT_BEAMBREAK = 1;
+    public static final int ALGAE_HOME_SWITCH = 2;
+  }
+
+  public static final class Analog {
+    public static final int ALGAE_DISTANCE_SENSOR = 0;
   }
 
   public static final class PathPlanner {

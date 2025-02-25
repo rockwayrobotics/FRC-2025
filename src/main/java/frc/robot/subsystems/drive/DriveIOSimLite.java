@@ -24,7 +24,7 @@ import frc.robot.Constants;
 /**
  * Lightweight drive sim that does not simulate motors
  */
-public class DriveIOSimLite implements DriveIO {
+public class DriveIOSimLite implements DriveIOSim {
   private static final double MAX_VOLTAGE = 12.0;
   private final DifferentialDrive differentialDrive;
 
