@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -31,6 +32,11 @@ public final class Constants {
   public static final class NT {
     public static final String SENSOR_MODE = "/Pi/SensorMode";
     public static final String CORNERS = "/Pi/Corners";
+  }
+
+  public static final class Field {
+    public static final double REEF_CORNER_TO_NEAR_POST_METERS = 0.3061;
+    public static final double REEF_CORNER_TO_FAR_POST_METERS = 0.6347;
   }
 
   public static final class Gamepads {
@@ -78,11 +84,16 @@ public final class Constants {
   }
 
   public static final class Chute {
-    public static final double PIVOT_TROUGH = Radians.convertFrom(40, Degrees);
-    public static final double PIVOT_L2 = Radians.convertFrom(30, Degrees);
-    public static final double PIVOT_L3 = Radians.convertFrom(30, Degrees);
-    public static final double PIVOT_LOAD = Radians.convertFrom(30, Degrees);
-    public static final double PIVOT_FLAT = Radians.convertFrom(90, Degrees);
+    // We start at -90 degrees with the shooter facing to starboard
+    // 0 degrees is vertically down
+    // 90 degrees is the other limit, facing flat to port
+    public static final double PIVOT_INITIAL_ANGLE_RADS = Units.degreesToRadians(-90.0);
+
+    public static final double PIVOT_TROUGH = Units.degreesToRadians(-60);
+    public static final double PIVOT_L2 = Units.degreesToRadians(-60);
+    public static final double PIVOT_L3 = Units.degreesToRadians(-60);
+    public static final double PIVOT_LOAD = Units.degreesToRadians(-60);
+    public static final double PIVOT_FLAT = Units.degreesToRadians(-90);
 
     public static final double PIVOT_GEAR_RATIO = 45; // 60/12 and 9:1 planetary
 

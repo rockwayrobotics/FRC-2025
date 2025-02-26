@@ -39,6 +39,9 @@ public class ChuteIOReal implements ChuteIO {
     SparkMaxConfig shooterConfig = new SparkMaxConfig();
     shooterConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     REVUtils.tryUntilOk(() -> shooterMotor.configure(shooterConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+
+    // At creation time, set encoder positions to our initial position
+    REVUtils.tryUntilOk(() -> pivotEncoder.setPosition(Constants.Chute.PIVOT_INITIAL_ANGLE_RADS));
   }
 
   @Override

@@ -3,12 +3,13 @@ package frc.robot.subsystems.chute;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 
 public class Chute extends SubsystemBase {
   private final ChuteIO io;
   private final CoralIOInputsAutoLogged inputs = new CoralIOInputsAutoLogged();
 
-  private double pivotGoalRads = 0.0;
+  private double pivotGoalRads = Constants.Chute.PIVOT_INITIAL_ANGLE_RADS;
   private boolean coralLoading = false;
   private boolean coralReady = false;
   

@@ -30,13 +30,13 @@ public class ScoringState {
     public double nearDistance() {
       switch (this) {
         case FRONT_LEFT:
-          return 0.55;
+          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX() - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case FRONT_RIGHT:
-          return 0.55;
+          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX() - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case BACK_LEFT:
-          return 0.55;
+          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS - Constants.ToFSensor.BACK_LEFT.getX() + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case BACK_RIGHT:
-          return 0.55;
+          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS - Constants.ToFSensor.BACK_RIGHT.getX() + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         default:
           return 0;
       }
@@ -52,13 +52,13 @@ public class ScoringState {
     public double farDistance() {
       switch (this) {
         case FRONT_LEFT:
-          return 0.55;
+          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX() - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case FRONT_RIGHT:
-          return 0.55;
+          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX() - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case BACK_LEFT:
-          return 0.55;
+          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS - Constants.ToFSensor.BACK_LEFT.getX() + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case BACK_RIGHT:
-          return 0.55;
+          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS - Constants.ToFSensor.BACK_RIGHT.getX() + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         default:
           return 0;
       }
@@ -112,7 +112,7 @@ public class ScoringState {
     switch (sensorState) {
       case FRONT_LEFT:
       case BACK_LEFT:
-        return Math.PI - reefHeight.pivotRadians();
+        return -reefHeight.pivotRadians();
       case FRONT_RIGHT:
       case BACK_RIGHT:
         return reefHeight.pivotRadians();

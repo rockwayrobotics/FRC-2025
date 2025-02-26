@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
 import frc.robot.subsystems.chute.ChuteIOSim;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
@@ -42,14 +43,16 @@ public class Coral {
 
   public Pose3d getPose(Pose2d robotPose, ElevatorIOSim elevator, ChuteIOSim chuteIOSim) {
     return new Pose3d(robotPose)
-    // Move the coral up by the height of the pivot
-      .plus(new Transform3d(0, 0, Constants.Elevator.MIN_PIVOT_HEIGHT_METERS + elevator.getChutePivotHeightMeters(), new Rotation3d()))
-      // Rotate it 90 degrees around the z-axis
-      .plus(new Transform3d(0, 0, 0, new Rotation3d(0, 0, Math.PI / 2)))
-      // Rotate it to match the pitch of the chute
-      .plus(new Transform3d(0, 0, 0, new Rotation3d(0, -chuteIOSim.getPivotAngleRads(), 0)))
-      // Move it along the chute
-      .plus(new Transform3d(Constants.Chute.CHUTE_LENGTH_METERS / 2 - chutePosition, 0, 0, new Rotation3d()));
+        // Move the coral up by the height of the pivot
+        .plus(new Transform3d(0, 0, Constants.Elevator.MIN_PIVOT_HEIGHT_METERS + elevator.getChutePivotHeightMeters(),
+            new Rotation3d()))
+        // Rotate it 90 degrees around the z-axis
+        .plus(new Transform3d(0, 0, 0, new Rotation3d(0, 0, Math.PI / 2)))
+        // Rotate it to match the pitch of the chute
+        .plus(
+            new Transform3d(0, 0, 0, new Rotation3d(0, Units.degreesToRadians(90) - chuteIOSim.getPivotAngleRads(), 0)))
+        // Move it along the chute
+        .plus(new Transform3d(chutePosition - Constants.Chute.CHUTE_LENGTH_METERS / 2, 0, 0, new Rotation3d()));
   }
 
   public void periodic(ChuteIOSim chuteIOSim) {
@@ -62,7 +65,7 @@ public class Coral {
       return;
     }
 
-    double chuteAngleRads = chuteIOSim.getPivotAngleRads();
+    double chuteAngleRads = Units.degreesToRadians(90) - chuteIOSim.getPivotAngleRads();
     if (chutePosition < 0) {
       inChute = false;
       chuteIOSim.setCoralLoading(false);
@@ -75,7 +78,8 @@ public class Coral {
       double frictionForce;
       if (Math.abs(chuteVelocity) < 1e-6) {
         // If not really moving, friction opposes gravity
-        frictionForce = Math.min(Math.abs(gravityForce), CORAL_COEFF_OF_FRICTION * normalForce) * Math.signum(gravityForce);
+        frictionForce = Math.min(Math.abs(gravityForce), CORAL_COEFF_OF_FRICTION * normalForce)
+            * Math.signum(gravityForce);
       } else {
         // If moving, friction opposes velocity
         frictionForce = CORAL_COEFF_OF_FRICTION * normalForce * Math.signum(chuteVelocity);

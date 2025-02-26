@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
@@ -190,7 +191,7 @@ public class WorldSimulation {
     // Offset for chute origin is 0.236 up in z.
     Pose3d chutePose = new Pose3d(0, 0, elevator.getChutePivotHeightMeters(), new Rotation3d())
         .transformBy(new Transform3d(0, 0, 0.236, new Rotation3d()))
-        .transformBy(new Transform3d(0, 0, 0, new Rotation3d(chute.getPivotAngleRads(), 0, 0)))
+        .transformBy(new Transform3d(0, 0, 0, new Rotation3d(Units.degreesToRadians(90) + chute.getPivotAngleRads(), 0, 0)))
         .transformBy(new Transform3d(0, 0, -0.236, new Rotation3d()));
     Logger.recordOutput("Robot/Components", new Pose3d[] {
         // Elevator box
