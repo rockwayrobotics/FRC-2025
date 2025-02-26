@@ -239,7 +239,7 @@ public class DriveCommands {
   public static Command driveForward(Drive drive) {
     final double speed = 0.45;
     return Commands.run(() -> {
-      drive.setTankDrive(new ChassisSpeeds(speed, speed, 0));
+      drive.setTankDrive(new ChassisSpeeds(speed, 0, 0));
     }, drive).withTimeout(4.5).finallyDo(() -> {
       drive.stop();
     });

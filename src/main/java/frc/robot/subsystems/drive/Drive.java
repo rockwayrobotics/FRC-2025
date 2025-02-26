@@ -286,7 +286,7 @@ public class Drive extends SubsystemBase {
 
   /**
    * Sets the drive and rotate speeds.
-   * 
+   *
    * @param scale double from 0 to 1
    */
   public void setScale(double scale) {
@@ -384,5 +384,13 @@ public class Drive extends SubsystemBase {
   /** Returns the average velocity in meters/second. */
   public double getCharacterizationVelocity() {
     return (inputs.leftVelocityMetersPerSec + inputs.rightVelocityMetersPerSec) / 2.0;
+  }
+
+  public Optional<Double> getLeftPositionAtTime(double fpgaTime) {
+    return leftPositionBuffer.getSample(fpgaTime);
+  }
+
+  public Optional<Double> getRightPositionAtTime(double fpgaTime) {
+    return rightPositionBuffer.getSample(fpgaTime);
   }
 }
