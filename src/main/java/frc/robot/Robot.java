@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -50,6 +51,8 @@ public class Robot extends LoggedRobot {
       // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
     }
 
+    AutoLogOutputManager.addObject(RobotTracker.getInstance());
+
     Logger.start();
 
   }
@@ -91,6 +94,9 @@ public class Robot extends LoggedRobot {
     // robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+
+    // Log updates to RobotTracker in all modes
+    RobotTracker.getInstance().periodic();
 
     // Back to normal priority
     Threads.setCurrentThreadPriority(false, 10);
@@ -174,5 +180,6 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
+    m_robotContainer.getWorldSimulation().simulationPeriodic();
   }
 }

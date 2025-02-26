@@ -1,6 +1,7 @@
 package frc.robot;
 
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -96,5 +97,8 @@ public class RobotTracker {
   public void periodic() {
     // Not sure what we want to do here, but this is set up to be called in all modes
     // periodically so we can do updates if needed.
+    if (scoringState != null) {
+      scoringState.logOutput();
+    }
   }
 }

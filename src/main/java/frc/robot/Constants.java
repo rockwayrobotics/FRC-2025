@@ -10,6 +10,9 @@ import static edu.wpi.first.units.Units.Radians;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 
 /**
@@ -25,6 +28,11 @@ import edu.wpi.first.math.system.plant.DCMotor;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  public static final class NT {
+    public static final String SENSOR_MODE = "/Pi/SensorMode";
+    public static final String CORNERS = "/Pi/Corners";
+  }
+
   public static final class Gamepads {
     public static final int DRIVER = 0;
     public static final int OPERATOR = 1;
@@ -81,13 +89,15 @@ public final class Constants {
     // FIXME: Complete guess
     public static final double MOI = 0.1;
     public static final double CHUTE_LENGTH_METERS = 0.66;
-    // Distance from loading end of chute to center of wheel, measured on y-axis only
+    // Distance from loading end of chute to center of wheel, measured on y-axis
+    // only
     public static final double CHUTE_WHEEL_POSITION_METERS = 0.568;
     public static final double SHOOTER_WHEEL_RADIUS_METERS = 0.05715 / 2.0;
     // Thickness of chute along robot drive axis
     public static final double CHUTE_X_THICKNESS_METERS = 0.107;
     // Measured with 0 as the center of the robot frame, positive x forwards
-    public static final double CHUTE_CENTER_X_POSITION_METERS = Dimensions.FRAME_X_LENGTH_METERS / 2 - 0.276 + CHUTE_X_THICKNESS_METERS / 2;
+    public static final double CHUTE_CENTER_X_POSITION_METERS = Dimensions.FRAME_X_LENGTH_METERS / 2 - 0.276
+        + CHUTE_X_THICKNESS_METERS / 2;
   }
 
   public static final class Drive {
@@ -141,6 +151,18 @@ public final class Constants {
   public static final class Grabber {
     public static final boolean LEFT_GRABBER_INVERTED = false;
     public static final boolean RIGHT_GRABBER_INVERTED = true;
+  }
+
+  public static final class ToFSensor {
+    // FIXME: Simulated locations of sensors are not measured
+    public static final Transform2d FRONT_LEFT = new Transform2d(new Translation2d(0.5, 0.5),
+        Rotation2d.fromDegrees(90));
+    public static final Transform2d BACK_LEFT = new Transform2d(new Translation2d(-0.5, 0.5),
+        Rotation2d.fromDegrees(90));
+    public static final Transform2d FRONT_RIGHT = new Transform2d(new Translation2d(0.5, -0.5),
+        Rotation2d.fromDegrees(-90));
+    public static final Transform2d BACK_RIGHT = new Transform2d(new Translation2d(-0.5, -0.5),
+        Rotation2d.fromDegrees(-90));
   }
 
   public static final class Digital {

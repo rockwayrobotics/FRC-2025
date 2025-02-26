@@ -19,8 +19,8 @@ import frc.robot.subsystems.drive.Drive;
 public class ScoreCommands {
   public static Command score(Drive drive, Elevator elevator, Chute chute) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
-    IntegerPublisher piState = nt.getIntegerTopic("pi-state").publish();
-    FloatSubscriber corner = nt.getFloatTopic("corner").subscribe(0);
+    IntegerPublisher piState = nt.getIntegerTopic(Constants.NT.SENSOR_MODE).publish();
+    FloatSubscriber corner = nt.getFloatTopic(Constants.NT.CORNERS).subscribe(0);
     AtomicReference<Float> cornerTime = new AtomicReference<Float>(0.0f);
     ParallelRaceGroup cancellableGroup = new ParallelRaceGroup();
     Command command = Commands.parallel(
@@ -31,7 +31,7 @@ public class ScoreCommands {
           elevator.setGoalHeightMeters(RobotTracker.getInstance().getScoringState().reefHeight.elevatorHeight());
         }),
         Commands.runOnce(() -> {
-          chute.setPivotGoalRads(RobotTracker.getInstance().getScoringState().reefHeight.pivotRadians());
+          chute.setPivotGoalRads(RobotTracker.getInstance().getScoringState().pivotRadians());
         }),
         Commands.sequence(
             Commands.runOnce(() -> piState.set(RobotTracker.getInstance().getScoringState().sensorState.piValue())),
@@ -65,6 +65,7 @@ public class ScoreCommands {
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
       RobotTracker.getInstance().getScoringState().reset();
+      chute.stopShooting();
       // FIXME: Reset? Detect if coral was shot?
     });
   }

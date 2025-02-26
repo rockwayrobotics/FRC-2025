@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
 import frc.robot.subsystems.chute.ChuteIO;
@@ -39,6 +40,9 @@ public class WorldSimulation {
     public final Translation2d[] blueReefVertices;
     public final Translation2d[] redReefVertices;
 
+    public final Translation2d[] blueCoralStationVertices;
+    public final Translation2d[] redCoralStationVertices;
+
     public FieldObstacles() {
       blueReefVertices = new Translation2d[] {
           new Translation2d(3.658, 3.546),
@@ -50,6 +54,26 @@ public class WorldSimulation {
       };
 
       redReefVertices = Arrays.stream(blueReefVertices)
+          .map(blueVertex -> new Translation2d(fieldWidthMeters - blueVertex.getX(), blueVertex.getY()))
+          .toArray(Translation2d[]::new);
+
+      blueCoralStationVertices = new Translation2d[] {
+          /*
+           * // These are the actual vertices according to
+           * https://github.com/Shenzhen-Robotics-Alliance/maple-sim/blob/main/project/src
+           * /main/java/org/ironmaple/simulation/seasonspecific/reefscape2025/
+           * Arena2025Reefscape.java
+           * // but we are just going to take midpoints.
+           * new Translation2d(0, 1.27),
+           * new Translation2d(1.672, 0),
+           * new Translation2d(0, 6.782),
+           * new Translation2d(1.672, 8.052),
+           */
+          new Translation2d(0.836, 0.635),
+          new Translation2d(0.836, 7.417),
+      };
+
+      redCoralStationVertices = Arrays.stream(blueCoralStationVertices)
           .map(blueVertex -> new Translation2d(fieldWidthMeters - blueVertex.getX(), blueVertex.getY()))
           .toArray(Translation2d[]::new);
     }
@@ -64,6 +88,10 @@ public class WorldSimulation {
   private ClimpIOSim climp;
   private ElevatorIOSim elevator;
   private GrabberIOSim grabber;
+
+  private PiSimulation pi;
+
+  private ArrayList<Coral> corals = new ArrayList<>();
 
   public WorldSimulation() {
     this(true);
@@ -84,6 +112,7 @@ public class WorldSimulation {
     this.climp = new ClimpIOSim();
     this.elevator = new ElevatorIOSim(0);
     this.grabber = new GrabberIOSim();
+    pi = new PiSimulation(fieldObstacles);
   }
 
   public Drive getDrive() {
@@ -114,11 +143,49 @@ public class WorldSimulation {
     return grabber;
   }
 
+  private void simulateLoadCoral(Pose2d robotPose) {
+    for (Coral coral : corals) {
+      if (coral.isInChute()) {
+        return;
+      }
+    }
+
+    for (var station : fieldObstacles.blueCoralStationVertices) {
+      if (robotPose.getTranslation().getDistance(station) < 1.0) {
+        var coral = new Coral();
+        coral.insertIntoChute(0);
+        corals.add(coral);
+        return;
+      }
+    }
+    for (var station : fieldObstacles.redCoralStationVertices) {
+      if (robotPose.getTranslation().getDistance(station) < 1.0) {
+        var coral = new Coral();
+        coral.insertIntoChute(0);
+        corals.add(coral);
+        return;
+      }
+    }
+  }
+
   public void simulationPeriodic() {
     // FIXME: Simulation should really simulate where the robot is, and not use
     // odometry for it
     // so we can simulate errors.
     Pose2d robotPose = RobotTracker.getInstance().getEstimatedPose();
+    simulateLoadCoral(robotPose);
+    pi.periodic(robotPose);
+
+    List<Coral> coralToRemove = new ArrayList<>();
+    final List<Pose3d> coralPoses = new ArrayList<>();
+    for (Coral coral : corals) {
+      coral.periodic(chute);
+      if (!coral.isInChute()) {
+        // coralToRemove.add(coral);
+      } else {
+        coralPoses.add(coral.getPose(robotPose, elevator, chute));
+      }
+    }
 
     // Offset for chute origin is 0.236 up in z.
     Pose3d chutePose = new Pose3d(0, 0, elevator.getChutePivotHeightMeters(), new Rotation3d())
@@ -133,5 +200,8 @@ public class WorldSimulation {
         // Climber arm
         new Pose3d(0, 0, 0, new Rotation3d()),
     });
+
+    corals.removeAll(coralToRemove);
+    Logger.recordOutput("FieldSimulation/Corals", coralPoses.toArray(Pose3d[]::new));
   }
 }

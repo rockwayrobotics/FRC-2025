@@ -1,5 +1,7 @@
 package frc.robot;
 
+import org.littletonrobotics.junction.Logger;
+
 public class ScoringState {
   public enum SensorState {
     NONE(0),
@@ -93,7 +95,7 @@ public class ScoringState {
   public SensorState sensorState = SensorState.NONE;
   public ReefBar reefBar = ReefBar.NEAR;
   public ReefHeight reefHeight = ReefHeight.L2;
-  private double cornerDistance = 0;
+  public double cornerDistance = 0;
 
   public void reset() {
     sensorState = SensorState.NONE;
@@ -110,10 +112,10 @@ public class ScoringState {
     switch (sensorState) {
       case FRONT_LEFT:
       case BACK_LEFT:
-        return reefHeight.pivotRadians();
+        return Math.PI - reefHeight.pivotRadians();
       case FRONT_RIGHT:
       case BACK_RIGHT:
-        return -reefHeight.pivotRadians();
+        return reefHeight.pivotRadians();
       default:
         // FIXME: This feels vaguely unsafe
         return 0;
@@ -147,5 +149,12 @@ public class ScoringState {
       default:
         return false;
     }
+  }
+
+  public void logOutput() {
+    Logger.recordOutput("RobotTracker/ScoringState/SensorState", sensorState);
+    Logger.recordOutput("RobotTracker/ScoringState/ReefBar", reefBar);
+    Logger.recordOutput("RobotTracker/ScoringState/ReefHeight", reefHeight);
+    Logger.recordOutput("RobotTracker/ScoringState/CornerDistance", cornerDistance);
   }
 }

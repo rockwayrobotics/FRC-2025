@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.ScoringState.SensorState;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ScoreCommands;
 import frc.robot.simulation.WorldSimulation;
@@ -105,6 +106,10 @@ public class RobotContainer {
     drive.disable();
   }
 
+  public WorldSimulation getWorldSimulation() {
+    return simulation;
+  }
+
   /**
    * Use this method to define your trigger->command mappings. Triggers can be
    * created via the
@@ -139,6 +144,55 @@ public class RobotContainer {
     driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
     driverController.a().whileTrue(ScoreCommands.score(drive, elevator, chute));
+
+    operatorController.povUpLeft().onTrue(new InstantCommand(() -> {
+      RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
+    }));
+    operatorController.povUpRight().onTrue(new InstantCommand(() -> {
+      RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
+    }));
+    operatorController.povDownLeft().onTrue(new InstantCommand(() -> {
+      RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
+    }));
+    operatorController.povDownRight().onTrue(new InstantCommand(() -> {
+      RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
+    }));
+    operatorController.povLeft().onTrue(new InstantCommand(() -> {
+      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+      if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
+      } else {
+        // Default to front
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
+      }
+    }));
+    operatorController.povRight().onTrue(new InstantCommand(() -> {
+      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+      if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
+      } else {
+        // Default to front
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
+      }
+    }));
+    operatorController.povDown().onTrue(new InstantCommand(() -> {
+      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+      if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
+      } else {
+        // Default to left
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
+      }
+    }));
+    operatorController.povUp().onTrue(new InstantCommand(() -> {
+      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+      if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
+      } else {
+        // Default to left
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
+      }
+    }));
 
     drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
   }

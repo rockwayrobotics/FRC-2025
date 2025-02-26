@@ -19,7 +19,7 @@ public class ChuteIOSim implements ChuteIO {
 
   public ChuteIOSim() {
     chuteSim = new SingleJointedArmSim(DCMotor.getNEO(1), Constants.Chute.PIVOT_GEAR_RATIO, Constants.Chute.MOI,
-        Constants.Chute.CHUTE_LENGTH_METERS, -Units.degreesToRadians(90), Units.degreesToRadians(90), false, 0.0);
+        Constants.Chute.CHUTE_LENGTH_METERS, Units.degreesToRadians(0), Units.degreesToRadians(180), false, 0.0);
   }
 
   @Override
