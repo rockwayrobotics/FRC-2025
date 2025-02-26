@@ -35,11 +35,11 @@ public class Chute extends SubsystemBase {
   }
 
   public void startShooting() {
-    io.setShooterVoltage(1);
+    io.setShooterSpeed(1);
   }
 
   public void stopShooting() {
-    io.setShooterVoltage(0);
+    io.setShooterSpeed(0);
   }
 
   public boolean isCoralLoading() {

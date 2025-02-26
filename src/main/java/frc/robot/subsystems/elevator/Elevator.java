@@ -35,6 +35,14 @@ public class Elevator extends SubsystemBase {
     goalHeightMeters = MathUtil.clamp(heightMeters, MIN_HEIGHT_METERS, MAX_HEIGHT_METERS);
   }
 
+  public double getHeightMeters() {
+    return heightMeters;
+  }
+
+  public double getGoalHeightMeters() {
+    return goalHeightMeters;
+  }
+
   public boolean atGoal() {
     // within 1 centimeter
     return Math.abs(heightMeters - goalHeightMeters) < 0.01;

@@ -13,7 +13,7 @@ public class ChuteIOSim implements ChuteIO {
   SingleJointedArmSim chuteSim;
   protected final PIDController pivotPid = new PIDController(0.8, 0, 0.1);
   private double pivotVoltage = 0;
-  private double shooterVoltage = 0;
+  private double shooterSpeed = 0;
   private boolean coralLoading = false;
   private boolean coralReady = false;
 
@@ -45,8 +45,8 @@ public class ChuteIOSim implements ChuteIO {
   }
 
   @Override
-  public void setShooterVoltage(double voltage) {
-    shooterVoltage = voltage;
+  public void setShooterSpeed(double speed) {
+    shooterSpeed = speed;
   }
 
   public void setCoralLoading(boolean loading) {
@@ -63,6 +63,6 @@ public class ChuteIOSim implements ChuteIO {
 
   public double getShooterVelocityRadPerSec() {
     // FIXME: This is ridiculous, but not sure how to model this.
-    return shooterVoltage;
+    return shooterSpeed;
   }
 }

@@ -60,7 +60,7 @@ public class ChuteIOReal implements ChuteIO {
   }
 
   @Override
-  public void setShooterVoltage(double voltage) {
-    shooterMotor.setVoltage(voltage);
+  public void setShooterSpeed(double speed) {
+    shooterMotor.set(speed);
   }
 }

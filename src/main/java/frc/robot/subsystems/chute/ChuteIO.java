@@ -18,6 +18,10 @@ public interface ChuteIO {
 
   public default void setPivotGoal(double pivotAngleRadians) {}
 
-  // FIXME: This is probably not what we want
-  public default void setShooterVoltage(double voltage) {}
+  /**
+   * Set the shooter to a normalized speed in [-1, 1].
+   * FIXME: This is probably not what we want
+   * @param speed
+   */
+  public default void setShooterSpeed(double speed) {}
 }

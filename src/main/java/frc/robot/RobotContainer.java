@@ -2,12 +2,16 @@ package frc.robot;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -126,16 +130,16 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    // driver & operator A              -> Coral.Pivot (swap side)
-    // driver & operator B              -> Coral.shoot
-    // driver & operator X              -> Elevator.set-L2
-    // driver & operator Y              -> Elevator.set-L3
-    // driver & operator left trigger   -> Algae.intake
-    // driver & operator right trigger  -> Algae.shoot
-    // driver & operator D-pad up       -> Coral.shift-up
-    // driver & operator D-pad down     -> Coral.shift-down
-    // driver & operator D-pad left     -> Algae.up
-    // driver & operator D-pad right    -> Algae.down
+    // driver & operator A -> Coral.Pivot (swap side)
+    // driver & operator B -> Coral.shoot
+    // driver & operator X -> Elevator.set-L2
+    // driver & operator Y -> Elevator.set-L3
+    // driver & operator left trigger -> Algae.intake
+    // driver & operator right trigger -> Algae.shoot
+    // driver & operator D-pad up -> Coral.shift-up
+    // driver & operator D-pad down -> Coral.shift-down
+    // driver & operator D-pad left -> Algae.up
+    // driver & operator D-pad right -> Algae.down
 
     // driver & operator right bumper held -> landing sequence
 
@@ -194,6 +198,43 @@ public class RobotContainer {
       }
     }));
 
+    drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
+  }
+
+  public void setupTestBindings() {
+    var testModelButtonLoop = new EventLoop();
+    CommandScheduler.getInstance().setActiveButtonLoop(testModelButtonLoop);
+
+    // FIXME: Do we want to intentionally limit the motors in some way? This code currently just changes the set points
+    // very gradually, but the motors are permitted to go at whatever speed in order to reach the set points.
+
+    // PoV Up but with different event loop
+    driverController.pov(0, 0, testModelButtonLoop)
+        .onTrue(Commands.runOnce(() -> elevator.setGoalHeightMeters(elevator.getGoalHeightMeters() + 0.01), elevator));
+    // PoV Up but with different event loop
+    driverController.pov(0, 180, testModelButtonLoop)
+        .onTrue(Commands.runOnce(() -> elevator.setGoalHeightMeters(elevator.getGoalHeightMeters() - 0.01), elevator));
+    // PoV Right but with different event loop
+    driverController.pov(0, 90, testModelButtonLoop)
+        .onTrue(Commands.runOnce(
+            () -> chute.setPivotGoalRads(-Units.degreesToRadians(1) + chute.getPivotGoalRads()),
+            chute));
+    // PoV Left but with different event loop
+    driverController.pov(0, 270, testModelButtonLoop)
+        .onTrue(Commands.runOnce(
+            () -> chute.setPivotGoalRads(Units.degreesToRadians(1) + chute.getPivotGoalRads()),
+            chute));
+    driverController.a().whileTrue(Commands.run(() -> chute.startShooting(), chute).finallyDo(() -> chute.stopShooting()));
+
+    // This sets the default command to drive very slowly. Remember to reset this when exiting test mode.
+    CommandScheduler.getInstance().cancel(drive.getDefaultCommand());
+    drive.setDefaultCommand(DriveCommands.defaultDrive(() -> driverController.getLeftY() * 0.1,
+        () -> driverController.getRightX() * 0.1, drive));
+  }
+
+  public void resetTestBindings() {
+    CommandScheduler.getInstance().setActiveButtonLoop(CommandScheduler.getInstance().getDefaultButtonLoop());
+    CommandScheduler.getInstance().cancel(drive.getDefaultCommand());
     drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
   }
 
