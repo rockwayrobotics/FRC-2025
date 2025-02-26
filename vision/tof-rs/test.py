@@ -1,43 +1,38 @@
-from vl53l1x import PyVL53L1X
-
+from vl53l1x import TofSensor
 import time
 
-# Create sensor with custom timing parameters
-sensor = PyVL53L1X(bus=1)
-# Initialize
-sensor.init(True)
-sensor.set_long_distance_mode(False)
-sensor.set_timing_budget_ms(20)
-sensor.set_inter_measurement_period_ms(25)
+def main():
+    # Create and configure sensor
+    sensor = TofSensor(bus=1)
+    sensor.init(True)  # Initialize with 2.8V mode
 
-# time.sleep(0.1)
-# Read back the actual values
-actual_budget = sensor.get_timing_budget_ms()
-actual_period = sensor.get_inter_measurement_period_ms()
-print(f"Timing budget: {actual_budget} ms")
-print(f"Inter-measurement period: {actual_period} ms")
+    # Configure sensor parameters
+    sensor.set_long_distance_mode(False)  # Short distance mode for faster readings
+    sensor.set_timing_budget_ms(20)  # 20ms is minimum for short mode
+    sensor.set_inter_measurement_period_ms(25)  # Must be >= timing budget
 
-# Try changing the values
+    # Print configuration
+    print("Sensor Configuration:")
+    print(f"Timing budget: {sensor.get_timing_budget_ms()} ms")
+    print(f"Inter-measurement period: {sensor.get_inter_measurement_period_ms()} ms")
 
-# Verify the new values
-# print(f"New timing budget: {sensor.get_timing_budget_ms()} ms")
-# print(f"New inter-measurement period: {sensor.get_inter_measurement_period_ms()} ms")
+    # Start streaming mode
+    print("\nStarting streaming mode...")
+    sensor.start_streaming()
 
-# data = sensor.read_bytes(0, 256)
-# for index, value in enumerate(data):
-#     print(f"0x{index:02x}: 0x{value:02x}")
+    try:
+        # Main loop
+        while True:
+            # Get latest reading (timestamp, distance)
+            if reading := sensor.get_latest_reading():
+                timestamp, distance = reading
+                print(f"Time: {timestamp:8.3f}s | Distance: {distance:4d}mm")
+            # time.sleep(0.001)  # Small sleep to prevent CPU spinning
 
-# Start ranging
-sensor.start_ranging()
+    except KeyboardInterrupt:
+        print("\nStopping streaming...")
+        sensor.stop_streaming()
+        print("Sensor stopped.")
 
-last = time.monotonic()
-try:
-    while True:
-        if sensor.is_data_ready():
-            now = time.monotonic()
-            distance = sensor.get_distance()
-            print(f"{now - last} | Distance: {distance}mm")
-            sensor.clear_interrupt()
-            last = now
-except KeyboardInterrupt:
-    sensor.stop_ranging()
+if __name__ == "__main__":
+    main()

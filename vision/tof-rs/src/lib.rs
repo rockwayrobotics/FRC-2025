@@ -1,9 +1,18 @@
 use linux_embedded_hal::I2cdev;
 use pyo3::prelude::*;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::{Duration, Instant};
 use vl53l1x_uld::{DistanceMode, IOVoltage, VL53L1X};
 
 /// Valid timing budget values in milliseconds
 const VALID_TIMING_BUDGETS: &[u16] = &[15, 20, 33, 50, 100, 200, 500];
+
+#[derive(Clone)]
+struct SensorReading {
+    timestamp: f64,
+    distance: u16,
+}
 
 #[pyclass]
 #[doc = "VL53L1X Time-of-Flight distance sensor wrapper.\n\n\
@@ -11,7 +20,9 @@ const VALID_TIMING_BUDGETS: &[u16] = &[15, 20, 33, 50, 100, 200, 500];
          Note: 15ms is only available in short distance mode.\n\
          Inter-measurement period must be >= timing budget."]
 struct TofSensor {
-    sensor: VL53L1X<I2cdev>,
+    sensor: Arc<Mutex<VL53L1X<I2cdev>>>,
+    latest_reading: Arc<Mutex<Option<SensorReading>>>,
+    is_streaming: Arc<Mutex<bool>>,
 }
 
 #[pymethods]
@@ -19,21 +30,20 @@ impl TofSensor {
     #[new]
     #[pyo3(signature = (bus, address=None))]
     fn new(bus: u8, address: Option<u8>) -> PyResult<Self> {
-        // Validate timing budget
-
         let i2c = I2cdev::new(format!("/dev/i2c-{}", bus)).map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Failed to open I2C bus: {}", e))
         })?;
 
-        let vl53l1x = TofSensor {
-            sensor: VL53L1X::new(i2c, address.unwrap_or(0x29)),
-        };
-
-        Ok(vl53l1x)
+        Ok(TofSensor {
+            sensor: Arc::new(Mutex::new(VL53L1X::new(i2c, address.unwrap_or(0x29)))),
+            latest_reading: Arc::new(Mutex::new(None)),
+            is_streaming: Arc::new(Mutex::new(false)),
+        })
     }
 
-    fn init(&mut self, voltage_2v8: bool) -> PyResult<()> {
-        self.sensor
+    fn init(&self, voltage_2v8: bool) -> PyResult<()> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor
             .init(if voltage_2v8 {
                 IOVoltage::Volt2_8
             } else {
@@ -47,8 +57,9 @@ impl TofSensor {
             })
     }
 
-    fn start_ranging(&mut self) -> PyResult<()> {
-        self.sensor.start_ranging().map_err(|e| {
+    fn start_ranging(&self) -> PyResult<()> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor.start_ranging().map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
                 "Failed to start ranging: {:?}",
                 e
@@ -56,14 +67,16 @@ impl TofSensor {
         })
     }
 
-    fn stop_ranging(&mut self) -> PyResult<()> {
-        self.sensor.stop_ranging().map_err(|e| {
+    fn stop_ranging(&self) -> PyResult<()> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor.stop_ranging().map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Failed to stop ranging: {:?}", e))
         })
     }
 
-    fn is_data_ready(&mut self) -> PyResult<bool> {
-        self.sensor.is_data_ready().map_err(|e| {
+    fn is_data_ready(&self) -> PyResult<bool> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor.is_data_ready().map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
                 "Failed to check data ready: {:?}",
                 e
@@ -71,14 +84,16 @@ impl TofSensor {
         })
     }
 
-    fn get_distance(&mut self) -> PyResult<u16> {
-        self.sensor.get_distance().map_err(|e| {
+    fn get_distance(&self) -> PyResult<u16> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor.get_distance().map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Failed to get distance: {:?}", e))
         })
     }
 
-    fn get_range_status(&mut self) -> PyResult<u8> {
-        Ok(self.sensor.get_range_status().map_err(|e| {
+    fn get_range_status(&self) -> PyResult<u8> {
+        let mut sensor = self.sensor.lock().unwrap();
+        Ok(sensor.get_range_status().map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
                 "Failed to get range status: {:?}",
                 e
@@ -86,8 +101,9 @@ impl TofSensor {
         })? as u8)
     }
 
-    fn clear_interrupt(&mut self) -> PyResult<()> {
-        self.sensor.clear_interrupt().map_err(|e| {
+    fn clear_interrupt(&self) -> PyResult<()> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor.clear_interrupt().map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
                 "Failed to clear interrupt: {:?}",
                 e
@@ -95,9 +111,7 @@ impl TofSensor {
         })
     }
 
-    /// Set the timing budget in milliseconds.
-    /// Valid values: 15 (short mode only), 20, 33, 50, 100, 200, 500
-    fn set_timing_budget_ms(&mut self, budget_ms: u16) -> PyResult<()> {
+    fn set_timing_budget_ms(&self, budget_ms: u16) -> PyResult<()> {
         if !VALID_TIMING_BUDGETS.contains(&budget_ms) {
             return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
                 "Invalid timing budget. Must be one of: {:?}",
@@ -105,7 +119,8 @@ impl TofSensor {
             )));
         }
 
-        self.sensor.set_timing_budget_ms(budget_ms).map_err(|e| {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor.set_timing_budget_ms(budget_ms).map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
                 "Failed to set timing budget: {:?}",
                 e
@@ -113,16 +128,25 @@ impl TofSensor {
         })?;
 
         // Verify the setting was applied correctly
-        let actual_budget = self.get_timing_budget_ms()?;
+        let actual_budget = sensor.get_timing_budget_ms().map_err(|e| {
+            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
+                "Failed to get timing budget: {:?}",
+                e
+            ))
+        })?;
         println!("actual_timing_budget: {}", actual_budget);
 
         Ok(())
     }
 
-    /// Set the inter-measurement period in milliseconds.
-    /// Must be greater than or equal to the timing budget.
-    fn set_inter_measurement_period_ms(&mut self, period_ms: u16) -> PyResult<()> {
-        let current_budget = self.get_timing_budget_ms()?;
+    fn set_inter_measurement_period_ms(&self, period_ms: u16) -> PyResult<()> {
+        let mut sensor = self.sensor.lock().unwrap();
+        let current_budget = sensor.get_timing_budget_ms().map_err(|e| {
+            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
+                "Failed to get timing budget: {:?}",
+                e
+            ))
+        })?;
 
         if period_ms < current_budget + 4 {
             return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
@@ -131,7 +155,7 @@ impl TofSensor {
             ));
         }
 
-        self.sensor
+        sensor
             .set_inter_measurement_period_ms(period_ms)
             .map_err(|e| {
                 PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
@@ -140,14 +164,20 @@ impl TofSensor {
                 ))
             })?;
 
-        let actual_period = self.get_inter_measurement_period_ms()?;
+        let actual_period = sensor.get_inter_measurement_period_ms().map_err(|e| {
+            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
+                "Failed to get inter-measurement period: {:?}",
+                e
+            ))
+        })?;
         println!("actual_inter_measurement_period: {}", actual_period);
 
         Ok(())
     }
 
-    fn get_timing_budget_ms(&mut self) -> PyResult<u16> {
-        self.sensor.get_timing_budget_ms().map_err(|e| {
+    fn get_timing_budget_ms(&self) -> PyResult<u16> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor.get_timing_budget_ms().map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
                 "Failed to get timing budget: {:?}",
                 e
@@ -155,9 +185,9 @@ impl TofSensor {
         })
     }
 
-    /// Get the current inter-measurement period in milliseconds
-    fn get_inter_measurement_period_ms(&mut self) -> PyResult<u16> {
-        self.sensor.get_inter_measurement_period_ms().map_err(|e| {
+    fn get_inter_measurement_period_ms(&self) -> PyResult<u16> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor.get_inter_measurement_period_ms().map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
                 "Failed to get inter-measurement period: {:?}",
                 e
@@ -165,8 +195,9 @@ impl TofSensor {
         })
     }
 
-    fn set_long_distance_mode(&mut self, long_range: bool) -> PyResult<()> {
-        self.sensor
+    fn set_long_distance_mode(&self, long_range: bool) -> PyResult<()> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor
             .set_distance_mode(if long_range {
                 DistanceMode::Long
             } else {
@@ -179,16 +210,103 @@ impl TofSensor {
                 ))
             })
     }
-    fn read_bytes(&mut self, reg: u16, len: usize) -> PyResult<Vec<u8>> {
+
+    fn read_bytes(&self, reg: u16, len: usize) -> PyResult<Vec<u8>> {
+        let mut sensor = self.sensor.lock().unwrap();
         let a = reg.to_be_bytes();
         let mut buf = vec![0; len];
-        self.sensor.read_bytes(a, &mut buf).map_err(|e| {
+        sensor.read_bytes(a, &mut buf).map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
                 "Failed to read bytes: {:?}",
                 e
             ))
         })?;
         Ok(buf)
+    }
+
+    // Streaming methods (from previous implementation)
+    fn start_streaming(&mut self) -> PyResult<()> {
+        let sensor = Arc::clone(&self.sensor);
+        let latest_reading = Arc::clone(&self.latest_reading);
+        let is_streaming = Arc::clone(&self.is_streaming);
+
+        {
+            let mut streaming = is_streaming.lock().unwrap();
+            if *streaming {
+                return Ok(());
+            }
+            *streaming = true;
+        }
+
+        // Start the sensor
+        {
+            let mut sensor = sensor.lock().unwrap();
+            sensor.start_ranging().map_err(|e| {
+                PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
+                    "Failed to start ranging: {:?}",
+                    e
+                ))
+            })?;
+        }
+
+        let start_time = Instant::now(); // Reference point for monotonic time
+
+        thread::Builder::new()
+            .name("tof_sensor_thread".to_string())
+            .spawn(move || {
+                let timing_budget = {
+                    let mut sensor = sensor.lock().unwrap();
+                    sensor.get_timing_budget_ms().unwrap_or(20)
+                };
+
+                while *is_streaming.lock().unwrap() {
+                    let next_reading_time =
+                        Instant::now() + Duration::from_millis(timing_budget as u64);
+
+                    // Only check sensor when we're close to the timing budget
+                    if next_reading_time.saturating_duration_since(Instant::now())
+                        <= Duration::from_millis(1)
+                    {
+                        let mut sensor = sensor.lock().unwrap();
+                        if sensor.is_data_ready().unwrap_or(false) {
+                            if let Ok(distance) = sensor.get_distance() {
+                                let reading = SensorReading {
+                                    timestamp: start_time.elapsed().as_secs_f64(), // Monotonic time since start
+                                    distance,
+                                };
+                                *latest_reading.lock().unwrap() = Some(reading);
+                                sensor.clear_interrupt().ok();
+                            }
+                        }
+                    }
+
+                    thread::sleep(Duration::from_micros(100));
+                }
+
+                // Stop ranging when streaming ends
+                if let Ok(mut sensor) = sensor.lock() {
+                    let _ = sensor.stop_ranging();
+                }
+            })
+            .map_err(|e| {
+                PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!(
+                    "Failed to spawn sensor thread: {}",
+                    e
+                ))
+            })?;
+
+        Ok(())
+    }
+
+    fn get_latest_reading(&self) -> PyResult<Option<(f64, u16)>> {
+        let reading = self.latest_reading.lock().unwrap();
+        Ok(reading.as_ref().map(|r| (r.timestamp, r.distance)))
+    }
+
+    fn stop_streaming(&mut self) -> PyResult<()> {
+        let mut is_streaming = self.is_streaming.lock().unwrap();
+        *is_streaming = false;
+        Ok(())
     }
 }
 
