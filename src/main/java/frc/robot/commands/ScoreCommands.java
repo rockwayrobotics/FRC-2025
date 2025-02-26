@@ -56,7 +56,7 @@ public class ScoreCommands {
             }),
             Commands.run(() -> {
               chute.startShooting();
-            }).withTimeout(1.0),
+            }).withTimeout(2.0),
             Commands.runOnce(() -> {
               chute.stopShooting();
             })
