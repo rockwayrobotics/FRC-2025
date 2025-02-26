@@ -4,6 +4,9 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radians;
+
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 
@@ -67,6 +70,12 @@ public final class Constants {
   }
 
   public static final class Chute {
+    public static final double PIVOT_TROUGH = Radians.convertFrom(40, Degrees);
+    public static final double PIVOT_L2 = Radians.convertFrom(30, Degrees);
+    public static final double PIVOT_L3 = Radians.convertFrom(30, Degrees);
+    public static final double PIVOT_LOAD = Radians.convertFrom(30, Degrees);
+    public static final double PIVOT_FLAT = Radians.convertFrom(90, Degrees);
+
     public static final double PIVOT_GEAR_RATIO = 45; // 60/12 and 9:1 planetary
 
     // FIXME: Complete guess
@@ -82,6 +91,9 @@ public final class Constants {
   }
 
   public static final class Drive {
+    // Our target speed for scoring in m/s
+    public static final double SCORING_SPEED = 0.45;
+
     public static final double TRACK_WIDTH_METERS = 0.56;
     public static final double MAX_SPEED_MPS = 4.;
     public static final double MAX_ACCEL_MPSS = 2.;
@@ -108,6 +120,15 @@ public final class Constants {
   }
 
   public static final class Elevator {
+    // Predefined heights in meters
+    public static final double TROUGH_HEIGHT = 1.0;
+    public static final double L2_HEIGHT = 2.0;
+    public static final double L3_HEIGHT = 3.0;
+    public static final double LOAD_HEIGHT = 4.0;
+    public static final double ALGAE_L2_HEIGHT = 2.0;
+    public static final double ALGAE_L3_HEIGHT = 3.0;
+    public static final double CLIMB_HEIGHT = 0.0;
+
     public static final double SPROCKET_RADIUS_METERS = 0.042;
     public static final double GEAR_RATIO = 2;
     public static final double CARRIAGE_MASS_KG = 5;

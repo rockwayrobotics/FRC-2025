@@ -9,7 +9,8 @@ public interface ChuteIO {
     public double pivotAngleRadians = 0.0;
     public double pivotVelocityRadPerSec = 0.0;
     public double pivotSetpoint = 0.0;
-    public boolean coralLoaded = false;
+    public boolean coralLoading = false;
+    public boolean coralReady = false;
     public double shooterVelocityRadPerSec = 0.0;
   }
 

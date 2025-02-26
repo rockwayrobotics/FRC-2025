@@ -18,6 +18,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
 public class ChuteIOReal implements ChuteIO {
+  protected final DigitalInput coralLoadSensor = new DigitalInput(Constants.Digital.CORAL_LOAD_BEAMBREAK);
   protected final DigitalInput coralShootSensor = new DigitalInput(Constants.Digital.CORAL_SHOOT_BEAMBREAK);
 
   protected final SparkMax pivotMotor = new SparkMax(Constants.CAN.PIVOT_MOTOR, MotorType.kBrushless);
@@ -46,7 +47,8 @@ public class ChuteIOReal implements ChuteIO {
     REVUtils.ifOk(pivotMotor, pivotEncoder::getVelocity, (value) -> inputs.pivotVelocityRadPerSec = value / 60.0);
     REVUtils.ifOk(shooterMotor, shooterEncoder::getVelocity, (value) -> inputs.shooterVelocityRadPerSec = value);
     // FIXME: Should we be reading this at 50Hz?
-    inputs.coralLoaded = coralShootSensor.get();
+    inputs.coralLoading = coralLoadSensor.get();
+    inputs.coralReady = coralShootSensor.get();
   }
 
   @Override

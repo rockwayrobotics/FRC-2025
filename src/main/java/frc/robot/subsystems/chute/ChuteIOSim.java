@@ -14,7 +14,8 @@ public class ChuteIOSim implements ChuteIO {
   protected final PIDController pivotPid = new PIDController(0.8, 0, 0.1);
   private double pivotVoltage = 0;
   private double shooterVoltage = 0;
-  private boolean coralLoaded = false;
+  private boolean coralLoading = false;
+  private boolean coralReady = false;
 
   public ChuteIOSim() {
     chuteSim = new SingleJointedArmSim(DCMotor.getNEO(1), Constants.Chute.PIVOT_GEAR_RATIO, Constants.Chute.MOI,
@@ -28,7 +29,8 @@ public class ChuteIOSim implements ChuteIO {
 
     chuteSim.update(0.02);
     inputs.pivotSetpoint = pivotPid.getSetpoint();
-    inputs.coralLoaded = coralLoaded;
+    inputs.coralLoading = coralLoading;
+    inputs.coralReady = coralReady;
     inputs.pivotAngleRadians = chuteSim.getAngleRads();
     inputs.pivotVelocityRadPerSec = chuteSim.getVelocityRadPerSec();
 
@@ -45,8 +47,12 @@ public class ChuteIOSim implements ChuteIO {
     shooterVoltage = voltage;
   }
 
-  public void setCoralLoaded(boolean loaded) {
-    coralLoaded = loaded;
+  public void setCoralLoading(boolean loading) {
+    coralLoading = loading;
+  }
+
+  public void setCoralReady(boolean ready) {
+    coralLoading = ready;
   }
 
   public double getPivotAngleRads() {

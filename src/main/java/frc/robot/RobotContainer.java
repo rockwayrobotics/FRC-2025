@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.ScoreCommands;
 import frc.robot.simulation.WorldSimulation;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chute.ChuteIOReal;
@@ -137,7 +138,7 @@ public class RobotContainer {
     driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
     driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-    driverController.a().whileTrue(DriveCommands.driveForward(drive));
+    driverController.a().whileTrue(ScoreCommands.score(drive, elevator, chute));
 
     drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
   }

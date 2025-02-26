@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import frc.robot.ScoringState.ReefBar;
 
 public class RobotTracker {
   private static RobotTracker instance = new RobotTracker();
@@ -20,6 +21,7 @@ public class RobotTracker {
   private Pose2d odometryPose = new Pose2d();
   private Pose2d estimatedPose = new Pose2d();
   private ChassisSpeeds robotVelocity = new ChassisSpeeds();
+  private ScoringState scoringState = new ScoringState();
 
   public Rotation2d getRotation() {
     return estimatedPose.getRotation();
@@ -85,6 +87,10 @@ public class RobotTracker {
     odometryPose = pose;
     estimatedPose = pose;
     poseEstimator.resetPosition(rawGyroRotation, leftMeters, rightMeters, pose);
+  }
+
+  public ScoringState getScoringState() {
+    return scoringState;
   }
 
   public void periodic() {
