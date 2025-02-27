@@ -18,16 +18,19 @@ def main():
 
     # Start streaming mode
     print("\nStarting streaming mode...")
+    # sensor.start_ranging()
     sensor.start_streaming()
 
     try:
         # Main loop
+        last = 0
         while True:
-            # Get latest reading (timestamp, distance)
             if reading := sensor.get_latest_reading():
                 timestamp, distance = reading
-                print(f"Time: {timestamp:8.3f}s | Distance: {distance:4d}mm")
-            # time.sleep(0.001)  # Small sleep to prevent CPU spinning
+                if timestamp != last:
+                    print(f"Time: {timestamp:8.40f}s | Distance: {distance:4d}mm")
+                    last = timestamp
+            time.sleep(0.001)  # Small sleep to prevent CPU spinning
 
     except KeyboardInterrupt:
         print("\nStopping streaming...")

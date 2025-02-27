@@ -258,15 +258,9 @@ impl TofSensor {
                     let mut sensor = sensor.lock().unwrap();
                     sensor.get_timing_budget_ms().unwrap_or(20)
                 };
-
+                let mut last = 0;
                 while *is_streaming.lock().unwrap() {
-                    let next_reading_time =
-                        Instant::now() + Duration::from_millis(timing_budget as u64);
-
-                    // Only check sensor when we're close to the timing budget
-                    if next_reading_time.saturating_duration_since(Instant::now())
-                        <= Duration::from_millis(1)
-                    {
+                    if last >= timing_budget {
                         let mut sensor = sensor.lock().unwrap();
                         if sensor.is_data_ready().unwrap_or(false) {
                             if let Ok(distance) = sensor.get_distance() {
@@ -276,11 +270,16 @@ impl TofSensor {
                                 };
                                 *latest_reading.lock().unwrap() = Some(reading);
                                 sensor.clear_interrupt().ok();
+                                last = 0;
                             }
                         }
                     }
-
-                    thread::sleep(Duration::from_micros(100));
+                    last += 1;
+                    if last < timing_budget - 1 {
+                        thread::sleep(Duration::from_millis(1));
+                    } else {
+                        thread::sleep(Duration::from_micros(100));
+                    }
                 }
 
                 // Stop ranging when streaming ends
