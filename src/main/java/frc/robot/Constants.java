@@ -5,6 +5,8 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Kilograms;
+import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.Radians;
 
 import com.pathplanner.lib.config.ModuleConfig;
@@ -188,7 +190,7 @@ public final class Constants {
 
   public static final class PathPlanner {
     // FIXME: This needs to be measured!
-    public static final double ROBOT_MASS_KG = 112.0;
+    public static final double ROBOT_MASS_KG = Kilograms.convertFrom(112.0, Pounds);
     // FIXME: This needs to be measured!
     public static final double ROBOT_MOI = 7.5;
     public static final RobotConfig CONFIG = new RobotConfig(

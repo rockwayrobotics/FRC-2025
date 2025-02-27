@@ -30,13 +30,17 @@ public class ScoringState {
     public double nearDistance() {
       switch (this) {
         case FRONT_LEFT:
-          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX() - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX()
+              - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case FRONT_RIGHT:
-          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX() - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX()
+              - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case BACK_LEFT:
-          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS - Constants.ToFSensor.BACK_LEFT.getX() + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS - Constants.ToFSensor.BACK_LEFT.getX()
+              + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case BACK_RIGHT:
-          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS - Constants.ToFSensor.BACK_RIGHT.getX() + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+          return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS - Constants.ToFSensor.BACK_RIGHT.getX()
+              + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         default:
           return 0;
       }
@@ -52,13 +56,17 @@ public class ScoringState {
     public double farDistance() {
       switch (this) {
         case FRONT_LEFT:
-          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX() - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX()
+              - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case FRONT_RIGHT:
-          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX() - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX()
+              - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case BACK_LEFT:
-          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS - Constants.ToFSensor.BACK_LEFT.getX() + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS - Constants.ToFSensor.BACK_LEFT.getX()
+              + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         case BACK_RIGHT:
-          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS - Constants.ToFSensor.BACK_RIGHT.getX() + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+          return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS - Constants.ToFSensor.BACK_RIGHT.getX()
+              + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
         default:
           return 0;
       }
@@ -95,17 +103,11 @@ public class ScoringState {
   public SensorState sensorState = SensorState.NONE;
   public ReefBar reefBar = ReefBar.NEAR;
   public ReefHeight reefHeight = ReefHeight.L2;
-  public double cornerDistance = 0;
 
   public void reset() {
     sensorState = SensorState.NONE;
     reefBar = ReefBar.NEAR;
     reefHeight = ReefHeight.L2;
-    cornerDistance = 0;
-  }
-
-  public void setCornerDistance(double cornerDistance) {
-    this.cornerDistance = cornerDistance;
   }
 
   public double pivotRadians() {
@@ -122,32 +124,17 @@ public class ScoringState {
     }
   }
 
-  /**
-   * Based on the current encoder position and the stored corner position,
-   * using the sensor state and target bar, return true if we should shoot now.
-   * @param leftPositionMeters
-   * @return
-   */
-  public boolean readyToShoot(double leftPositionMeters) {
-    switch (sensorState) {
-      case FRONT_LEFT:
-      case FRONT_RIGHT:
-        switch (reefBar) {
-          case NEAR:
-            return sensorState.nearDistance() <= leftPositionMeters - cornerDistance;
-          case FAR:
-            return sensorState.farDistance() <= leftPositionMeters - cornerDistance;
-        }
-      case BACK_LEFT:
-      case BACK_RIGHT:
-        switch (reefBar) {
-          case NEAR:
-            return sensorState.nearDistance() >= leftPositionMeters - cornerDistance;
-          case FAR:
-            return sensorState.farDistance() >= leftPositionMeters - cornerDistance;
-        }
+  public double getTargetWallDistance() {
+    int backOrForwards = 1;
+    if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
+      backOrForwards = -1;
+    }
+
+    switch (reefBar) {
+      case FAR:
+        return backOrForwards * sensorState.farDistance();
       default:
-        return false;
+        return backOrForwards * sensorState.nearDistance();
     }
   }
 
@@ -155,6 +142,5 @@ public class ScoringState {
     Logger.recordOutput("RobotTracker/ScoringState/SensorState", sensorState);
     Logger.recordOutput("RobotTracker/ScoringState/ReefBar", reefBar);
     Logger.recordOutput("RobotTracker/ScoringState/ReefHeight", reefHeight);
-    Logger.recordOutput("RobotTracker/ScoringState/CornerDistance", cornerDistance);
   }
 }
