@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.controllers.PPLTVController;
@@ -56,6 +57,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
 import frc.robot.util.TimestampSynchronizer;
+import frc.robot.util.Tuner;
 
 public class Drive extends SubsystemBase {
   private final DriveIO io;
@@ -88,6 +90,7 @@ public class Drive extends SubsystemBase {
   double cornerLastChangeTime = 0;
   int noDataCounter = 0;
   TimestampSynchronizer timestampSynchronizer = new TimestampSynchronizer();
+  Tuner tunableNumber = new Tuner("TunableNumber", 1, true);
 
   // Publish RobotPose for Shuffleboard.
   ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
@@ -236,6 +239,7 @@ public class Drive extends SubsystemBase {
     Logger.processInputs("Drive/Gyro", gyroInputs);
 
     beamBreak.periodic();
+    System.out.println(tunableNumber.get());
 
     double now = Timer.getFPGATimestamp();
     tofDistancePeriodic(now);
@@ -312,6 +316,7 @@ public class Drive extends SubsystemBase {
 
   /**
    * This method is used for non-PID trajectory following.
+   * 
    * @param speeds in m/s
    */
   public void setTankDrive(ChassisSpeeds speeds) {
