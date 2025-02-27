@@ -28,7 +28,7 @@ def main():
             if reading := sensor.get_latest_reading():
                 timestamp, distance = reading
                 if timestamp != last:
-                    print(f"Time: {timestamp:8.40f}s | Distance: {distance:4d}mm")
+                    print(f"Delta: {timestamp - last} | Time: {timestamp:8.4f}ms | Distance: {distance:4d}mm")
                     last = timestamp
             time.sleep(0.001)  # Small sleep to prevent CPU spinning
 

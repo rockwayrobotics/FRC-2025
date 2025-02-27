@@ -3,6 +3,7 @@ use pyo3::prelude::*;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
+use thread_priority::{ThreadBuilder, ThreadPriority};
 use vl53l1x_uld::{DistanceMode, IOVoltage, VL53L1X};
 
 /// Valid timing budget values in milliseconds
@@ -251,9 +252,17 @@ impl TofSensor {
 
         let start_time = Instant::now(); // Reference point for monotonic time
 
-        thread::Builder::new()
+        // Create thread with highest possible priority
+        ThreadBuilder::default()
             .name("tof_sensor_thread".to_string())
-            .spawn(move || {
+            .priority(ThreadPriority::Max) // Set the thread to maximum priority
+            .spawn(move |_| {
+                // Log the current thread priority - useful for debugging
+                println!(
+                    "ToF sensor thread started with priority: {:?}",
+                    thread_priority::get_current_thread_priority().unwrap_or(ThreadPriority::Min)
+                );
+
                 let timing_budget = {
                     let mut sensor = sensor.lock().unwrap();
                     sensor.get_timing_budget_ms().unwrap_or(20)
@@ -265,7 +274,8 @@ impl TofSensor {
                         if sensor.is_data_ready().unwrap_or(false) {
                             if let Ok(distance) = sensor.get_distance() {
                                 let reading = SensorReading {
-                                    timestamp: start_time.elapsed().as_secs_f64(), // Monotonic time since start
+                                    timestamp: Instant::now().duration_since(start_time).as_millis()
+                                        as f64, // Monotonic time since start
                                     distance,
                                 };
                                 *latest_reading.lock().unwrap() = Some(reading);
