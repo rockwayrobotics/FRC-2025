@@ -18,15 +18,17 @@ import frc.robot.ScoringState.SensorState;
 import frc.robot.simulation.WorldSimulation.FieldObstacles;
 
 public class PiSimulation {
-  public static final double[] DEFAULT_STATE = new double[] {SensorState.NONE.piValue(), 0};
+  public static final double[] DEFAULT_STATE = new double[] { SensorState.NONE.piValue(), 0 };
   private final DoubleArraySubscriber piStateSubscriber;
   private final FloatArrayPublisher cornerPublisher;
   private final FieldObstacles fieldObstacles;
   private double[] piState = DEFAULT_STATE;
-  private double cornerTimestamp;
 
-  public record TimeDistance(float time, float distance) {}
-  public record CornerInfo(double cornerTimestamp, double angle) {}
+  public record TimeDistance(float time, float distance) {
+  }
+
+  public record CornerInfo(double cornerTimestamp, double angle) {
+  }
 
   private CircularBuffer<TimeDistance> data = new CircularBuffer<>(25);
 
@@ -37,11 +39,17 @@ public class PiSimulation {
     this.fieldObstacles = fieldObstacles;
   }
 
+  private boolean isLineLike(LinearRegression regression) {
+    final int flatSlopeThreshold = 60;
+    return regression.r2value > 0.8 || regression.slope < flatSlopeThreshold;
+    // Possibly using RMSE is better so we can get a fit for flat slopes?
+    // return regression.r2value > 0.8 || (regression.rmse / 600) < 0.05;
+  }
+
   private Optional<CornerInfo> addRecord(float distanceMm, double speed) {
     // Basically corner_detector.py in Java
     final int largeWindow = 25;
     final int smallWindow = 10;
-    final int flatSlopeThreshold = 60;
     final double slopeThreshold = 400;
     final float minDistance = 150;
     final float maxDistance = 750;
@@ -55,23 +63,21 @@ public class PiSimulation {
       return Optional.empty();
     }
 
-    data.addLast(new TimeDistance((float)Timer.getFPGATimestamp(), distanceMm));
+    data.addLast(new TimeDistance((float) Timer.getFPGATimestamp(), distanceMm));
     if (data.size() < largeWindow) {
       return Optional.empty();
     }
 
     var firstRegression = new LinearRegression(data, 0, smallWindow);
     var secondRegression = new LinearRegression(data, data.size() - smallWindow, data.size());
-    if (
-      (firstRegression.r2value > 0.8 || Math.abs(firstRegression.slope) < flatSlopeThreshold) &&
-      (secondRegression.r2value > 0.8 || Math.abs(secondRegression.slope) < flatSlopeThreshold) &&
-      secondRegression.slope - firstRegression.slope > slopeThreshold
-    ) {
+    if (isLineLike(firstRegression) && isLineLike(secondRegression) &&
+        secondRegression.slope - firstRegression.slope > slopeThreshold) {
       if (Math.abs(firstRegression.slope - secondRegression.slope) < 1e-6) {
         return Optional.empty();
       }
 
-      double cornerTimestamp = (secondRegression.intercept - firstRegression.intercept) / (firstRegression.slope - secondRegression.slope);
+      double cornerTimestamp = (secondRegression.intercept - firstRegression.intercept)
+          / (firstRegression.slope - secondRegression.slope);
       // Convert m/s to mm/s since slope has y-values in mm.
       double angle = Math.atan2(secondRegression.slope, speed * 1000);
       CornerInfo cornerInfo = new CornerInfo(cornerTimestamp, angle);
@@ -113,9 +119,9 @@ public class PiSimulation {
         + sensorTransform.getRotation().getRadians();
     double distanceMm = ToFSimUtils.simulateSensor(sensorPose, angle, fieldObstacles);
     if (distanceMm < Double.POSITIVE_INFINITY) {
-      var maybeCornerInfo = this.addRecord((float)distanceMm, piState[1]);
+      var maybeCornerInfo = this.addRecord((float) distanceMm, piState[1]);
       maybeCornerInfo.ifPresent(cornerInfo -> {
-        cornerPublisher.set(new float[] {(float)cornerInfo.cornerTimestamp, (float)cornerInfo.angle});
+        cornerPublisher.set(new float[] { (float) cornerInfo.cornerTimestamp, (float) cornerInfo.angle });
         data.clear();
       });
     }
