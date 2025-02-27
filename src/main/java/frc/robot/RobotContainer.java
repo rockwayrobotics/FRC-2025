@@ -224,7 +224,8 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(
             () -> chute.setPivotGoalRads(Units.degreesToRadians(1) + chute.getPivotGoalRads()),
             chute));
-    driverController.a().whileTrue(Commands.run(() -> chute.startShooting(), chute).finallyDo(() -> chute.stopShooting()));
+    driverController.a(testModelButtonLoop).whileTrue(Commands.run(() -> chute.startShooting(), chute).finallyDo(() -> chute.stopShooting()));
+    driverController.b(testModelButtonLoop).whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
 
     // This sets the default command to drive very slowly. Remember to reset this when exiting test mode.
     CommandScheduler.getInstance().cancel(drive.getDefaultCommand());
