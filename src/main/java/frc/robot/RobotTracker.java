@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
-import frc.robot.ScoringState.ReefBar;
 
 public class RobotTracker {
   private static RobotTracker instance = new RobotTracker();
@@ -78,10 +77,6 @@ public class RobotTracker {
    */
   public void recordVision(Pose2d visionPose, double timestamp) {
     poseEstimator.addVisionMeasurement(visionPose, timestamp);
-  }
-
-  public void recordToF(double[] frontLeft, double[] backLeft, double[] frontRight, double[] backRight) {
-    System.out.printf("ToF: %.2f, %.2f, %.2f, %.2f%n", frontLeft[0], backLeft[0], frontRight[0], backRight[0]);
   }
 
   public void resetPose(Pose2d pose, Rotation2d rawGyroRotation, double leftMeters, double rightMeters) {
