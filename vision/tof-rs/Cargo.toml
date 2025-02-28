@@ -12,7 +12,7 @@ name = "vl53l1x"
 [dependencies]
 linux-embedded-hal = "0.3.2"
 embedded-hal = "0.2.7"
-pyo3 = { version = "0.19", features = ["extension-module"] }
+pyo3 = { version = "0.23", features = ["extension-module", "abi3-py310"] }
 vl53l1x-uld = "2.0.1"
 gpiod = "0.3.0"
 eventfd = "0.2.0"

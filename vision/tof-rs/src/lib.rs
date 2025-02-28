@@ -322,7 +322,7 @@ impl TofSensor {
 }
 
 #[pymodule]
-fn vl53l1x(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn vl53l1x(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TofSensor>()?;
     Ok(())
 }
