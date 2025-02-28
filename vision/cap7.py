@@ -228,6 +228,10 @@ def main():
 
     console = NonBlockingConsole()
 
+    if args.save:
+        cam0stream = open('cam0stream.mjpeg', 'ab')
+        cam1stream = open('cam1stream.mjpeg', 'ab')
+
     try:
         now = start = time.time()
         reported = start
@@ -249,7 +253,17 @@ def main():
             arr0 = cam0.capture_array('main')
             arr1 = cam1.capture_array('main')
             #dashboard_arr = cam.capture_array('lores')
+            if args.save:
+                result0, encode0 = cv2.imencode('.jpg', arr0)
+                result1, encode1 = cv2.imencode('.jpg', arr1)
+
+                if result0:
+                    cam0stream.write(encode0)
+                if result1:
+                    cam1stream.write(encode1)
+
             dashboard_arr = cv2.resize(arr0 if currentCam == 'fore' else arr1, (320, 240))
+            
             source.putFrame(dashboard_arr)
 
             aprilDetector.detect(arr0)
@@ -275,6 +289,9 @@ def main():
         print()
         cam0.stop()
         cam1.stop()
+        if args.save:
+            cam0stream.close()
+            cam1stream.close()
 
 if __name__ == '__main__':
     import argparse
@@ -287,6 +304,7 @@ if __name__ == '__main__':
     parser.add_argument('--fps', type=float, default=60.0)
     parser.add_argument('--time', type=float, default=10000.0)
     parser.add_argument('--cals')
+    parser.add_argument('--save', action='store_true')
 
     args = parser.parse_args()
     if args.cals is None:
