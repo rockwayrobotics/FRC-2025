@@ -5,6 +5,8 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DigitalSource;
 
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -21,10 +23,10 @@ import frc.robot.util.REVUtils;
 import frc.robot.util.Tuner;
 
 public class ElevatorIOReal implements ElevatorIO {
+  // Note that we may eventually have a second motor on the elevator
   protected final SparkFlex leftMotor = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR_LEFT, MotorType.kBrushless);
-  // one
-  // protected final SparkFlex rightMotor = new
-  // SparkFlex(Constants.CAN.ELEVATOR_MOTOR_RIGHT, MotorType.kBrushless);
+
+  protected final DigitalInput homeSwitch = new DigitalInput(Constants.Digital.ELEVATOR_HOME_SWITCH);
 
   final Tuner ElevatorFeedforwardkS = new Tuner("ElevatorFeedforwardkS", 0, true);
   final Tuner ElevatorFeedforwardkG = new Tuner("ElevatorFeedforwardkG", 0, true);
@@ -61,6 +63,7 @@ public class ElevatorIOReal implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
+    inputs.homed = homeSwitch.get();
     // FIXME: Measure CAN bus usage with all these queries?
     REVUtils.ifOk(leftMotor, encoder::getPosition, (value) -> inputs.positionMeters = value);
     REVUtils.ifOk(leftMotor, encoder::getVelocity, (value) -> inputs.velocityMetersPerSec = value);

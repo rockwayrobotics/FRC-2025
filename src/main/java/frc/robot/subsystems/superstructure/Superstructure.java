@@ -16,9 +16,28 @@ public class Superstructure extends SubsystemBase{
     this.grabber = grabber;
   }
 
+  @Override
   public void periodic() {
     elevator.periodic();
     chute.periodic();
     grabber.periodic();
   }
+
+  public void setElevatorGoalHeightMeters(double heightMeters) {
+    elevator.setGoalHeightMeters(heightMeters);
+  }
+
+  public void setChutePivotGoalRads(double pivotAngleRads) {
+    chute.setPivotGoalRads(pivotAngleRads);
+  }
+
+  public void startShooting() {
+    chute.startShooting();
+  }
+
+  public void stopShooting() {
+    chute.stopShooting();
+  }
+
+  // FIXME: Add grabber methods too
 }

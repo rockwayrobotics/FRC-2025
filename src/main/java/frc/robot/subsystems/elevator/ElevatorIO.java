@@ -5,6 +5,7 @@ import org.littletonrobotics.junction.AutoLog;
 public interface ElevatorIO {
   @AutoLog
   public static class ElevatorIOInputs {
+    public boolean homed = false;
     // TODO: Figure out how to report faults / connectivity?
     // public boolean motorConnected = true;
     public double positionMeters = 0.0;

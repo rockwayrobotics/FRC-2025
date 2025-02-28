@@ -10,6 +10,8 @@ public class Elevator {
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private double goalHeightMeters = 0;
   private double heightMeters = 0;
+  private boolean homed = false;
+
   protected final double MIN_HEIGHT_METERS = 0;
   protected final double MAX_HEIGHT_METERS = 0.5;
 
@@ -21,6 +23,7 @@ public class Elevator {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
     heightMeters = inputs.positionMeters;
+    homed = inputs.homed;
 
     if (DriverStation.isDisabled()) {
       io.stop();
@@ -48,5 +51,9 @@ public class Elevator {
 
   public void stop() {
     io.stop();
+  }
+
+  public boolean isHomed() {
+    return homed;
   }
 }

@@ -185,6 +185,8 @@ public final class Constants {
     public static final int CORAL_LOAD_BEAMBREAK = 0;
     public static final int CORAL_SHOOT_BEAMBREAK = 1;
     public static final int ALGAE_HOME_SWITCH = 2;
+    public static final int ELEVATOR_HOME_SWITCH = 3;
+    public static final int CHUTE_HOME_SWITCH = 4;
   }
 
   public static final class Analog {
