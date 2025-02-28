@@ -251,12 +251,14 @@ def main():
             elif currentCam == 'auto':
                 leftVelocity = leftVelocitySubscriber.get()
                 rightVelocity = rightVelocitySubscriber.get()
-                
-                if leftVelocity > 0 and rightVelocity > 0:
-                    cam = cam0
-                else:
-                    cam = cam1
-   
+                deadbandThreshold = 0.05  
+
+                if abs(leftVelocity) > deadbandThreshold and abs(rightVelocity) > deadbandThreshold:
+                    if leftVelocity > 0 and rightVelocity > 0:
+                        cam = cam0
+                    else:
+                        cam = cam1
+
             count += 1
             now = time.time()
 
