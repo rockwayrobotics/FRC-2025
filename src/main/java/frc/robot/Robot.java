@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -32,6 +33,11 @@ public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
+
+  // A command that will set the drivebase to coast mode after a delay.
+  // We start the command and store it here when the robot is disabled.
+  // We store the command here so we can cancel it if we re-enable the robot.
+  protected Command enterCoastModeCommand = null;
 
   public Robot() {
     Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
@@ -106,6 +112,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     m_robotContainer.disable();
+    enterCoastModeAfterSeconds(2);
   }
 
   @Override
@@ -119,6 +126,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousInit() {
     m_robotContainer.enable();
+    enterBrakeMode();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
@@ -139,6 +147,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     m_robotContainer.enable();
+    enterBrakeMode();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -162,6 +171,7 @@ public class Robot extends LoggedRobot {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
     m_robotContainer.setupTestBindings();
+    enterBrakeMode();
   }
 
   /** This function is called periodically during test mode. */
@@ -183,5 +193,17 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationPeriodic() {
     m_robotContainer.getWorldSimulation().simulationPeriodic();
+  }
+
+  private void enterCoastModeAfterSeconds(double seconds) {
+    enterCoastModeCommand = Commands.sequence(Commands.waitSeconds(seconds), Commands.runOnce(() -> m_robotContainer.setDriveBrakeMode(false)));
+  }
+
+  private void enterBrakeMode() {
+    if (enterCoastModeCommand != null) {
+      enterCoastModeCommand.cancel();
+      enterCoastModeCommand = null;
+    }
+    m_robotContainer.setDriveBrakeMode(true);
   }
 }

@@ -46,6 +46,8 @@ public interface DriveIO {
       double leftMetersPerSec, double rightMetersPerSec, double leftFFVolts, double rightFFVolts) {
   }
 
+  public default void setBrakeMode(boolean brake) {}
+
   public default DifferentialDrive getDifferentialDrive() {
     return new DifferentialDrive((double leftOutput) -> {}, (double rightOutput) -> {});
   }

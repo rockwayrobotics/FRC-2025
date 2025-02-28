@@ -142,6 +142,7 @@ public class DriveIOSparkMax implements DriveIO {
     return feedForward;
   }
 
+  @Override
   public void setBrakeMode(boolean brake) {
     var mode = brake ? IdleMode.kBrake : IdleMode.kCoast;
     var config = new SparkMaxConfig();
