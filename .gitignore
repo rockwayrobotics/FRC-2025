@@ -201,3 +201,7 @@ akit*.log
 akit*.csv
 akit*.wpilog
 akit*.toml
+
+*.jpg
+*.jpeg
+*.mjpeg
