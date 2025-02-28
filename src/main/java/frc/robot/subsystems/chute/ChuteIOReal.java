@@ -9,6 +9,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import frc.robot.Constants;
 import frc.robot.util.REVUtils;
+import frc.robot.util.Tuner;
 
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -29,19 +30,27 @@ public class ChuteIOReal implements ChuteIO {
 
   protected final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
 
+  final Tuner PivotPID_P = new Tuner("PivotPID_P", 0, true);
+  final Tuner PivotPID_D = new Tuner("PivotPID_D", 0, true);
+
   public ChuteIOReal() {
     SparkMaxConfig pivotConfig = new SparkMaxConfig();
     pivotConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     pivotConfig.encoder.positionConversionFactor(1 / Constants.Chute.PIVOT_GEAR_RATIO);
-    pivotConfig.closedLoop.pidf(0.5, 0, 0, REVUtils.NEO_FF);
-    REVUtils.tryUntilOk(() -> pivotMotor.configure(pivotConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+    pivotConfig.closedLoop.pidf(PivotPID_P.get(), 0, PivotPID_D.get(), REVUtils.NEO_FF);
+    REVUtils.tryUntilOk(
+        () -> pivotMotor.configure(pivotConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
     SparkMaxConfig shooterConfig = new SparkMaxConfig();
     shooterConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
-    REVUtils.tryUntilOk(() -> shooterMotor.configure(shooterConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+    REVUtils.tryUntilOk(
+        () -> shooterMotor.configure(shooterConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
     // At creation time, set encoder positions to our initial position
     REVUtils.tryUntilOk(() -> pivotEncoder.setPosition(Constants.Chute.PIVOT_INITIAL_ANGLE_RADS));
+
+    PivotPID_P.addListener((_e) -> updateParams());
+    PivotPID_D.addListener((_e) -> updateParams());
   }
 
   @Override
@@ -62,5 +71,11 @@ public class ChuteIOReal implements ChuteIO {
   @Override
   public void setShooterSpeed(double speed) {
     shooterMotor.set(speed);
+  }
+
+  private void updateParams() {
+    var new_config = new SparkMaxConfig();
+    new_config.closedLoop.pidf(PivotPID_P.get(), 0, PivotPID_D.get(), REVUtils.NEO_FF);
+    pivotMotor.configure(new_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 }
