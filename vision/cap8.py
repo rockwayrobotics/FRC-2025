@@ -243,22 +243,20 @@ def main():
         print('SIZE', SIZE, 'height', height, end='\r\n')
 
         while now - start < args.time:
-            # currentCam = selectCameraSubscriber.get()
-            # if currentCam == 'fore':
-            #     cam = cam0
-            # else:
-            #     cam = cam1
-
-            leftVelocity = leftVelocitySubscriber.get()
-            rightVelocity = rightVelocitySubscriber.get()
-
-            if leftVelocity > 0 and rightVelocity > 0:
-                currentCam = 'fore'
+            currentCam = selectCameraSubscriber.get()
+            if currentCam == 'fore':
                 cam = cam0
-            else:
-                currentCam = 'aft'
+            elif currentCam == 'aft':
                 cam = cam1
-            
+            elif currentCam == 'auto':
+                leftVelocity = leftVelocitySubscriber.get()
+                rightVelocity = rightVelocitySubscriber.get()
+                
+                if leftVelocity > 0 and rightVelocity > 0:
+                    cam = cam0
+                else:
+                    cam = cam1
+   
             count += 1
             now = time.time()
 
@@ -274,7 +272,7 @@ def main():
                 if result1:
                     cam1stream.write(encode1)
 
-            dashboard_arr = cv2.resize(arr0 if currentCam == 'fore' else arr1, (320, 240))
+            dashboard_arr = cv2.resize(arr0 if cam == cam0 else arr1, (320, 240))
             
             source.putFrame(dashboard_arr)
 
