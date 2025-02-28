@@ -1,6 +1,4 @@
-use gpiod;
 use gpiod::Options;
-use std::error::Error;
 
 /// PinSetup class for configuring GPIO pins for sensor selection.
 ///
@@ -18,9 +16,12 @@ pub struct PinSetup {
 
 impl PinSetup {
     /// Creates a new PinSetup instance with the specified sensor option
-    pub fn new(sensor_option: u8) -> Result<Self, Box<dyn Error>> {
+    pub fn new(sensor_option: u8) -> Result<Self, std::io::Error> {
         if sensor_option > 5 {
-            return Err(format!("Invalid sensor option: {}. Must be 0-5", sensor_option).into());
+            return Err(std::io::Error::other(format!(
+                "Invalid sensor option: {}. Must be 0-5",
+                sensor_option
+            )));
         }
 
         let pin_setup = PinSetup { sensor_option };
@@ -32,7 +33,7 @@ impl PinSetup {
     }
 
     /// Configures the GPIO pins based on the sensor option
-    fn configure(&self) -> Result<(), Box<dyn Error>> {
+    fn configure(&self) -> Result<(), std::io::Error> {
         let chip = gpiod::Chip::new("gpiochip0")?;
         // FIXME: Implement pin configuration pins
         let opts = Options::output([5]);
@@ -45,7 +46,7 @@ impl PinSetup {
                 Ok(())
             }
             1 => {
-                outputs.set_values([true, false])?;
+                outputs.set_values([true])?;
                 Ok(())
             }
             2 => {
@@ -66,7 +67,7 @@ impl PinSetup {
             }
             _ => {
                 // This should never happen because we check in new()
-                Err("Invalid sensor option".into())
+                unreachable!()
             }
         }
     }
