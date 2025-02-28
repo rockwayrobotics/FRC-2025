@@ -19,6 +19,7 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 
 import frc.robot.Constants;
 import frc.robot.util.REVUtils;
+import frc.robot.util.Tuner;
 
 public class DriveIOSparkMax implements DriveIO {
   protected final DifferentialDrive differentialDrive;
@@ -34,7 +35,11 @@ public class DriveIOSparkMax implements DriveIO {
   protected final SparkClosedLoopController leftController = leftDriveMotorF.getClosedLoopController();
   protected final SparkClosedLoopController rightController = rightDriveMotorF.getClosedLoopController();
 
-  protected final SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(Constants.Drive.REAL_KS, Constants.Drive.REAL_KV);
+  protected final SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(Constants.Drive.REAL_KS,
+      Constants.Drive.REAL_KV);
+
+  protected final Tuner DrivebasePID_P = new Tuner("Drivebase PID P", 0.5, true);
+  protected final Tuner DrivebasePID_I = new Tuner("Drivebase PID I", 0, true);
 
   public DriveIOSparkMax() {
     var config = new SparkMaxConfig();
@@ -43,7 +48,7 @@ public class DriveIOSparkMax implements DriveIO {
     config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     // FIXME: Measure this and consider using it?
     // FIXME: make FF a constant?
-    config.closedLoop.pidf(0.5, 0, 0, 1 / 473);
+    config.closedLoop.pidf(DrivebasePID_P.get(), DrivebasePID_I.get(), 0, REVUtils.NEO_FF);
     config.encoder
         // Encoder rotations in radians converted to meters
         .positionConversionFactor(Constants.Drive.WHEEL_CIRCUM_CM / 100 / Constants.Drive.WHEEL_GEAR_RATIO)
@@ -79,6 +84,8 @@ public class DriveIOSparkMax implements DriveIO {
 
     differentialDrive = new DifferentialDrive(leftDriveMotorF, rightDriveMotorF);
 
+    DrivebasePID_P.addListener((_e) -> updateParams());
+    DrivebasePID_I.addListener((_e) -> updateParams());
   }
 
   @Override
@@ -131,5 +138,12 @@ public class DriveIOSparkMax implements DriveIO {
 
   public SimpleMotorFeedforward getFeedForward() {
     return feedForward;
+  }
+
+  public void updateParams() {
+    var new_config = new SparkMaxConfig();
+    new_config.closedLoop.pidf(DrivebasePID_P.get(), DrivebasePID_I.get(), 0, REVUtils.NEO_FF);
+    leftDriveMotorF.configure(new_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    rightDriveMotorF.configure(new_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 }
