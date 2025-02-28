@@ -94,6 +94,6 @@ public class GrabberIOReal implements GrabberIO {
   public void updateParams() {
     var new_config = new SparkMaxConfig();
     new_config.closedLoop.pidf(WristPID_P.get(), 0, WristPID_D.get(), REVUtils.NEO_FF);
-    wristMotor.configure(new_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    wristMotor.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 }

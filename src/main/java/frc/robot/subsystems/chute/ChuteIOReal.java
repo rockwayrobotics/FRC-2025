@@ -76,6 +76,6 @@ public class ChuteIOReal implements ChuteIO {
   private void updateParams() {
     var new_config = new SparkMaxConfig();
     new_config.closedLoop.pidf(PivotPID_P.get(), 0, PivotPID_D.get(), REVUtils.NEO_FF);
-    pivotMotor.configure(new_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    pivotMotor.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 }

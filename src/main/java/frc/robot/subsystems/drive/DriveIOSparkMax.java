@@ -140,10 +140,22 @@ public class DriveIOSparkMax implements DriveIO {
     return feedForward;
   }
 
+  public void setBrakeMode(boolean brake) {
+    var mode = brake ? IdleMode.kBrake : IdleMode.kCoast;
+    var config = new SparkMaxConfig();
+    config.idleMode(mode);
+    leftDriveMotorF.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    rightDriveMotorF.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    leftDriveMotorR.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    rightDriveMotorR.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+  }
+
   public void updateParams() {
     var new_config = new SparkMaxConfig();
     new_config.closedLoop.pidf(DrivebasePID_P.get(), DrivebasePID_I.get(), 0, REVUtils.NEO_FF);
-    leftDriveMotorF.configure(new_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-    rightDriveMotorF.configure(new_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    leftDriveMotorF.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    rightDriveMotorF.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    leftDriveMotorR.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    rightDriveMotorR.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 }

@@ -93,6 +93,6 @@ public class ElevatorIOReal implements ElevatorIO {
     feedforward = new ElevatorFeedforward(ElevatorFeedforwardkS.get(), ElevatorFeedforwardkG.get(), 0);
     var new_config = new SparkMaxConfig();
     new_config.closedLoop.pidf(ElevatorPID_P.get(), 0, ElevatorPID_D.get(), REVUtils.VORTEX_FF);
-    leftMotor.configure(new_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    leftMotor.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 }
