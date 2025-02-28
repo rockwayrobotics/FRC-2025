@@ -38,12 +38,14 @@ class PiCam:
         self.cam = picamera2.Picamera2(id)
         self.id = id
 
+        # Default exposure time is 22162 us
+        # To get fast fps, need Exposure time lower, buffer_count > 1 (4 is better than 2), and FrameDurationLimits maybe (slight difference)
         vid1 = self.cam.create_video_configuration(
             main=dict(size=SIZE, format='RGB888'),
             lores=dict(size=[320,240], format='RGB888'),
-            controls=dict(FrameRate=args.fps), # FrameDurationLimits=(1, 5000)),
+            controls=dict(ExposureTime=11081, FrameRate=args.fps, FrameDurationLimits=(1,17000)), # FrameDurationLimits=(1, 5000)),
             queue=False,
-            buffer_count=1,
+            buffer_count=4,
             transform=Transform(hflip=1, vflip=1),
             )
 
