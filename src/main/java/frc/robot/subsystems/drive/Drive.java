@@ -90,7 +90,6 @@ public class Drive extends SubsystemBase {
   double cornerLastChangeTime = 0;
   int noDataCounter = 0;
   TimestampSynchronizer timestampSynchronizer = new TimestampSynchronizer();
-  Tuner tunableNumber = new Tuner("TunableNumber", 1, true);
 
   // Publish RobotPose for Shuffleboard.
   ShuffleboardTab dashboard = Shuffleboard.getTab("Drivebase");
@@ -239,7 +238,6 @@ public class Drive extends SubsystemBase {
     Logger.processInputs("Drive/Gyro", gyroInputs);
 
     beamBreak.periodic();
-    System.out.println(tunableNumber.get());
 
     double now = Timer.getFPGATimestamp();
     tofDistancePeriodic(now);

@@ -37,6 +37,7 @@ public class ScoreCommands {
     public double cornerDistance;
     public double targetLeftEncoder;
     public CircularBuffer<Double> speeds = new CircularBuffer<Double>(3);
+
     public ScoreCommandState() {
       reset();
     }
@@ -90,7 +91,8 @@ public class ScoreCommands {
               return Math.abs(commandState.speeds.getFirst() - commandState.speeds.getLast()) < 0.01;
             }),
             Commands.runOnce(() -> {
-              piState.set(new double[] {RobotTracker.getInstance().getScoringState().sensorState.piValue(), commandState.speeds.getLast()});
+              piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
+                  commandState.speeds.getLast() });
             }),
             Commands.waitUntil(() -> commandState.isValid),
             Commands.runOnce(() -> {
@@ -98,7 +100,8 @@ public class ScoreCommands {
               leftEncoderDistance.ifPresentOrElse(distance -> {
                 var scoringState = RobotTracker.getInstance().getScoringState();
                 commandState.cornerDistance = distance;
-                commandState.targetLeftEncoder = distance + scoringState.getTargetWallDistance() * Math.cos(commandState.angle);
+                commandState.targetLeftEncoder = distance
+                    + scoringState.getTargetWallDistance() * Math.cos(commandState.angle);
               }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
                 System.err.println("Failed to find scoring encoder distance because we have no position data");
               })));
@@ -115,7 +118,7 @@ public class ScoreCommands {
     command.addRequirements(drive, elevator, chute);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
-      piState.set(new double[] {SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED});
+      piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
       chute.stopShooting();

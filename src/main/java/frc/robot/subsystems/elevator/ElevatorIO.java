@@ -15,10 +15,19 @@ public interface ElevatorIO {
   }
 
   /** Read values back from motors */
-  public default void updateInputs(ElevatorIOInputs inputs) {}
+  public default void updateInputs(ElevatorIOInputs inputs) {
+  }
 
-  /** Command a specific height from the elevator. Up is positive, down is negative. */
-  public default void moveTowardsGoal(double goalHeightMeters, double currentHeightMeters) {}
+  /**
+   * Command a specific height from the elevator. Up is positive, down is
+   * negative.
+   */
+  public default void moveTowardsGoal(double goalHeightMeters, double currentHeightMeters) {
+  }
 
-  public default void stop() {}
+  public default void stop() {
+  }
+
+  public default void periodic() {
+  }
 }

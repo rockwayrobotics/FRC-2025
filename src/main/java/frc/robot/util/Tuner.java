@@ -1,6 +1,7 @@
 package frc.robot.util;
 
 import java.util.EnumSet;
+import java.util.function.Consumer;
 
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTableEvent;
@@ -48,5 +49,9 @@ public class Tuner {
 
   public double get() {
     return subscriber.get();
+  }
+
+  public NetworkTableListener addListener(Consumer<NetworkTableEvent> callback) {
+    return NetworkTableListener.createListener(this.subscriber, EnumSet.of(NetworkTableEvent.Kind.kValueAll), callback);
   }
 }
