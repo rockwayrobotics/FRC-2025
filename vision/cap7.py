@@ -29,8 +29,7 @@ from wpimath import units
 
 from libcamera import Transform
 import picamera2
-from picamera2.encoders import JpegEncoder
-from picamera2.outputs import FileOutput
+
 
 degrees = lambda rad: rad * 180 / math.pi
 
@@ -115,8 +114,7 @@ class AprilTagDetection:
             "/Shuffleboard/Drivebase/Field2d/Ambiguity"
         ).publish(PubSubOptions())  # Uses default options
     
-    def detect(self, cam):
-        arr = cam.capture_array('main')
+    def detect(self, arr):
         # img = arr[:height,:]
         img = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
         tags = self.det.detect(img)
@@ -263,11 +261,14 @@ def main():
             count += 1
             now = time.time()
 
-            dashboard_arr = cam.capture_array('lores')
+            arr0 = cam0.capture_array('main')
+            arr1 = cam1.capture_array('main')
+            #dashboard_arr = cam.capture_array('lores')
+            dashboard_arr = cv2.resize(arr0 if currentCam == 'fore' else arr1, (320, 240))
             source.putFrame(dashboard_arr)
 
-            aprilDetector.detect(cam0)
-            aprilDetector.detect(cam1)
+            aprilDetector.detect(arr0)
+            aprilDetector.detect(arr1)
 
             key = console.get_key()
 
