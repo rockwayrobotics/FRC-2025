@@ -5,20 +5,112 @@
     selected=""
 ><frc-camera-wrapper
         source-provider="NetworkTables"
-        style="transform: translate(226px, 222px);"
+        style="transform: translate(120.4px, 21.6px);"
         source-key="/CameraPublisher/PiCam"
         streams="[]"
         background-color="black"
         wait-image="./no-camera-stream.jpg"
         crosshair-color="white"
     ></frc-camera-wrapper><frc-radio-group
-        options="[&quot;fore&quot;,&quot;aft&quot;]"
+        options="[&quot;fore&quot;,&quot;aft&quot;,&quot;auto&quot;]"
         source-provider="NetworkTables"
-        style="width: 87.775px; height: 98px; transform: translate(132.794px, 338.8px);"
+        style="width: 87.775px; height: 98px; transform: translate(19.994px, 100.4px);"
         source-key="/CameraPublisher/PiCam/selected"
         selected="fore"
     >
-    </frc-radio-group></dashboard-tab><dashboard-tab
+    </frc-radio-group><vaadin-number-field
+        label="Cam Deadband"
+        value="0"
+        has-value=""
+        has-label=""
+        source-provider="NetworkTables"
+        style="transform: translate(559.4px, 31.2px); width: 128px; height: 61.4px;"
+        source-key="/Tuning/Camera Auto Deadband"
+        placeholder=""
+        max="NaN"
+    ><input
+            slot="input"
+            value="0"
+            type="number"
+            id="vaadin-number-field-6"
+            aria-labelledby="label-vaadin-number-field-7"
+            aria-describedby=""
+            min="0"
+            max="undefined"
+            step="any"
+        ><label
+            slot="label"
+            id="label-vaadin-number-field-7"
+            for="vaadin-number-field-6"
+        >Cam Deadband</label>
+        <div
+            slot="error-message"
+            id="error-message-vaadin-number-field-5"
+            hidden=""
+        ></div>
+    </vaadin-number-field><vaadin-number-field
+        label="Right Velocity m/s"
+        value="0"
+        has-value=""
+        has-label=""
+        source-provider="NetworkTables"
+        style="transform: translate(559.2px, 118.6px); width: 128px; height: 86.2px;"
+        source-key="/AdvantageKit/Drive/RightVelocityMetersPerSec"
+        placeholder=""
+        min="NaN"
+        max="NaN"
+    ><input
+            slot="input"
+            value="0"
+            type="number"
+            id="vaadin-number-field-89"
+            aria-labelledby="label-vaadin-number-field-90"
+            aria-describedby=""
+            min="undefined"
+            max="undefined"
+            step="any"
+        ><label
+            slot="label"
+            id="label-vaadin-number-field-90"
+            for="vaadin-number-field-89"
+        >Right Velocity m/s</label>
+        <div
+            slot="error-message"
+            id="error-message-vaadin-number-field-66"
+            hidden=""
+        ></div>
+    </vaadin-number-field><vaadin-number-field
+        label="Left Velocity m/s"
+        value="0"
+        has-value=""
+        has-label=""
+        source-provider="NetworkTables"
+        style="transform: translate(559.6px, 212.6px);"
+        source-key="/AdvantageKit/Drive/LeftVelocityMetersPerSec"
+        placeholder=""
+        min="NaN"
+        max="NaN"
+    ><input
+            slot="input"
+            value="0"
+            type="number"
+            id="vaadin-number-field-90"
+            aria-labelledby="label-vaadin-number-field-91"
+            aria-describedby=""
+            min="undefined"
+            max="undefined"
+            step="any"
+        ><label
+            slot="label"
+            id="label-vaadin-number-field-91"
+            for="vaadin-number-field-90"
+        >Left Velocity m/s</label>
+        <div
+            slot="error-message"
+            id="error-message-vaadin-number-field-67"
+            hidden=""
+        ></div>
+    </vaadin-number-field></dashboard-tab><dashboard-tab
     slot="tab"
     tab-name="Autonomous"
     source-provider="NetworkTables"
