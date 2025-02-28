@@ -247,6 +247,10 @@ public class RobotContainer {
     drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
   }
 
+  public void setDriveBrakeMode(boolean brake) {
+    drive.setBrakeMode(brake);
+  }
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *

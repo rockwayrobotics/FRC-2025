@@ -314,7 +314,7 @@ public class Drive extends SubsystemBase {
 
   /**
    * This method is used for non-PID trajectory following.
-   * 
+   *
    * @param speeds in m/s
    */
   public void setTankDrive(ChassisSpeeds speeds) {
@@ -395,5 +395,9 @@ public class Drive extends SubsystemBase {
 
   public Optional<Double> getRightPositionAtTime(double fpgaTime) {
     return rightPositionBuffer.getSample(fpgaTime);
+  }
+
+  public void setBrakeMode(boolean brake) {
+    io.setBrakeMode(brake);
   }
 }
