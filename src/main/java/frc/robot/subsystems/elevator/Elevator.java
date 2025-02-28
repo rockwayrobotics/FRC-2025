@@ -4,13 +4,14 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Elevator extends SubsystemBase {
+public class Elevator {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private double goalHeightMeters = 0;
   private double heightMeters = 0;
+  private boolean homed = false;
+
   protected final double MIN_HEIGHT_METERS = 0;
   protected final double MAX_HEIGHT_METERS = 0.5;
 
@@ -18,11 +19,11 @@ public class Elevator extends SubsystemBase {
     this.io = io;
   }
 
-  @Override
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
     heightMeters = inputs.positionMeters;
+    homed = inputs.homed;
 
     if (DriverStation.isDisabled()) {
       io.stop();
@@ -50,5 +51,9 @@ public class Elevator extends SubsystemBase {
 
   public void stop() {
     io.stop();
+  }
+
+  public boolean isHomed() {
+    return homed;
   }
 }
