@@ -4,10 +4,13 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.util.Tuner;
 
 public class Chute extends SubsystemBase {
   private final ChuteIO io;
   private final CoralIOInputsAutoLogged inputs = new CoralIOInputsAutoLogged();
+
+  final Tuner shooterSpeedTuner = new Tuner("ShooterSpeed", 0.3, true);
 
   private double pivotGoalRads = Constants.Chute.PIVOT_INITIAL_ANGLE_RADS;
   private boolean coralLoading = false;
@@ -35,7 +38,7 @@ public class Chute extends SubsystemBase {
   }
 
   public void startShooting() {
-    io.setShooterSpeed(1);
+    io.setShooterSpeed(shooterSpeedTuner.get());
   }
 
   public void stopShooting() {
