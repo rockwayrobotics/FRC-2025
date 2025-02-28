@@ -6,6 +6,8 @@ use std::time::{Duration, Instant};
 use thread_priority::{ThreadBuilder, ThreadPriority};
 use vl53l1x_uld::{DistanceMode, IOVoltage, VL53L1X};
 
+mod pin_setup;
+use pin_setup::PinSetup;
 /// Valid timing budget values in milliseconds
 const VALID_TIMING_BUDGETS: &[u16] = &[15, 20, 33, 50, 100, 200, 500];
 
@@ -323,4 +325,24 @@ impl TofSensor {
 fn vl53l1x(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<TofSensor>()?;
     Ok(())
+}
+
+#[pyclass]
+struct ChooseSensor {
+    inner: PinSetup,
+}
+
+#[pymethods]
+impl ChooseSensor {
+    #[new]
+    fn new(sensor_option: u8) -> PyResult<Self> {
+        PinSetup::new(sensor_option)
+            .map(|inner| ChooseSensor { inner })
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("{}", e)))
+    }
+
+    #[getter]
+    fn get_sensor_option(&self) -> u8 {
+        self.inner.get_sensor_option()
+    }
 }
