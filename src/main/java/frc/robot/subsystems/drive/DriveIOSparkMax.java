@@ -41,6 +41,8 @@ public class DriveIOSparkMax implements DriveIO {
   protected final Tuner DrivebasePID_P = new Tuner("Drivebase PID P", 0.5, true);
   protected final Tuner DrivebasePID_I = new Tuner("Drivebase PID I", 0, true);
 
+  protected final Tuner cameraAutoDeadband = new Tuner("Camera Auto Deadband", 0, true);
+
   public DriveIOSparkMax() {
     var config = new SparkMaxConfig();
     // FIXME: Move to constants

@@ -213,6 +213,9 @@ def main():
     selectCameraPublisher.set("fore")
     selectCameraSubscriber = selectCameraTopic.subscribe("fore")
 
+    camAutoDeadbandTopic = nt.getDoubleTopic("/Tuning/Camera Auto Deadband")
+    camAutoDeadbandSubscriber = camAutoDeadbandTopic.subscribe(0)    
+
     rightVelocitySubscriber = nt.getDoubleTopic("/AdvantageKit/Drive/RightVelocityMetersPerSec").subscribe(0)
     leftVelocitySubscriber = nt.getDoubleTopic("/AdvantageKit/Drive/LeftVelocityMetersPerSec").subscribe(0)
 
@@ -251,7 +254,8 @@ def main():
             elif currentCam == 'auto':
                 leftVelocity = leftVelocitySubscriber.get()
                 rightVelocity = rightVelocitySubscriber.get()
-                deadbandThreshold = 0.05  
+                deadbandThreshold = camAutoDeadbandSubscriber.get()
+                #print(f'deadbandThreshold={deadbandThreshold}', end = '\r\n')
 
                 if abs(leftVelocity) > deadbandThreshold and abs(rightVelocity) > deadbandThreshold:
                     if leftVelocity > 0 and rightVelocity > 0:
