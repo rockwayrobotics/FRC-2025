@@ -1,0 +1,25 @@
+<dashboard-tab
+    tab-name="TeleOperated"
+    slot="tab"
+    source-provider="NetworkTables"
+    selected=""
+><frc-camera-wrapper
+        source-provider="NetworkTables"
+        style="transform: translate(226px, 222px);"
+        source-key="/CameraPublisher/PiCam"
+        streams="[]"
+        background-color="black"
+        wait-image="./no-camera-stream.jpg"
+        crosshair-color="white"
+    ></frc-camera-wrapper><frc-radio-group
+        options="[&quot;fore&quot;,&quot;aft&quot;]"
+        source-provider="NetworkTables"
+        style="width: 87.775px; height: 98px; transform: translate(132.794px, 338.8px);"
+        source-key="/CameraPublisher/PiCam/selected"
+        selected="fore"
+    >
+    </frc-radio-group></dashboard-tab><dashboard-tab
+    slot="tab"
+    tab-name="Autonomous"
+    source-provider="NetworkTables"
+></dashboard-tab>
