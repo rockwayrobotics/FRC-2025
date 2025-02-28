@@ -40,14 +40,13 @@ import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.grabber.Grabber;
 import frc.robot.subsystems.grabber.GrabberIOReal;
 import frc.robot.subsystems.grabber.GrabberIOSim;
+import frc.robot.subsystems.superstructure.Superstructure;
 
 public class RobotContainer {
   // Subsystems are listed here
   private final Drive drive;
-  private final Chute chute;
-  private final Elevator elevator;
+  private final Superstructure superstructure;
   private final Climp climp;
-  private final Grabber grabber;
 
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
@@ -65,16 +64,16 @@ public class RobotContainer {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
       // FIXME: replace with real io once motors are on the robot
-      elevator = new Elevator(new ElevatorIOSim(0));
-      chute = new Chute(new ChuteIOSim());
-      grabber = new Grabber(new GrabberIOSim());
+      Elevator elevator = new Elevator(new ElevatorIOSim(0));
+      Chute chute = new Chute(new ChuteIOSim());
+      Grabber grabber = new Grabber(new GrabberIOSim());
+      superstructure = new Superstructure(elevator, chute, grabber);
       climp = new Climp(new ClimpIOSim());
     } else {
       simulation = new WorldSimulation();
       drive = simulation.getDrive();
-      elevator = new Elevator(simulation.getElevator());
-      chute = new Chute(simulation.getChute());
-      grabber = new Grabber(simulation.getGrabber());
+      superstructure = new Superstructure(new Elevator(simulation.getElevator()), new Chute(simulation.getChute()),
+          new Grabber(simulation.getGrabber()));
       climp = new Climp(simulation.getClimp());
     }
 
@@ -147,7 +146,7 @@ public class RobotContainer {
     driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
     driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-    driverController.a().whileTrue(ScoreCommands.score(drive, elevator, chute));
+    driverController.a().whileTrue(ScoreCommands.score(drive, superstructure));
 
     operatorController.povUpLeft().onTrue(new InstantCommand(() -> {
       RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
@@ -205,29 +204,38 @@ public class RobotContainer {
     var testModelButtonLoop = new EventLoop();
     CommandScheduler.getInstance().setActiveButtonLoop(testModelButtonLoop);
 
-    // FIXME: Do we want to intentionally limit the motors in some way? This code currently just changes the set points
-    // very gradually, but the motors are permitted to go at whatever speed in order to reach the set points.
+    // FIXME: Do we want to intentionally limit the motors in some way? This code
+    // currently just changes the set points
+    // very gradually, but the motors are permitted to go at whatever speed in order
+    // to reach the set points.
 
     // PoV Up but with different event loop
     driverController.pov(0, 0, testModelButtonLoop)
-        .onTrue(Commands.runOnce(() -> elevator.setGoalHeightMeters(elevator.getGoalHeightMeters() + 0.01), elevator));
+        .onTrue(Commands.runOnce(
+            () -> superstructure.elevator.setGoalHeightMeters(superstructure.elevator.getGoalHeightMeters() + 0.01),
+            superstructure));
     // PoV Up but with different event loop
     driverController.pov(0, 180, testModelButtonLoop)
-        .onTrue(Commands.runOnce(() -> elevator.setGoalHeightMeters(elevator.getGoalHeightMeters() - 0.01), elevator));
+        .onTrue(Commands.runOnce(
+            () -> superstructure.elevator.setGoalHeightMeters(superstructure.elevator.getGoalHeightMeters() - 0.01),
+            superstructure));
     // PoV Right but with different event loop
     driverController.pov(0, 90, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> chute.setPivotGoalRads(-Units.degreesToRadians(1) + chute.getPivotGoalRads()),
-            chute));
+            () -> superstructure.chute.setPivotGoalRads(-Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
+            superstructure));
     // PoV Left but with different event loop
     driverController.pov(0, 270, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> chute.setPivotGoalRads(Units.degreesToRadians(1) + chute.getPivotGoalRads()),
-            chute));
-    driverController.a(testModelButtonLoop).whileTrue(Commands.run(() -> chute.startShooting(), chute).finallyDo(() -> chute.stopShooting()));
-    driverController.b(testModelButtonLoop).whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
+            () -> superstructure.chute.setPivotGoalRads(Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
+            superstructure));
+    driverController.a(testModelButtonLoop)
+        .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure).finallyDo(() -> superstructure.chute.stopShooting()));
+    driverController.b(testModelButtonLoop)
+        .whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
 
-    // This sets the default command to drive very slowly. Remember to reset this when exiting test mode.
+    // This sets the default command to drive very slowly. Remember to reset this
+    // when exiting test mode.
     CommandScheduler.getInstance().cancel(drive.getDefaultCommand());
     drive.setDefaultCommand(DriveCommands.defaultDrive(() -> driverController.getLeftY() * 0.1,
         () -> driverController.getRightX() * 0.1, drive));

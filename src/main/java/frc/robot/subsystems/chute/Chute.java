@@ -2,11 +2,10 @@ package frc.robot.subsystems.chute;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.util.Tuner;
 
-public class Chute extends SubsystemBase {
+public class Chute {
   private final ChuteIO io;
   private final CoralIOInputsAutoLogged inputs = new CoralIOInputsAutoLogged();
 
@@ -20,7 +19,6 @@ public class Chute extends SubsystemBase {
     this.io = io;
   }
 
-  @Override
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Chute", inputs);

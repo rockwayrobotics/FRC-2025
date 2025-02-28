@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
 import frc.robot.ScoringState.SensorState;
@@ -53,7 +54,7 @@ public class ScoreCommands {
 
   public static final double SCORING_EPSILON_METERS = 0.25;
 
-  public static Command score(Drive drive, Elevator elevator, Chute chute) {
+  public static Command score(Drive drive, Superstructure superstructure) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
     DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
     FloatArrayTopic cornerTopic = nt.getFloatArrayTopic(Constants.NT.CORNERS);
@@ -73,10 +74,10 @@ public class ScoreCommands {
           drive.setTankDrive(new ChassisSpeeds(Constants.Drive.SCORING_SPEED, 0, 0));
         }),
         Commands.runOnce(() -> {
-          elevator.setGoalHeightMeters(RobotTracker.getInstance().getScoringState().reefHeight.elevatorHeight());
+          superstructure.elevator.setGoalHeightMeters(RobotTracker.getInstance().getScoringState().reefHeight.elevatorHeight());
         }),
         Commands.runOnce(() -> {
-          chute.setPivotGoalRads(RobotTracker.getInstance().getScoringState().pivotRadians());
+          superstructure.chute.setPivotGoalRads(RobotTracker.getInstance().getScoringState().pivotRadians());
         }),
         Commands.sequence(
             Commands.waitUntil(() -> {
@@ -110,18 +111,18 @@ public class ScoreCommands {
               return Math.abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
             }),
             Commands.run(() -> {
-              chute.startShooting();
+              superstructure.chute.startShooting();
             }).withTimeout(2.0),
             Commands.runOnce(() -> {
-              chute.stopShooting();
+              superstructure.chute.stopShooting();
             })));
-    command.addRequirements(drive, elevator, chute);
+    command.addRequirements(drive, superstructure);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
       piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
-      chute.stopShooting();
+      superstructure.chute.stopShooting();
       // FIXME: Reset? Detect if coral was shot?
     });
   }
