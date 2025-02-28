@@ -177,21 +177,6 @@ CALS = {
         cx = 736.690867,
         cy = 557.428635,
     ),
-
-    # Jeremy's Mac @640x480
-    'jeremy-mac-640x480': dict(
-        fx = 801.552718,
-        fy = 782.872041,
-        cx = 268.012054,
-        cy = 125.630105,
-    ),
-
-    'jeremy-mac-1280x720': dict(
-        fx = 895.628914,
-        fy = 899.300743,
-        cx = 655.965312,
-        cy = 344.614969,
-    ),
 }
 
 def cam2Field(fieldPos, camPos):
