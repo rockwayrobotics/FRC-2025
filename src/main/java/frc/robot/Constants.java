@@ -182,11 +182,13 @@ public final class Constants {
   }
 
   public static final class Digital {
-    public static final int CORAL_LOAD_BEAMBREAK = 0;
-    public static final int CORAL_SHOOT_BEAMBREAK = 1;
-    public static final int ALGAE_HOME_SWITCH = 2;
-    public static final int ELEVATOR_HOME_SWITCH = 3;
-    public static final int CHUTE_HOME_SWITCH = 4;
+    public static final int ALGAE_ACQUIRED_DISTANCE_SENSOR = 0;
+    public static final int ALGAE_HOME_LIMIT_SWITCH = 1; // normally open
+    public static final int CHUTE_HOME_LIMIT_SWITCH = 2; // normally open, when intake is to the left it is clsoed
+    // 3 is empty
+    public static final int CHUTE_SHOOT_CORAL_BEAMBREAK = 4;
+    public static final int CHUTE_LOAD_CORAL_BEAMBREAK = 5;
+    public static final int ELEVATOR_HOME_BEAMBREAK = 6;
   }
 
   public static final class Analog {
