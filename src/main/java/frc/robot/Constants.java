@@ -190,7 +190,7 @@ public final class Constants {
   }
 
   public static final class Analog {
-    public static final int ALGAE_DISTANCE_SENSOR = 0;
+    public static final int ALGAE_DISTANCE_SENSOR = 3;
   }
 
   public static final class PathPlanner {
