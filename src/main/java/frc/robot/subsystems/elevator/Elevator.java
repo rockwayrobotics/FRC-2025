@@ -14,8 +14,6 @@ public class Elevator {
   private double heightMeters = 0;
   private boolean homed = false;
 
-  final Tuner elevatorSoftLimitMin = new Tuner("Elevator/soft_limit_min", 0.4, true);
-  final Tuner elevatorSoftLimitMax = new Tuner("Elevator/soft_limit_max", 0.6, true);
   final Interlock enabled = new Interlock("Elevator");
 
   public Elevator(ElevatorIO io) {
@@ -37,7 +35,9 @@ public class Elevator {
 
   public void setGoalHeightMeters(double heightMeters) {
     if (enabled.get()) {
-      goalHeightMeters = MathUtil.clamp(heightMeters, elevatorSoftLimitMin.get(), elevatorSoftLimitMax.get());
+      // goalHeightMeters = MathUtil.clamp(heightMeters, elevatorSoftLimitMin.get(),
+      // elevatorSoftLimitMax.get());
+      goalHeightMeters = heightMeters;
     }
   }
 

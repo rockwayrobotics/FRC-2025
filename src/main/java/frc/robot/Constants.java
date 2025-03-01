@@ -151,13 +151,18 @@ public final class Constants {
     public static final double ALGAE_L3_HEIGHT = 3.0;
     public static final double CLIMB_HEIGHT = 0.0;
 
-    public static final double SPROCKET_RADIUS_METERS = 0.042;
     public static final double GEAR_RATIO = 2;
+
+    public static final double ELEVATOR_CONVERSION_FACTOR = 281.5249266862;
+    // March 1st 2025:
+    // (375/1.33203125) = 281.5249266862
+    // (1192/4.251) = 280.4046106798
+
     public static final double CARRIAGE_MASS_KG = 5;
     // Minimum height of pivot center
     public static final double MIN_PIVOT_HEIGHT_METERS = 0.24;
-    // Maximum extension height of elevator - FIXME: Not measured
-    public static final double MAX_HEIGHT_METERS = 1.5;
+    // Maximum extension height of elevator
+    public static final double MAX_HEIGHT_METERS = 1.320;
   }
 
   public static final class Grabber {

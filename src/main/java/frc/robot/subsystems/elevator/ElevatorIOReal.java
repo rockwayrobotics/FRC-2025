@@ -2,6 +2,7 @@ package frc.robot.subsystems.elevator;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
@@ -31,6 +32,8 @@ public class ElevatorIOReal implements ElevatorIO {
   final Tuner elevatorPID_D = new Tuner("Elevator/Kd", 0, true);
   final Tuner elevatorMaxNormalizedSpeed = new Tuner("Elevator/normalized_speed_max", 0.1, true);
   final Tuner elevatorMinNormalizedSpeed = new Tuner("Elevator/normalized_speed_min", -0.1, true);
+  final Tuner elevatorSoftLimitMin = new Tuner("Elevator/soft_limit_min_mm", 5, true);
+  final Tuner elevatorSoftLimitMax = new Tuner("Elevator/soft_limit_max_mm", 1300, true);
 
   protected final RelativeEncoder encoder = motor.getEncoder();
   protected final SparkClosedLoopController controller = motor.getClosedLoopController();
@@ -58,7 +61,7 @@ public class ElevatorIOReal implements ElevatorIO {
   public void updateInputs(ElevatorIOInputs inputs) {
     inputs.homed = Sensors.getInstance().getElevatorHomeBeambreak();
     if (inputs.homed) {
-      REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
+      // REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
     }
 
     // FIXME: Measure CAN bus usage with all these queries?
@@ -94,10 +97,18 @@ public class ElevatorIOReal implements ElevatorIO {
     feedforward = new ElevatorFeedforward(elevatorFeedforwardkS.get(), elevatorFeedforwardkG.get(), 0);
     SparkMaxConfig config = new SparkMaxConfig();
     if (resetSafe) {
-      config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
-      config.encoder.positionConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO)
-          .velocityConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO / 60);
+      config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0).inverted(true);
+      // config.encoder.positionConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS
+      // / Constants.Elevator.GEAR_RATIO)
+      // .velocityConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS /
+      // Constants.Elevator.GEAR_RATIO / 60);
+
+      config.encoder.positionConversionFactor(Constants.Elevator.ELEVATOR_CONVERSION_FACTOR).velocityConversionFactor(
+          Constants.Elevator.ELEVATOR_CONVERSION_FACTOR);
     }
+
+    config.softLimit.forwardSoftLimit(elevatorSoftLimitMax.get()).reverseSoftLimit(elevatorSoftLimitMin.get());
+
     // No ff term here because we want position control not velocity
     config.closedLoop.pidf(elevatorPID_P.get(), 0, elevatorPID_D.get(), 0);
     config.closedLoop.outputRange(elevatorMinNormalizedSpeed.get(), elevatorMaxNormalizedSpeed.get());
