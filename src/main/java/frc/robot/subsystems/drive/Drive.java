@@ -58,7 +58,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
-import frc.robot.subsystems.Sensors;
+import frc.robot.util.Sensors;
 import frc.robot.util.TimestampSynchronizer;
 import frc.robot.util.Tuner;
 

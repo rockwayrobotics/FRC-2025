@@ -106,6 +106,9 @@ public class Robot extends LoggedRobot {
     // Log updates to RobotTracker in all modes
     RobotTracker.getInstance().periodic();
 
+    // Push updates of sensor state to NetworkTables no matter what
+    m_robotContainer.sensors.updateNT();
+
     // Back to normal priority
     Threads.setCurrentThreadPriority(false, 10);
   }

@@ -20,13 +20,15 @@ import java.util.function.DoubleSupplier;
 
 import frc.robot.Constants;
 import frc.robot.util.REVUtils;
+import frc.robot.util.Sensors;
 import frc.robot.util.Tuner;
 
 public class ElevatorIOReal implements ElevatorIO {
   // Note that we may eventually have a second motor on the elevator
   protected final SparkFlex leftMotor = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR_LEFT, MotorType.kBrushless);
 
-  protected final DigitalInput homeSwitch = new DigitalInput(Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
+  // protected final DigitalInput homeSwitch = new
+  // DigitalInput(Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
 
   final Tuner ElevatorFeedforwardkS = new Tuner("ElevatorFeedforwardkS", 0, true);
   final Tuner ElevatorFeedforwardkG = new Tuner("ElevatorFeedforwardkG", 0, true);
@@ -40,7 +42,9 @@ public class ElevatorIOReal implements ElevatorIO {
       ElevatorFeedforwardkG.get(), 0);
   protected final double SPEED_METERS_PER_SECOND = 0.5;
 
-  public ElevatorIOReal() {
+  protected Sensors sensors;
+
+  public ElevatorIOReal(Sensors sensors) {
     var config = new SparkMaxConfig();
     config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     config.encoder.positionConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO)
@@ -55,6 +59,8 @@ public class ElevatorIOReal implements ElevatorIO {
 
     REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
 
+    this.sensors = sensors;
+
     ElevatorFeedforwardkS.addListener((_e) -> updateParams());
     ElevatorFeedforwardkG.addListener((_e) -> updateParams());
     ElevatorPID_P.addListener((_e) -> updateParams());
@@ -63,7 +69,7 @@ public class ElevatorIOReal implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    inputs.homed = homeSwitch.get();
+    inputs.homed = sensors.getElevatorHomeBeambreak();
     // FIXME: Measure CAN bus usage with all these queries?
     REVUtils.ifOk(leftMotor, encoder::getPosition, (value) -> inputs.positionMeters = value);
     REVUtils.ifOk(leftMotor, encoder::getVelocity, (value) -> inputs.velocityMetersPerSec = value);

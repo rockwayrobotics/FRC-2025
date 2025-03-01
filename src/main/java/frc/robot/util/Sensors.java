@@ -1,14 +1,13 @@
-package frc.robot.subsystems;
+package frc.robot.util;
 
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
-public class Sensors extends SubsystemBase {
+public class Sensors {
   private AnalogInput AlgaeAcquiredDistanceSensor = new AnalogInput(
       Constants.Digital.ALGAE_ACQUIRED_DISTANCE_SENSOR);
   private DigitalInput AlgaeHomeLimitSwitch = new DigitalInput(
@@ -42,10 +41,11 @@ public class Sensors extends SubsystemBase {
         .publish();
     this.ElevatorHomeBeambreakPublisher = nt.getBooleanTopic(String.join("", "/Sensors/", "ElevatorHomeBeambreak"))
         .publish();
+
+    updateNT();
   }
 
-  @Override
-  public void periodic() {
+  public void updateNT() {
     this.AlgaeAcquiredDistanceSensorPublisher.set(getAlgaeAcquiredDistanceSensor());
     this.AlgaeHomeLimitSwitchPublisher.set(getAlgaeHomeLimitSwitch());
     this.ChuteHomeLimitSwitchPublisher.set(getChuteHomeLimitSwitch());

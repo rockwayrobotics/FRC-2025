@@ -21,7 +21,6 @@ import frc.robot.ScoringState.SensorState;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ScoreCommands;
 import frc.robot.simulation.WorldSimulation;
-import frc.robot.subsystems.Sensors;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chute.ChuteIOReal;
 import frc.robot.subsystems.chute.ChuteIOSim;
@@ -42,13 +41,14 @@ import frc.robot.subsystems.grabber.Grabber;
 import frc.robot.subsystems.grabber.GrabberIOReal;
 import frc.robot.subsystems.grabber.GrabberIOSim;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.util.Sensors;
 
 public class RobotContainer {
   // Subsystems are listed here
   private final Drive drive;
   private final Superstructure superstructure;
   private final Climp climp;
-  private final Sensors sensors;
+  public final Sensors sensors;
 
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
@@ -65,13 +65,13 @@ public class RobotContainer {
   public RobotContainer() {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
-      // FIXME: replace with real io once motors are on the robot
-      Elevator elevator = new Elevator(new ElevatorIOSim(0));
-      Chute chute = new Chute(new ChuteIOSim());
-      Grabber grabber = new Grabber(new GrabberIOSim());
+      sensors = new Sensors();
+
+      Elevator elevator = new Elevator(new ElevatorIOReal(sensors));
+      Chute chute = new Chute(new ChuteIOReal(sensors));
+      Grabber grabber = new Grabber(new GrabberIOReal(sensors));
       superstructure = new Superstructure(elevator, chute, grabber);
       climp = new Climp(new ClimpIOSim());
-      sensors = new Sensors();
     } else {
       simulation = new WorldSimulation();
       drive = simulation.getDrive();

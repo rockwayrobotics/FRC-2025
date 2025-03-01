@@ -9,6 +9,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import frc.robot.Constants;
 import frc.robot.util.REVUtils;
+import frc.robot.util.Sensors;
 import frc.robot.util.Tuner;
 
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -19,8 +20,10 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
 public class ChuteIOReal implements ChuteIO {
-  protected final DigitalInput coralLoadSensor = new DigitalInput(Constants.Digital.CHUTE_LOAD_CORAL_BEAMBREAK);
-  protected final DigitalInput coralShootSensor = new DigitalInput(Constants.Digital.CHUTE_SHOOT_CORAL_BEAMBREAK);
+  // protected final DigitalInput coralLoadSensor = new
+  // DigitalInput(Constants.Digital.CHUTE_LOAD_CORAL_BEAMBREAK);
+  // protected final DigitalInput coralShootSensor = new
+  // DigitalInput(Constants.Digital.CHUTE_SHOOT_CORAL_BEAMBREAK);
 
   protected final SparkMax pivotMotor = new SparkMax(Constants.CAN.PIVOT_MOTOR, MotorType.kBrushless);
   protected final SparkMax shooterMotor = new SparkMax(Constants.CAN.SHOOTER_MOTOR, MotorType.kBrushless);
@@ -30,10 +33,12 @@ public class ChuteIOReal implements ChuteIO {
 
   protected final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
 
+  protected Sensors sensors;
+
   final Tuner PivotPID_P = new Tuner("PivotPID_P", 0, true);
   final Tuner PivotPID_D = new Tuner("PivotPID_D", 0, true);
 
-  public ChuteIOReal() {
+  public ChuteIOReal(Sensors sensors) {
     SparkMaxConfig pivotConfig = new SparkMaxConfig();
     pivotConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     pivotConfig.encoder.positionConversionFactor(1 / Constants.Chute.PIVOT_GEAR_RATIO);
@@ -49,6 +54,8 @@ public class ChuteIOReal implements ChuteIO {
     // At creation time, set encoder positions to our initial position
     REVUtils.tryUntilOk(() -> pivotEncoder.setPosition(Constants.Chute.PIVOT_INITIAL_ANGLE_RADS));
 
+    this.sensors = sensors;
+
     PivotPID_P.addListener((_e) -> updateParams());
     PivotPID_D.addListener((_e) -> updateParams());
   }
@@ -59,8 +66,8 @@ public class ChuteIOReal implements ChuteIO {
     REVUtils.ifOk(pivotMotor, pivotEncoder::getVelocity, (value) -> inputs.pivotVelocityRadPerSec = value / 60.0);
     REVUtils.ifOk(shooterMotor, shooterEncoder::getVelocity, (value) -> inputs.shooterVelocityRadPerSec = value);
     // FIXME: Should we be reading this at 50Hz?
-    inputs.coralLoading = coralLoadSensor.get();
-    inputs.coralReady = coralShootSensor.get();
+    inputs.coralLoading = sensors.getChuteLoadCoralBeambreak();
+    inputs.coralReady = sensors.getChuteShootCoralBeambreak();
   }
 
   @Override
