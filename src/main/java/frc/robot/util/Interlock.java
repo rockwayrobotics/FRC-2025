@@ -17,7 +17,7 @@ import edu.wpi.first.networktables.NetworkTableListener;
  * WPILib Preferences.
  */
 public class Interlock {
-  private final String key = "enable";
+  private final String key = "/enable";
   private final BooleanSubscriber subscriber;
 
   /**
