@@ -196,7 +196,8 @@ public class Robot extends LoggedRobot {
   }
 
   private void enterCoastModeAfterSeconds(double seconds) {
-    enterCoastModeCommand = Commands.sequence(Commands.waitSeconds(seconds), Commands.runOnce(() -> m_robotContainer.setDriveBrakeMode(false)));
+    enterCoastModeCommand = Commands.sequence(Commands.waitSeconds(seconds), Commands.runOnce(() -> m_robotContainer.setDriveBrakeMode(false))).ignoringDisable(true);
+    enterCoastModeCommand.schedule();
   }
 
   private void enterBrakeMode() {
