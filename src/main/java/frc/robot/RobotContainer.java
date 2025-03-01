@@ -21,6 +21,7 @@ import frc.robot.ScoringState.SensorState;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ScoreCommands;
 import frc.robot.simulation.WorldSimulation;
+import frc.robot.subsystems.Sensors;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chute.ChuteIOReal;
 import frc.robot.subsystems.chute.ChuteIOSim;
@@ -47,6 +48,7 @@ public class RobotContainer {
   private final Drive drive;
   private final Superstructure superstructure;
   private final Climp climp;
+  private final Sensors sensors;
 
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
@@ -69,12 +71,14 @@ public class RobotContainer {
       Grabber grabber = new Grabber(new GrabberIOSim());
       superstructure = new Superstructure(elevator, chute, grabber);
       climp = new Climp(new ClimpIOSim());
+      sensors = new Sensors();
     } else {
       simulation = new WorldSimulation();
       drive = simulation.getDrive();
       superstructure = new Superstructure(new Elevator(simulation.getElevator()), new Chute(simulation.getChute()),
           new Grabber(simulation.getGrabber()));
       climp = new Climp(simulation.getClimp());
+      sensors = new Sensors(); // TODO: Simulate sensors(?)
     }
 
     // Set up auto routines
@@ -214,15 +218,18 @@ public class RobotContainer {
     // PoV Right but with different event loop
     driverController.pov(0, 90, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.chute.setPivotGoalRads(-Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
+            () -> superstructure.chute
+                .setPivotGoalRads(-Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
             superstructure));
     // PoV Left but with different event loop
     driverController.pov(0, 270, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.chute.setPivotGoalRads(Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
+            () -> superstructure.chute
+                .setPivotGoalRads(Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
             superstructure));
     driverController.a(testModelButtonLoop)
-        .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure).finallyDo(() -> superstructure.chute.stopShooting()));
+        .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)
+            .finallyDo(() -> superstructure.chute.stopShooting()));
     driverController.b(testModelButtonLoop)
         .whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
 

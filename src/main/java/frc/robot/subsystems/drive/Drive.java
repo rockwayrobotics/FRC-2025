@@ -58,7 +58,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
-import frc.robot.util.Sensors;
+import frc.robot.subsystems.Sensors;
 import frc.robot.util.TimestampSynchronizer;
 import frc.robot.util.Tuner;
 
@@ -101,7 +101,6 @@ public class Drive extends SubsystemBase {
   TimeInterpolatableBuffer<Double> leftPositionBuffer;
   TimeInterpolatableBuffer<Double> rightPositionBuffer;
 
-  public Sensors sensors = new Sensors();
 
   public Drive(DriveIO io, GyroIO gyroIO) {
     this.io = io;
@@ -192,8 +191,6 @@ public class Drive extends SubsystemBase {
     gyroIO.updateInputs(gyroInputs);
     Logger.processInputs("Drive", inputs);
     Logger.processInputs("Drive/Gyro", gyroInputs);
-
-    sensors.updateNT();
 
     double now = Timer.getFPGATimestamp();
     tofDistancePeriodic(now);
