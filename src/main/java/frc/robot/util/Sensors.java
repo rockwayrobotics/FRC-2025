@@ -33,8 +33,7 @@ public class Sensors {
   private Sensors() {
     var nt = NetworkTableInstance.getDefault();
     this.GrabberAcquiredDistanceSensorPublisher = nt
-        .getDoubleTopic("/AdvantageKit/RealOutputs/Grabber/acquired_distance_unknown_units").publish();
-    // FIXME: determine units. It also floats around zero when nothing is in range
+        .getDoubleTopic("/AdvantageKit/RealOutputs/Grabber/acquired_distance_mm").publish();
     this.GrabberHomeSwitchPublisher = nt.getBooleanTopic("/AdvantageKit/RealOutputs/Grabber/home_sw").publish();
     this.ChuteHomeSwitchPublisher = nt.getBooleanTopic("/AdvantageKit/RealOutputs/Chute/home_sw").publish();
     this.ChuteShootCoralBeambreakPublisher = nt.getBooleanTopic("/AdvantageKit/RealOutputs/Chute/ready_sw").publish();
@@ -61,41 +60,36 @@ public class Sensors {
   }
 
   /**
-   * @return the distance from the algae acquired distance sensor, in unknown
-   *         units, FIXME! see above
+   * @return the distance from the algae acquired distance sensor, in mm (FIXME:
+   *         rn its in volts)
    */
   public double getGrabberAcquiredDistance() {
+    // TODO: Calibrate this and convert from voltage to mm.
+    // 40 to 300 mm
     return GrabberAcquiredDistanceSensor.getVoltage();
   }
 
-  /**
-   * @return true if the grabber home limit switch is pressed. It is normally
-   *         'true'
-   *         when not pressed
-   */
+  /** @return true if the grabber home limit switch is pressed. */
   public boolean getGrabberHomeSwitch() {
     return GrabberHomeSwitch.get();
   }
 
-  /**
-   * @return true if the chute home limit switch is pressed. It is normally
-   *         'true' when not pressed
-   */
+  /** @return true if the chute home limit switch is pressed. */
   public boolean getChuteHomeSwitch() {
     return ChuteHomeSwitch.get();
   }
 
-  /** @return False when beam is broken */
+  /** @return talse when beam is broken */
   public boolean getChuteCoralReadyBeambreak() {
     return ChuteCoralReadyBeambreak.get();
   }
 
-  /** @return False when beam is broken */
+  /** @return talse when beam is broken */
   public boolean getChuteCoralLoadedBeambreak() {
     return ChuteCoralLoadedBeambreak.get();
   }
 
-  /** @return False when elevator is home */
+  /** @return talse when elevator is home */
   public boolean getElevatorHomeBeambreak() {
     return ElevatorHomeBeambreak.get();
   }
