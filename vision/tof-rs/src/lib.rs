@@ -7,7 +7,7 @@ use thread_priority::{ThreadBuilder, ThreadPriority};
 use vl53l1x_uld::{DistanceMode, IOVoltage, VL53L1X};
 
 // use crate::sensor_chooser::SensorChooser;
-mod sensor_chooser;
+mod set_pins;
 /// Valid timing budget values in milliseconds
 const VALID_TIMING_BUDGETS: &[u16] = &[15, 20, 33, 50, 100, 200, 500];
 
@@ -324,6 +324,6 @@ impl TofSensor {
 #[pymodule]
 fn vl53l1x(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TofSensor>()?;
-    m.add_class::<sensor_chooser::SensorChooser>()?;
+    m.add_class::<set_pins::SetPins>()?;
     Ok(())
 }
