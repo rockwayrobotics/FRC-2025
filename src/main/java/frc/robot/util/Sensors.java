@@ -1,5 +1,7 @@
 package frc.robot.util;
 
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -18,24 +20,38 @@ public class Sensors {
   private DigitalInput ElevatorHomeBeambreak = new DigitalInput(
       Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
 
+  private DoublePublisher AlgaeAcquiredDistanceSensorPublisher;
+  private BooleanPublisher AlgaeHomeLimitSwitchPublisher;
+  private BooleanPublisher ChuteHomeLimitSwitchPublisher;
+  private BooleanPublisher ChuteShootCoralBeambreakPublisher;
+  private BooleanPublisher ChuteLoadCoralBeambreakPublisher;
+  private BooleanPublisher ElevatorHomeBeambreakPublisher;
+
   public Sensors() {
+    var nt = NetworkTableInstance.getDefault();
+    this.AlgaeAcquiredDistanceSensorPublisher = nt
+        .getDoubleTopic(String.join("", "/Sensors/", "AlgaeAcquiredDistanceSensor")).publish();
+    this.AlgaeHomeLimitSwitchPublisher = nt.getBooleanTopic(String.join("", "/Sensors/", "AlgaeHomeLimitSwitch"))
+        .publish();
+    this.ChuteHomeLimitSwitchPublisher = nt.getBooleanTopic(String.join("", "/Sensors/", "ChuteHomeLimitSwitch"))
+        .publish();
+    this.ChuteShootCoralBeambreakPublisher = nt
+        .getBooleanTopic(String.join("", "/Sensors/", "ChuteShootCoralBeambreak")).publish();
+    this.ChuteLoadCoralBeambreakPublisher = nt.getBooleanTopic(String.join("", "/Sensors/", "ChuteLoadCoralBeambreak"))
+        .publish();
+    this.ElevatorHomeBeambreakPublisher = nt.getBooleanTopic(String.join("", "/Sensors/", "ElevatorHomeBeambreak"))
+        .publish();
+
     updateNT();
   }
 
   public void updateNT() {
-    var nt = NetworkTableInstance.getDefault();
-    nt.getDoubleTopic(String.join("", "/Sensors/", "AlgaeAcquiredDistanceSensor")).publish()
-        .set(AlgaeAcquiredDistanceSensor.getVoltage());
-    nt.getBooleanTopic(String.join("", "/Sensors/", "AlgaeHomeLimitSwitch")).publish()
-        .set(AlgaeHomeLimitSwitch.get());
-    nt.getBooleanTopic(String.join("", "/Sensors/", "ChuteHomeLimitSwitch")).publish()
-        .set(ChuteHomeLimitSwitch.get());
-    nt.getBooleanTopic(String.join("", "/Sensors/", "ChuteShootCoralBeambreak")).publish()
-        .set(ChuteShootCoralBeambreak.get());
-    nt.getBooleanTopic(String.join("", "/Sensors/", "ChuteLoadCoralBeambreak")).publish()
-        .set(ChuteLoadCoralBeambreak.get());
-    nt.getBooleanTopic(String.join("", "/Sensors/", "ElevatorHomeBeambreak")).publish()
-        .set(ElevatorHomeBeambreak.get());
+    this.AlgaeAcquiredDistanceSensorPublisher.set(getAlgaeAcquiredDistanceSensor());
+    this.AlgaeHomeLimitSwitchPublisher.set(getAlgaeHomeLimitSwitch());
+    this.ChuteHomeLimitSwitchPublisher.set(getChuteHomeLimitSwitch());
+    this.ChuteShootCoralBeambreakPublisher.set(getChuteShootCoralBeambreak());
+    this.ChuteLoadCoralBeambreakPublisher.set(getChuteLoadCoralBeambreak());
+    this.ElevatorHomeBeambreakPublisher.set(getElevatorHomeBeambreak());
   }
 
   public double getAlgaeAcquiredDistanceSensor() {
