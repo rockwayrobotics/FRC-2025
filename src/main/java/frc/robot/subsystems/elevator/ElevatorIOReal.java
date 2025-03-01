@@ -5,8 +5,6 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DigitalSource;
 
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -25,54 +23,51 @@ import frc.robot.util.Tuner;
 
 public class ElevatorIOReal implements ElevatorIO {
   // Note that we may eventually have a second motor on the elevator
-  protected final SparkFlex Motor = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR, MotorType.kBrushless);
+  protected final SparkFlex motor = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR, MotorType.kBrushless);
 
-  // protected final DigitalInput homeSwitch = new
-  // DigitalInput(Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
+  final Tuner elevatorFeedforwardkS = new Tuner("Elevator/feedforward_kS", 0, true);
+  final Tuner elevatorFeedforwardkG = new Tuner("Elevator/feedforward_kG", 0, true);
+  final Tuner elevatorPID_P = new Tuner("Elevator/Kp", 0, true);
+  final Tuner elevatorPID_D = new Tuner("Elevator/Kd", 0, true);
+  final Tuner elevatorMaxNormalizedSpeed = new Tuner("Elevator/normalized_speed_max", 0.1, true);
+  final Tuner elevatorMinNormalizedSpeed = new Tuner("Elevator/normalized_speed_min", -0.1, true);
 
-  final Tuner ElevatorFeedforwardkS = new Tuner("ElevatorFeedforwardkS", 0, true);
-  final Tuner ElevatorFeedforwardkG = new Tuner("ElevatorFeedforwardkG", 0, true);
-  final Tuner ElevatorPID_P = new Tuner("ElevatorPID_P", 0, true);
-  final Tuner ElevatorPID_D = new Tuner("ElevatorPID_D", 0, true);
-
-  protected final RelativeEncoder encoder = Motor.getEncoder();
-  protected final SparkClosedLoopController controller = Motor.getClosedLoopController();
+  protected final RelativeEncoder encoder = motor.getEncoder();
+  protected final SparkClosedLoopController controller = motor.getClosedLoopController();
   // TODO: tune
-  protected ElevatorFeedforward feedforward = new ElevatorFeedforward(ElevatorFeedforwardkS.get(),
-      ElevatorFeedforwardkG.get(), 0);
+  protected ElevatorFeedforward feedforward = new ElevatorFeedforward(elevatorFeedforwardkS.get(),
+      elevatorFeedforwardkG.get(), 0);
+
+  // FIXME: Not used and not measured - only needs to be arbitrary positive
   protected final double SPEED_METERS_PER_SECOND = 0.5;
 
   public ElevatorIOReal() {
-    var config = new SparkMaxConfig();
-    config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
-    config.encoder.positionConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO)
-        .velocityConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO / 60);
-
-    config.closedLoop.pidf(ElevatorPID_P.get(), 0, ElevatorPID_D.get(), REVUtils.VORTEX_FF);
-
-    config.encoder.positionConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO)
-        .velocityConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO / 60);
-    REVUtils.tryUntilOk(
-        () -> Motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+    updateParams(true);
 
     REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
 
-    ElevatorFeedforwardkS.addListener((_e) -> updateParams());
-    ElevatorFeedforwardkG.addListener((_e) -> updateParams());
-    ElevatorPID_P.addListener((_e) -> updateParams());
-    ElevatorPID_D.addListener((_e) -> updateParams());
+    elevatorFeedforwardkS.addListener((_e) -> updateParams(false));
+    elevatorFeedforwardkG.addListener((_e) -> updateParams(false));
+    elevatorPID_P.addListener((_e) -> updateParams(false));
+    elevatorPID_D.addListener((_e) -> updateParams(false));
+    elevatorMaxNormalizedSpeed.addListener((_e) -> updateParams(false));
+    elevatorMinNormalizedSpeed.addListener((_e) -> updateParams(false));
   }
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
     inputs.homed = Sensors.getInstance().getElevatorHomeBeambreak();
+    if (inputs.homed) {
+      REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
+    }
+
     // FIXME: Measure CAN bus usage with all these queries?
-    REVUtils.ifOk(Motor, encoder::getPosition, (value) -> inputs.positionMeters = value);
-    REVUtils.ifOk(Motor, encoder::getVelocity, (value) -> inputs.velocityMetersPerSec = value);
-    REVUtils.ifOk(Motor, new DoubleSupplier[] {
-        Motor::getAppliedOutput, Motor::getBusVoltage
+    REVUtils.ifOk(motor, encoder::getPosition, (value) -> inputs.positionMeters = value);
+    REVUtils.ifOk(motor, encoder::getVelocity, (value) -> inputs.velocityMetersPerSec = value);
+    REVUtils.ifOk(motor, new DoubleSupplier[] {
+        motor::getAppliedOutput, motor::getBusVoltage
     }, (values) -> inputs.appliedVoltage = values[0] * values[1]);
-    REVUtils.ifOk(Motor, Motor::getOutputCurrent, (value) -> inputs.supplyCurrentAmps = value);
+    REVUtils.ifOk(motor, motor::getOutputCurrent, (value) -> inputs.supplyCurrentAmps = value);
     // FIXME: Could ask for temperature?
     // REVUtils.ifOk(motor, motor::getMotorTemperature, (value) ->
     // inputs.tempCelsius = value);
@@ -91,13 +86,21 @@ public class ElevatorIOReal implements ElevatorIO {
 
   @Override
   public void stop() {
-    Motor.set(0);
+    motor.set(0);
   }
 
-  public void updateParams() {
-    feedforward = new ElevatorFeedforward(ElevatorFeedforwardkS.get(), ElevatorFeedforwardkG.get(), 0);
-    var new_config = new SparkMaxConfig();
-    new_config.closedLoop.pidf(ElevatorPID_P.get(), 0, ElevatorPID_D.get(), REVUtils.VORTEX_FF);
-    Motor.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+  public void updateParams(boolean resetSafe) {
+    ResetMode resetMode = resetSafe ? ResetMode.kResetSafeParameters : ResetMode.kNoResetSafeParameters;
+    feedforward = new ElevatorFeedforward(elevatorFeedforwardkS.get(), elevatorFeedforwardkG.get(), 0);
+    SparkMaxConfig config = new SparkMaxConfig();
+    if (resetSafe) {
+      config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
+      config.encoder.positionConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO)
+          .velocityConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO / 60);
+    }
+    // No ff term here because we want position control not velocity
+    config.closedLoop.pidf(elevatorPID_P.get(), 0, elevatorPID_D.get(), 0);
+    config.closedLoop.outputRange(elevatorMinNormalizedSpeed.get(), elevatorMaxNormalizedSpeed.get());
+    REVUtils.tryUntilOk(() -> motor.configure(config, resetMode, PersistMode.kPersistParameters));
   }
 }

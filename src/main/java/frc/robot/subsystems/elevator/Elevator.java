@@ -4,6 +4,8 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.util.Interlock;
+import frc.robot.util.Tuner;
 
 public class Elevator {
   private final ElevatorIO io;
@@ -12,8 +14,9 @@ public class Elevator {
   private double heightMeters = 0;
   private boolean homed = false;
 
-  protected final double MIN_HEIGHT_METERS = 0;
-  protected final double MAX_HEIGHT_METERS = 0.5;
+  final Tuner elevatorSoftLimitMin = new Tuner("Elevator/soft_limit_min", 0.4, true);
+  final Tuner elevatorSoftLimitMax = new Tuner("Elevator/soft_limit_max", 0.6, true);
+  final Interlock enabled = new Interlock("Elevator");
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -25,7 +28,7 @@ public class Elevator {
     heightMeters = inputs.positionMeters;
     homed = inputs.homed;
 
-    if (DriverStation.isDisabled()) {
+    if (DriverStation.isDisabled() || !enabled.get()) {
       io.stop();
     } else {
       io.moveTowardsGoal(goalHeightMeters, heightMeters);
@@ -33,7 +36,9 @@ public class Elevator {
   }
 
   public void setGoalHeightMeters(double heightMeters) {
-    goalHeightMeters = MathUtil.clamp(heightMeters, MIN_HEIGHT_METERS, MAX_HEIGHT_METERS);
+    if (enabled.get()) {
+      goalHeightMeters = MathUtil.clamp(heightMeters, elevatorSoftLimitMin.get(), elevatorSoftLimitMax.get());
+    }
   }
 
   public double getHeightMeters() {

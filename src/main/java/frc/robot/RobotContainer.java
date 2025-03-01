@@ -136,61 +136,67 @@ public class RobotContainer {
     // driver & operator right bumper held -> landing sequence
 
     // left bumper -> set drive scale to 0.3 when held
-    driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
-    driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-    driverController.a().whileTrue(ScoreCommands.score(drive, superstructure));
+    // FIXME FIXME FIXME: Everything is disabled for now
+    boolean enabled = false;
+    if (enabled) {
+      driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
+      driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-    operatorController.povUpLeft().onTrue(new InstantCommand(() -> {
-      RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
-    }));
-    operatorController.povUpRight().onTrue(new InstantCommand(() -> {
-      RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
-    }));
-    operatorController.povDownLeft().onTrue(new InstantCommand(() -> {
-      RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
-    }));
-    operatorController.povDownRight().onTrue(new InstantCommand(() -> {
-      RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
-    }));
-    operatorController.povLeft().onTrue(new InstantCommand(() -> {
-      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
-      if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
-      } else {
-        // Default to front
+      driverController.a().whileTrue(ScoreCommands.score(drive, superstructure));
+
+      operatorController.povUpLeft().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
-      }
-    }));
-    operatorController.povRight().onTrue(new InstantCommand(() -> {
-      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
-      if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
-      } else {
-        // Default to front
+      }));
+      operatorController.povUpRight().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
-      }
-    }));
-    operatorController.povDown().onTrue(new InstantCommand(() -> {
-      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
-      if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
-      } else {
-        // Default to left
+      }));
+      operatorController.povDownLeft().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
-      }
-    }));
-    operatorController.povUp().onTrue(new InstantCommand(() -> {
-      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
-      if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
-      } else {
-        // Default to left
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
-      }
-    }));
+      }));
+      operatorController.povDownRight().onTrue(new InstantCommand(() -> {
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
+      }));
+      operatorController.povLeft().onTrue(new InstantCommand(() -> {
+        var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+        if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
+        } else {
+          // Default to front
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
+        }
+      }));
+      operatorController.povRight().onTrue(new InstantCommand(() -> {
+        var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+        if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
+        } else {
+          // Default to front
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
+        }
+      }));
+      operatorController.povDown().onTrue(new InstantCommand(() -> {
+        var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+        if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
+        } else {
+          // Default to left
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
+        }
+      }));
+      operatorController.povUp().onTrue(new InstantCommand(() -> {
+        var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+        if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
+        } else {
+          // Default to left
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
+        }
+      }));
 
-    drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
+      drive.setDefaultCommand(
+          DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
+    }
   }
 
   public void setupTestBindings() {
@@ -205,13 +211,14 @@ public class RobotContainer {
     // PoV Up but with different event loop
     driverController.pov(0, 0, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.elevator.setGoalHeightMeters(superstructure.elevator.getGoalHeightMeters() + 0.01),
+            () -> superstructure.elevator.setGoalHeightMeters(0.6),
             superstructure));
     // PoV Up but with different event loop
     driverController.pov(0, 180, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.elevator.setGoalHeightMeters(superstructure.elevator.getGoalHeightMeters() - 0.01),
+            () -> superstructure.elevator.setGoalHeightMeters(0.4),
             superstructure));
+
     // PoV Right but with different event loop
     driverController.pov(0, 90, testModelButtonLoop)
         .onTrue(Commands.runOnce(
