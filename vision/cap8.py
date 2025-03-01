@@ -262,7 +262,7 @@ def main():
                 if abs(leftVelocity) > deadbandThreshold and abs(rightVelocity) > deadbandThreshold:
                     if leftVelocity > 0 and rightVelocity > 0:
                         cam = cam0
-                    else:
+                    elif leftVelocity < 0 and rightVelocity < 0:
                         cam = cam1
 
             count += 1
