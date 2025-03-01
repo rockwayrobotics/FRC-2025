@@ -1,0 +1,305 @@
+<dashboard-tab
+  tab-name="TeleOperated"
+  slot="tab"
+  source-provider="NetworkTables"
+></dashboard-tab
+><dashboard-tab
+  slot="tab"
+  tab-name="Autonomous"
+  source-provider="NetworkTables"
+></dashboard-tab
+><dashboard-tab
+  tab-name="Tuning"
+  slot="tab"
+  source-provider="NetworkTables"
+  selected=""
+  source-key="/Tuning/Elevator/feedforward_kS"
+  ><vaadin-number-field
+    label="Elevator FF kG"
+    value="0"
+    has-value=""
+    has-label=""
+    source-provider="NetworkTables"
+    source-key="/Tuning/Elevator/feedforward_kG"
+    style="transform: translate(146px, 0px)"
+    placeholder=""
+    min="NaN"
+    max="NaN"
+    ><input
+      slot="input"
+      value="0"
+      type="number"
+      id="vaadin-number-field-185"
+      aria-labelledby="label-vaadin-number-field-186"
+      aria-describedby=""
+      min="undefined"
+      max="undefined"
+      step="any"
+    /><label
+      slot="label"
+      id="label-vaadin-number-field-186"
+      for="vaadin-number-field-185"
+      >Elevator FF kG</label
+    >
+    <div
+      slot="error-message"
+      id="error-message-vaadin-number-field-128"
+      hidden=""
+    ></div> </vaadin-number-field
+  ><vaadin-number-field
+    label="Elevator FF kS"
+    value="0"
+    has-value=""
+    has-label=""
+    source-provider="NetworkTables"
+    style="transform: translate(0px, 0px)"
+    placeholder=""
+    min="NaN"
+    max="NaN"
+    ><input
+      slot="input"
+      value="0"
+      type="number"
+      id="vaadin-number-field-229"
+      aria-labelledby="label-vaadin-number-field-230"
+      aria-describedby=""
+      min="undefined"
+      max="undefined"
+      step="any"
+    /><label
+      slot="label"
+      id="label-vaadin-number-field-230"
+      for="vaadin-number-field-229"
+      >Elevator FF kS</label
+    >
+    <div
+      slot="error-message"
+      id="error-message-vaadin-number-field-156"
+      hidden=""
+    ></div> </vaadin-number-field
+  ><vaadin-number-field
+    label="Elevator PID kP"
+    value="0"
+    has-value=""
+    has-label=""
+    source-provider="NetworkTables"
+    style="transform: translate(291px, 0px)"
+    source-key="/Tuning/Elevator/Kp"
+    placeholder=""
+    min="NaN"
+    max="NaN"
+    ><input
+      slot="input"
+      value="0"
+      type="number"
+      id="vaadin-number-field-263"
+      aria-labelledby="label-vaadin-number-field-268"
+      aria-describedby=""
+      min="undefined"
+      max="undefined"
+      step="any"
+    /><label
+      slot="label"
+      id="label-vaadin-number-field-268"
+      for="vaadin-number-field-263"
+      >Elevator PID kP</label
+    >
+    <div
+      slot="error-message"
+      id="error-message-vaadin-number-field-182"
+      hidden=""
+    ></div> </vaadin-number-field
+  ><vaadin-number-field
+    label="Elevator PID kD"
+    value="0"
+    has-value=""
+    has-label=""
+    source-provider="NetworkTables"
+    style="transform: translate(436px, 0px)"
+    source-key="/Tuning/Elevator/Kd"
+    placeholder=""
+    min="NaN"
+    max="NaN"
+    ><input
+      slot="input"
+      value="0"
+      type="number"
+      id="vaadin-number-field-285"
+      aria-labelledby="label-vaadin-number-field-290"
+      aria-describedby=""
+      min="undefined"
+      max="undefined"
+      step="any"
+    /><label
+      slot="label"
+      id="label-vaadin-number-field-290"
+      for="vaadin-number-field-285"
+      >Elevator PID kD</label
+    >
+    <div
+      slot="error-message"
+      id="error-message-vaadin-number-field-196"
+      hidden=""
+    ></div> </vaadin-number-field
+  ><vaadin-number-field
+    label="Camera Auto deadband"
+    value="0"
+    has-value=""
+    has-label=""
+    source-provider="NetworkTables"
+    style="transform: translate(683px, 0px); width: 182px; height: 59px"
+    source-key="/Tuning/Camera Auto Deadband"
+    placeholder=""
+    min="NaN"
+    max="NaN"
+    ><input
+      slot="input"
+      value="0"
+      type="number"
+      id="vaadin-number-field-396"
+      aria-labelledby="label-vaadin-number-field-401"
+      aria-describedby=""
+      min="undefined"
+      max="undefined"
+      step="any"
+    /><label
+      slot="label"
+      id="label-vaadin-number-field-401"
+      for="vaadin-number-field-396"
+      >Camera Auto deadband</label
+    >
+    <div
+      slot="error-message"
+      id="error-message-vaadin-number-field-267"
+      hidden=""
+    ></div> </vaadin-number-field
+  ><vaadin-number-field
+    label="Ele Min Speed"
+    value="0"
+    has-value=""
+    has-label=""
+    source-provider="NetworkTables"
+    style="transform: translate(0px, 90px); width: 128px; height: 77px"
+    source-key="/Tuning/Elevator/normalized_speed_min"
+    placeholder=""
+    min="NaN"
+    max="NaN"
+    ><input
+      slot="input"
+      value="0"
+      type="number"
+      id="vaadin-number-field-550"
+      aria-labelledby="label-vaadin-number-field-560"
+      aria-describedby=""
+      min="undefined"
+      max="undefined"
+      step="any"
+    /><label
+      slot="label"
+      id="label-vaadin-number-field-560"
+      for="vaadin-number-field-550"
+      >Ele Min Speed</label
+    >
+    <div
+      slot="error-message"
+      id="error-message-vaadin-number-field-370"
+      hidden=""
+    ></div> </vaadin-number-field
+  ><vaadin-number-field
+    label="Ele Max Speed"
+    value="0"
+    has-value=""
+    has-label=""
+    source-provider="NetworkTables"
+    style="transform: translate(146px, 88px)"
+    source-key="/Tuning/Elevator/normalized_speed_max"
+    placeholder=""
+    min="NaN"
+    max="NaN"
+    ><input
+      slot="input"
+      value="0"
+      type="number"
+      id="vaadin-number-field-581"
+      aria-labelledby="label-vaadin-number-field-591"
+      aria-describedby=""
+      min="undefined"
+      max="undefined"
+      step="any"
+    /><label
+      slot="label"
+      id="label-vaadin-number-field-591"
+      for="vaadin-number-field-581"
+      >Ele Max Speed</label
+    >
+    <div
+      slot="error-message"
+      id="error-message-vaadin-number-field-389"
+      hidden=""
+    ></div> </vaadin-number-field
+  ><vaadin-number-field
+    label="Ele soft min"
+    value="0"
+    has-value=""
+    has-label=""
+    source-provider="NetworkTables"
+    style="width: 125px; height: 117px; transform: translate(293px, 89px)"
+    source-key="/Tuning/Elevator/soft_limit_min"
+    placeholder="Ele soft min"
+    min="NaN"
+    max="NaN"
+    ><input
+      slot="input"
+      value="0"
+      type="number"
+      id="vaadin-number-field-592"
+      aria-labelledby="label-vaadin-number-field-602"
+      aria-describedby=""
+      min="undefined"
+      max="undefined"
+      step="any"
+      placeholder="Ele soft min"
+    /><label
+      slot="label"
+      id="label-vaadin-number-field-602"
+      for="vaadin-number-field-592"
+      >Ele soft min</label
+    >
+    <div
+      slot="error-message"
+      id="error-message-vaadin-number-field-396"
+      hidden=""
+    ></div> </vaadin-number-field
+  ><vaadin-number-field
+    label="Ele soft max"
+    value="0"
+    has-value=""
+    has-label=""
+    source-provider="NetworkTables"
+    style="width: 127px; height: 97px; transform: translate(436px, 89px)"
+    source-key="/Tuning/Elevator/soft_limit_max"
+    placeholder=""
+    min="NaN"
+    max="NaN"
+    ><input
+      slot="input"
+      value="0"
+      type="number"
+      id="vaadin-number-field-722"
+      aria-labelledby="label-vaadin-number-field-732"
+      aria-describedby=""
+      min="undefined"
+      max="undefined"
+      step="any"
+    /><label
+      slot="label"
+      id="label-vaadin-number-field-732"
+      for="vaadin-number-field-722"
+      >Ele soft max</label
+    >
+    <div
+      slot="error-message"
+      id="error-message-vaadin-number-field-478"
+      hidden=""
+    ></div> </vaadin-number-field
+></dashboard-tab>
