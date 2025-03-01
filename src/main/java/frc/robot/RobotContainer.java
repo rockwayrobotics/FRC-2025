@@ -101,14 +101,6 @@ public class RobotContainer {
 
   }
 
-  public void enable() {
-    drive.enable();
-  }
-
-  public void disable() {
-    drive.disable();
-  }
-
   public WorldSimulation getWorldSimulation() {
     return simulation;
   }

@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj.AsynchronousInterrupt;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 public class TempBeamBreak {
-  private DigitalInput input = new DigitalInput(3);
+  private DigitalInput input = new DigitalInput(3); // 3 is empty
   private AsynchronousInterrupt interrupt;
   private double lastTimestamp = 0;
 

@@ -52,9 +52,11 @@ public class Robot extends LoggedRobot {
 
       // This is for replay!
       // setUseTiming(false); // Run as fast as possible
-      // String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+      // String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from
+      // AdvantageScope (or prompt the user)
       // Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-      // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+      // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath,
+      // "_sim"))); // Save outputs to a new log
     }
 
     AutoLogOutputManager.addObject(RobotTracker.getInstance());
@@ -111,7 +113,6 @@ public class Robot extends LoggedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    m_robotContainer.disable();
     enterCoastModeAfterSeconds(2);
   }
 
@@ -125,7 +126,6 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_robotContainer.enable();
     enterBrakeMode();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
@@ -146,7 +146,6 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
-    m_robotContainer.enable();
     enterBrakeMode();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
@@ -196,7 +195,9 @@ public class Robot extends LoggedRobot {
   }
 
   private void enterCoastModeAfterSeconds(double seconds) {
-    enterCoastModeCommand = Commands.sequence(Commands.waitSeconds(seconds), Commands.runOnce(() -> m_robotContainer.setDriveBrakeMode(false))).ignoringDisable(true);
+    enterCoastModeCommand = Commands
+        .sequence(Commands.waitSeconds(seconds), Commands.runOnce(() -> m_robotContainer.setDriveBrakeMode(false)))
+        .ignoringDisable(true);
     enterCoastModeCommand.schedule();
   }
 

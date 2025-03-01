@@ -58,6 +58,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
+import frc.robot.util.Sensors;
 import frc.robot.util.TimestampSynchronizer;
 import frc.robot.util.Tuner;
 
@@ -77,18 +78,6 @@ public class Drive extends SubsystemBase {
   private double leftPositionShootTarget = Double.NaN;
   private double rightPositionShootTarget = Double.NaN;
   private int shootCounter = 0;
-
-  private AnalogInput ALGAE_ACQUIRED_DISTANCE_SENSOR = new AnalogInput(
-      Constants.Digital.ALGAE_ACQUIRED_DISTANCE_SENSOR);
-  private DigitalInput ALGAE_HOME_LIMIT_SWITCH = new DigitalInput(
-      Constants.Digital.ALGAE_HOME_LIMIT_SWITCH);
-  private DigitalInput CHUTE_HOME_LIMIT_SWITCH = new DigitalInput(Constants.Digital.CHUTE_HOME_LIMIT_SWITCH);
-  private DigitalInput CHUTE_SHOOT_CORAL_BEAMBREAK = new DigitalInput(
-      Constants.Digital.CHUTE_SHOOT_CORAL_BEAMBREAK);
-  private DigitalInput CHUTE_LOAD_CORAL_BEAMBREAK = new DigitalInput(
-      Constants.Digital.CHUTE_LOAD_CORAL_BEAMBREAK);
-  private DigitalInput ELEVATOR_HOME_BEAMBREAK = new DigitalInput(
-      Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
 
   // FIXME: Stop publishing twice to save bandwidth
   // Publish RobotPose for AdvantageScope
@@ -111,7 +100,8 @@ public class Drive extends SubsystemBase {
 
   TimeInterpolatableBuffer<Double> leftPositionBuffer;
   TimeInterpolatableBuffer<Double> rightPositionBuffer;
-  TempBeamBreak beamBreak;
+
+  public Sensors sensors = new Sensors();
 
   public Drive(DriveIO io, GyroIO gyroIO) {
     this.io = io;
@@ -119,7 +109,6 @@ public class Drive extends SubsystemBase {
     this.differentialDrive = io.getDifferentialDrive();
 
     // Temporary stuff for drive-by ToF measurement
-    beamBreak = new TempBeamBreak();
     leftPositionBuffer = TimeInterpolatableBuffer.createDoubleBuffer(60);
     rightPositionBuffer = TimeInterpolatableBuffer.createDoubleBuffer(60);
 
@@ -134,53 +123,6 @@ public class Drive extends SubsystemBase {
             (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
         new SysIdRoutine.Mechanism(
             (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), null, this));
-  }
-
-  /**
-   * Meant to be called in the Drive constructor if and when we try to re-enable
-   * PathPlanner.
-   */
-  private void setupPathPlanner() {
-    double rElem0 = 1;
-    Logger.recordOutput("VelocityControlFF", rElem0);
-    AutoBuilder.configure(
-        () -> RobotTracker.getInstance().getEstimatedPose(),
-        this::setPose,
-        () -> RobotTracker.getInstance().getDriveKinematics().toChassisSpeeds(getWheelSpeeds()),
-        // Could run closed loop here or add software PID
-        (ChassisSpeeds speeds) -> setTankDrive(speeds),
-        new PPLTVController(
-            VecBuilder.fill(0.0625, 0.125, 0.5),
-            VecBuilder.fill(rElem0, 2),
-            0.02,
-            Constants.Drive.MAX_SPEED_MPS),
-        Constants.PathPlanner.CONFIG,
-        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-        this);
-
-    // This is for logging pathfinding, by setting up our own pathfinder that
-    // intercepts
-    // the calls to log them.
-    // Pathfinding.setPathfinder(new LocalADStarAK());
-    PathPlannerLogging.setLogActivePathCallback(
-        (activePath) -> {
-          // FIXME: Logging
-          Logger.recordOutput(
-              "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
-        });
-
-    PathPlannerLogging.setLogTargetPoseCallback(
-        (targetPose) -> {
-          Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-        });
-  }
-
-  public void enable() {
-    beamBreak.enable();
-  }
-
-  public void disable() {
-    beamBreak.disable();
   }
 
   private void tofDistancePeriodic(double now) {
@@ -251,16 +193,7 @@ public class Drive extends SubsystemBase {
     Logger.processInputs("Drive", inputs);
     Logger.processInputs("Drive/Gyro", gyroInputs);
 
-    System.out.println("*********************** START ***********************");
-    System.out.println(ALGAE_ACQUIRED_DISTANCE_SENSOR.getVoltage());
-    System.out.println(ALGAE_HOME_LIMIT_SWITCH.get());
-    System.out.println(CHUTE_HOME_LIMIT_SWITCH.get());
-    System.out.println(CHUTE_SHOOT_CORAL_BEAMBREAK.get());
-    System.out.println(CHUTE_LOAD_CORAL_BEAMBREAK.get());
-    System.out.println(ELEVATOR_HOME_BEAMBREAK.get());
-    System.out.println("*********************** END ***********************");
-
-    beamBreak.periodic();
+    sensors.updateNT();
 
     double now = Timer.getFPGATimestamp();
     tofDistancePeriodic(now);
@@ -422,5 +355,44 @@ public class Drive extends SubsystemBase {
 
   public void setBrakeMode(boolean brake) {
     io.setBrakeMode(brake);
+  }
+
+  /**
+   * Meant to be called in the Drive constructor if and when we try to re-enable
+   * PathPlanner.
+   */
+  private void _setupPathPlanner() {
+    double rElem0 = 1;
+    Logger.recordOutput("VelocityControlFF", rElem0);
+    AutoBuilder.configure(
+        () -> RobotTracker.getInstance().getEstimatedPose(),
+        this::setPose,
+        () -> RobotTracker.getInstance().getDriveKinematics().toChassisSpeeds(getWheelSpeeds()),
+        // Could run closed loop here or add software PID
+        (ChassisSpeeds speeds) -> setTankDrive(speeds),
+        new PPLTVController(
+            VecBuilder.fill(0.0625, 0.125, 0.5),
+            VecBuilder.fill(rElem0, 2),
+            0.02,
+            Constants.Drive.MAX_SPEED_MPS),
+        Constants.PathPlanner.CONFIG,
+        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+        this);
+
+    // This is for logging pathfinding, by setting up our own pathfinder that
+    // intercepts
+    // the calls to log them.
+    // Pathfinding.setPathfinder(new LocalADStarAK());
+    PathPlannerLogging.setLogActivePathCallback(
+        (activePath) -> {
+          // FIXME: Logging
+          Logger.recordOutput(
+              "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
+        });
+
+    PathPlannerLogging.setLogTargetPoseCallback(
+        (targetPose) -> {
+          Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+        });
   }
 }
