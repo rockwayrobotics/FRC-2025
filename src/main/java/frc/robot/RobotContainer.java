@@ -65,7 +65,7 @@ public class RobotContainer {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
 
-      Elevator elevator = new Elevator(new ElevatorIOSim(0));
+      Elevator elevator = new Elevator(new ElevatorIOReal());
       Chute chute = new Chute(new ChuteIOSim());
       Grabber grabber = new Grabber(new GrabberIOSim());
       superstructure = new Superstructure(elevator, chute, grabber);
@@ -219,29 +219,33 @@ public class RobotContainer {
             () -> superstructure.elevator.setGoalHeightMeters(0.4),
             superstructure));
 
-    // PoV Right but with different event loop
-    driverController.pov(0, 90, testModelButtonLoop)
-        .onTrue(Commands.runOnce(
-            () -> superstructure.chute
-                .setPivotGoalRads(-Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
-            superstructure));
-    // PoV Left but with different event loop
-    driverController.pov(0, 270, testModelButtonLoop)
-        .onTrue(Commands.runOnce(
-            () -> superstructure.chute
-                .setPivotGoalRads(Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
-            superstructure));
-    driverController.a(testModelButtonLoop)
-        .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)
-            .finallyDo(() -> superstructure.chute.stopShooting()));
-    driverController.b(testModelButtonLoop)
-        .whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
+    // FIXME FIXME FIXME: Everything is disabled for now
+    boolean enabled = false;
+    if (enabled) {
+      // PoV Right but with different event loop
+      driverController.pov(0, 90, testModelButtonLoop)
+          .onTrue(Commands.runOnce(
+              () -> superstructure.chute
+                  .setPivotGoalRads(-Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
+              superstructure));
+      // PoV Left but with different event loop
+      driverController.pov(0, 270, testModelButtonLoop)
+          .onTrue(Commands.runOnce(
+              () -> superstructure.chute
+                  .setPivotGoalRads(Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
+              superstructure));
+      driverController.a(testModelButtonLoop)
+          .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)
+              .finallyDo(() -> superstructure.chute.stopShooting()));
+      driverController.b(testModelButtonLoop)
+          .whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
 
-    // This sets the default command to drive very slowly. Remember to reset this
-    // when exiting test mode.
-    CommandScheduler.getInstance().cancel(drive.getDefaultCommand());
-    drive.setDefaultCommand(DriveCommands.defaultDrive(() -> driverController.getLeftY() * 0.1,
-        () -> driverController.getRightX() * 0.1, drive));
+      // This sets the default command to drive very slowly. Remember to reset this
+      // when exiting test mode.
+      CommandScheduler.getInstance().cancel(drive.getDefaultCommand());
+      drive.setDefaultCommand(DriveCommands.defaultDrive(() -> driverController.getLeftY() * 0.1,
+          () -> driverController.getRightX() * 0.1, drive));
+    }
   }
 
   public void resetTestBindings() {
