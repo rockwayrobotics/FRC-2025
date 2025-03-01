@@ -25,7 +25,7 @@ import frc.robot.util.Tuner;
 
 public class ElevatorIOReal implements ElevatorIO {
   // Note that we may eventually have a second motor on the elevator
-  protected final SparkFlex leftMotor = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR_LEFT, MotorType.kBrushless);
+  protected final SparkFlex Motor = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR, MotorType.kBrushless);
 
   // protected final DigitalInput homeSwitch = new
   // DigitalInput(Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
@@ -35,16 +35,14 @@ public class ElevatorIOReal implements ElevatorIO {
   final Tuner ElevatorPID_P = new Tuner("ElevatorPID_P", 0, true);
   final Tuner ElevatorPID_D = new Tuner("ElevatorPID_D", 0, true);
 
-  protected final RelativeEncoder encoder = leftMotor.getEncoder();
-  protected final SparkClosedLoopController controller = leftMotor.getClosedLoopController();
+  protected final RelativeEncoder encoder = Motor.getEncoder();
+  protected final SparkClosedLoopController controller = Motor.getClosedLoopController();
   // TODO: tune
   protected ElevatorFeedforward feedforward = new ElevatorFeedforward(ElevatorFeedforwardkS.get(),
       ElevatorFeedforwardkG.get(), 0);
   protected final double SPEED_METERS_PER_SECOND = 0.5;
 
-  protected Sensors sensors;
-
-  public ElevatorIOReal(Sensors sensors) {
+  public ElevatorIOReal() {
     var config = new SparkMaxConfig();
     config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     config.encoder.positionConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO)
@@ -55,11 +53,9 @@ public class ElevatorIOReal implements ElevatorIO {
     config.encoder.positionConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO)
         .velocityConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS / Constants.Elevator.GEAR_RATIO / 60);
     REVUtils.tryUntilOk(
-        () -> leftMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+        () -> Motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
     REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
-
-    this.sensors = sensors;
 
     ElevatorFeedforwardkS.addListener((_e) -> updateParams());
     ElevatorFeedforwardkG.addListener((_e) -> updateParams());
@@ -69,14 +65,14 @@ public class ElevatorIOReal implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    inputs.homed = sensors.getElevatorHomeBeambreak();
+    inputs.homed = Sensors.getInstance().getElevatorHomeBeambreak();
     // FIXME: Measure CAN bus usage with all these queries?
-    REVUtils.ifOk(leftMotor, encoder::getPosition, (value) -> inputs.positionMeters = value);
-    REVUtils.ifOk(leftMotor, encoder::getVelocity, (value) -> inputs.velocityMetersPerSec = value);
-    REVUtils.ifOk(leftMotor, new DoubleSupplier[] {
-        leftMotor::getAppliedOutput, leftMotor::getBusVoltage
+    REVUtils.ifOk(Motor, encoder::getPosition, (value) -> inputs.positionMeters = value);
+    REVUtils.ifOk(Motor, encoder::getVelocity, (value) -> inputs.velocityMetersPerSec = value);
+    REVUtils.ifOk(Motor, new DoubleSupplier[] {
+        Motor::getAppliedOutput, Motor::getBusVoltage
     }, (values) -> inputs.appliedVoltage = values[0] * values[1]);
-    REVUtils.ifOk(leftMotor, leftMotor::getOutputCurrent, (value) -> inputs.supplyCurrentAmps = value);
+    REVUtils.ifOk(Motor, Motor::getOutputCurrent, (value) -> inputs.supplyCurrentAmps = value);
     // FIXME: Could ask for temperature?
     // REVUtils.ifOk(motor, motor::getMotorTemperature, (value) ->
     // inputs.tempCelsius = value);
@@ -95,13 +91,13 @@ public class ElevatorIOReal implements ElevatorIO {
 
   @Override
   public void stop() {
-    leftMotor.set(0);
+    Motor.set(0);
   }
 
   public void updateParams() {
     feedforward = new ElevatorFeedforward(ElevatorFeedforwardkS.get(), ElevatorFeedforwardkG.get(), 0);
     var new_config = new SparkMaxConfig();
     new_config.closedLoop.pidf(ElevatorPID_P.get(), 0, ElevatorPID_D.get(), REVUtils.VORTEX_FF);
-    leftMotor.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    Motor.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 }

@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.util.Sensors;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -107,7 +108,7 @@ public class Robot extends LoggedRobot {
     RobotTracker.getInstance().periodic();
 
     // Push updates of sensor state to NetworkTables no matter what
-    m_robotContainer.sensors.updateNT();
+    Sensors.getInstance().updateNT();
 
     // Back to normal priority
     Threads.setCurrentThreadPriority(false, 10);

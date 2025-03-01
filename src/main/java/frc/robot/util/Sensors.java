@@ -9,7 +9,7 @@ import frc.robot.Constants;
 
 public class Sensors {
   private AnalogInput AlgaeAcquiredDistanceSensor = new AnalogInput(
-      Constants.Digital.ALGAE_ACQUIRED_DISTANCE_SENSOR);
+      Constants.Analog.ALGAE_DISTANCE_SENSOR);
   private DigitalInput AlgaeHomeLimitSwitch = new DigitalInput(
       Constants.Digital.ALGAE_HOME_LIMIT_SWITCH);
   private DigitalInput ChuteHomeLimitSwitch = new DigitalInput(Constants.Digital.CHUTE_HOME_LIMIT_SWITCH);
@@ -17,6 +17,7 @@ public class Sensors {
       Constants.Digital.CHUTE_SHOOT_CORAL_BEAMBREAK);
   private DigitalInput ChuteLoadCoralBeambreak = new DigitalInput(
       Constants.Digital.CHUTE_LOAD_CORAL_BEAMBREAK);
+  // private DigitalInput ChuteLoadCoralBeambreak = new DigitalInput(3);
   private DigitalInput ElevatorHomeBeambreak = new DigitalInput(
       Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
 
@@ -27,7 +28,9 @@ public class Sensors {
   private BooleanPublisher ChuteLoadCoralBeambreakPublisher;
   private BooleanPublisher ElevatorHomeBeambreakPublisher;
 
-  public Sensors() {
+  private static Sensors Instance = null;
+
+  private Sensors() {
     var nt = NetworkTableInstance.getDefault();
     this.AlgaeAcquiredDistanceSensorPublisher = nt
         .getDoubleTopic(String.join("", "/Sensors/", "AlgaeAcquiredDistanceSensor")).publish();
@@ -43,6 +46,13 @@ public class Sensors {
         .publish();
 
     updateNT();
+  }
+
+  public static Sensors getInstance() {
+    if (Instance == null) {
+      Instance = new Sensors();
+    }
+    return Instance;
   }
 
   public void updateNT() {

@@ -35,6 +35,7 @@ import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIOInputsAutoLogged;
 import frc.robot.subsystems.elevator.ElevatorIOReal;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.grabber.Grabber;
@@ -48,8 +49,6 @@ public class RobotContainer {
   private final Drive drive;
   private final Superstructure superstructure;
   private final Climp climp;
-  public final Sensors sensors;
-
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
   private final CommandXboxController operatorController = new CommandXboxController(Constants.Gamepads.OPERATOR);
@@ -65,11 +64,10 @@ public class RobotContainer {
   public RobotContainer() {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
-      sensors = new Sensors();
 
-      Elevator elevator = new Elevator(new ElevatorIOReal(sensors));
-      Chute chute = new Chute(new ChuteIOReal(sensors));
-      Grabber grabber = new Grabber(new GrabberIOReal(sensors));
+      Elevator elevator = new Elevator(new ElevatorIOSim(0));
+      Chute chute = new Chute(new ChuteIOSim());
+      Grabber grabber = new Grabber(new GrabberIOSim());
       superstructure = new Superstructure(elevator, chute, grabber);
       climp = new Climp(new ClimpIOSim());
     } else {
@@ -78,7 +76,6 @@ public class RobotContainer {
       superstructure = new Superstructure(new Elevator(simulation.getElevator()), new Chute(simulation.getChute()),
           new Grabber(simulation.getGrabber()));
       climp = new Climp(simulation.getClimp());
-      sensors = new Sensors(); // TODO: Simulate sensors(?)
     }
 
     // Set up auto routines

@@ -36,13 +36,12 @@ public class GrabberIOReal implements GrabberIO {
 
   protected final RelativeEncoder wristEncoder = wristMotor.getEncoder();
 
-  protected Sensors sensors;
   // protected final DigitalInput homeSwitch = new
   // DigitalInput(Constants.Digital.ALGAE_HOME_LIMIT_SWITCH);
   // protected final AnalogInput distanceSensor = new
   // AnalogInput(Constants.Analog.ALGAE_DISTANCE_SENSOR);
 
-  public GrabberIOReal(Sensors sensors) {
+  public GrabberIOReal() {
     SparkMaxConfig grabberConfig = new SparkMaxConfig();
 
     // NEO 550's have a recommended current limit range of 20-40A.
@@ -71,8 +70,6 @@ public class GrabberIOReal implements GrabberIO {
     // FIXME: This is just a sanity value, but we should figure out homing.
     wristEncoder.setPosition(0);
 
-    this.sensors = sensors;
-
     WristFeedforwardkS.addListener((_e) -> updateParams());
     WristFeedforwardkG.addListener((_e) -> updateParams());
     WristPID_P.addListener((_e) -> updateParams());
@@ -93,8 +90,8 @@ public class GrabberIOReal implements GrabberIO {
 
   @Override
   public void updateInputs(GrabberIOInputs inputs) {
-    inputs.algaeDistance = sensors.getAlgaeAcquiredDistanceSensor();
-    inputs.home = sensors.getAlgaeHomeLimitSwitch();
+    inputs.algaeDistance = Sensors.getInstance().getAlgaeAcquiredDistanceSensor();
+    inputs.home = Sensors.getInstance().getAlgaeHomeLimitSwitch();
   }
 
   public void updateParams() {
