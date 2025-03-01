@@ -142,20 +142,20 @@ public final class Constants {
   }
 
   public static final class Elevator {
-    // Predefined heights in meters
-    public static final double TROUGH_HEIGHT = 1.0;
-    public static final double L2_HEIGHT = 2.0;
-    public static final double L3_HEIGHT = 3.0;
-    public static final double LOAD_HEIGHT = 4.0;
-    public static final double ALGAE_L2_HEIGHT = 2.0;
-    public static final double ALGAE_L3_HEIGHT = 3.0;
+    // Predefined heights in millimeters
+    public static final double TROUGH_HEIGHT = 1000.0;
+    public static final double L2_HEIGHT = 1000.0;
+    public static final double L3_HEIGHT = 1000.0;
+    public static final double LOAD_HEIGHT = 1000.0;
+    public static final double ALGAE_L2_HEIGHT = 1000.0;
+    public static final double ALGAE_L3_HEIGHT = 1000.0;
     public static final double CLIMB_HEIGHT = 0.0;
 
     public static final double GEAR_RATIO = 2;
 
     public static final double ELEVATOR_CONVERSION_FACTOR = 281.5249266862;
 
-    public static final double SPROCKET_RADIUS_METERS = 0.0448060837;
+    public static final double SPROCKET_DIAMETER_METERS = 0.0448060837;
     // March 1st 2025:
     // (375/1.33203125) = 281.5249266862
     // (1192/4.251) = 280.4046106798

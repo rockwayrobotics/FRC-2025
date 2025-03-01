@@ -1,5 +1,8 @@
 package frc.robot.subsystems.elevator;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Millimeters;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -12,7 +15,7 @@ public class ElevatorIOSim implements ElevatorIO {
 
   public ElevatorIOSim(double startHeightMeters) {
     sim = new ElevatorSim(DCMotor.getNeoVortex(2), Constants.Elevator.GEAR_RATIO, Constants.Elevator.CARRIAGE_MASS_KG,
-        Constants.Elevator.SPROCKET_RADIUS_METERS, 0.0, Constants.Elevator.MAX_HEIGHT_METERS, false, 0.0);
+        Constants.Elevator.SPROCKET_DIAMETER_METERS, 0.0, Constants.Elevator.MAX_HEIGHT_METERS, false, 0.0);
     sim.setState(startHeightMeters, 0.0);
   }
 
@@ -23,10 +26,10 @@ public class ElevatorIOSim implements ElevatorIO {
 
     sim.update(0.02);
     inputs.appliedVoltage = inputVoltage;
-    inputs.positionMeters = sim.getPositionMeters();
-    inputs.velocityMetersPerSec = sim.getVelocityMetersPerSecond();
+    inputs.positionMillimeters = Millimeters.convertFrom(sim.getPositionMeters(), Meters);
+    inputs.velocityMillimetersPerSec = sim.getVelocityMetersPerSecond();
     inputs.supplyCurrentAmps = sim.getCurrentDrawAmps();
-    inputs.homed = inputs.positionMeters < 0.001;
+    inputs.homed = inputs.positionMillimeters < 1;
   }
 
   @Override

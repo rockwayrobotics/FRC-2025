@@ -2,16 +2,14 @@ package frc.robot.subsystems.elevator;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.util.Interlock;
-import frc.robot.util.Tuner;
 
 public class Elevator {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
-  private double goalHeightMeters = 0;
-  private double heightMeters = 0;
+  private double goalHeightMillimeters = 0;
+  private double heightMillimeters = 0;
   private boolean homed = false;
 
   final Interlock enabled = new Interlock("Elevator");
@@ -23,35 +21,33 @@ public class Elevator {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
-    heightMeters = inputs.positionMeters;
+    heightMillimeters = inputs.positionMillimeters;
     homed = inputs.homed;
 
     if (DriverStation.isDisabled() || !enabled.get()) {
       io.stop();
     } else {
-      io.moveTowardsGoal(goalHeightMeters, heightMeters);
+      io.moveTowardsGoal(goalHeightMillimeters, heightMillimeters);
     }
   }
 
-  public void setGoalHeightMeters(double heightMeters) {
+  public void setGoalHeightMillimeters(double heightMillimeters) {
     if (enabled.get()) {
-      // goalHeightMeters = MathUtil.clamp(heightMeters, elevatorSoftLimitMin.get(),
-      // elevatorSoftLimitMax.get());
-      goalHeightMeters = heightMeters;
+      goalHeightMillimeters = heightMillimeters;
     }
   }
 
-  public double getHeightMeters() {
-    return heightMeters;
+  public double getHeightMillimeters() {
+    return heightMillimeters;
   }
 
-  public double getGoalHeightMeters() {
-    return goalHeightMeters;
+  public double getGoalHeightMillimeters() {
+    return goalHeightMillimeters;
   }
 
   public boolean atGoal() {
     // within 1 centimeter
-    return Math.abs(heightMeters - goalHeightMeters) < 0.01;
+    return Math.abs(heightMillimeters - goalHeightMillimeters) < 10;
   }
 
   public void stop() {

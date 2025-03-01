@@ -37,12 +37,10 @@ public class ElevatorIOReal implements ElevatorIO {
 
   protected final RelativeEncoder encoder = motor.getEncoder();
   protected final SparkClosedLoopController controller = motor.getClosedLoopController();
-  // TODO: tune
-  protected ElevatorFeedforward feedforward = new ElevatorFeedforward(elevatorFeedforwardkS.get(),
-      elevatorFeedforwardkG.get(), 0);
+  protected ElevatorFeedforward feedforward;
 
   // FIXME: Not used and not measured - only needs to be arbitrary positive
-  protected final double SPEED_METERS_PER_SECOND = 0.5;
+  protected final double SPEED_MM_PER_SEC = 0.5;
 
   public ElevatorIOReal() {
     updateParams(true);
@@ -65,8 +63,8 @@ public class ElevatorIOReal implements ElevatorIO {
     }
 
     // FIXME: Measure CAN bus usage with all these queries?
-    REVUtils.ifOk(motor, encoder::getPosition, (value) -> inputs.positionMeters = value);
-    REVUtils.ifOk(motor, encoder::getVelocity, (value) -> inputs.velocityMetersPerSec = value);
+    REVUtils.ifOk(motor, encoder::getPosition, (value) -> inputs.positionMillimeters = value);
+    REVUtils.ifOk(motor, encoder::getVelocity, (value) -> inputs.velocityMillimetersPerSec = value);
     REVUtils.ifOk(motor, new DoubleSupplier[] {
         motor::getAppliedOutput, motor::getBusVoltage
     }, (values) -> inputs.appliedVoltage = values[0] * values[1]);
@@ -77,10 +75,10 @@ public class ElevatorIOReal implements ElevatorIO {
   }
 
   @Override
-  public void moveTowardsGoal(double goalHeightMeters, double currentHeightMeters) {
-    var velocity = SPEED_METERS_PER_SECOND * Math.signum(goalHeightMeters - currentHeightMeters);
+  public void moveTowardsGoal(double goalHeightMillimeters, double currentHeightMillimeters) {
+    var velocity = SPEED_MM_PER_SEC * Math.signum(goalHeightMillimeters - currentHeightMillimeters);
     var ff = feedforward.calculate(velocity);
-    controller.setReference(goalHeightMeters, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff);
+    controller.setReference(goalHeightMillimeters, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff);
   }
 
   public void setVoltage(double volts) {
@@ -98,10 +96,6 @@ public class ElevatorIOReal implements ElevatorIO {
     SparkMaxConfig config = new SparkMaxConfig();
     if (resetSafe) {
       config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0).inverted(true);
-      // config.encoder.positionConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS
-      // / Constants.Elevator.GEAR_RATIO)
-      // .velocityConversionFactor(Constants.Elevator.SPROCKET_RADIUS_METERS /
-      // Constants.Elevator.GEAR_RATIO / 60);
 
       config.encoder.positionConversionFactor(Constants.Elevator.ELEVATOR_CONVERSION_FACTOR).velocityConversionFactor(
           Constants.Elevator.ELEVATOR_CONVERSION_FACTOR / 60);

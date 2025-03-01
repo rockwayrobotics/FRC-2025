@@ -211,12 +211,12 @@ public class RobotContainer {
     // PoV Up but with different event loop
     driverController.pov(0, 0, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.elevator.setGoalHeightMeters(0.6),
+            () -> superstructure.elevator.setGoalHeightMillimeters(60),
             superstructure));
-    // PoV Up but with different event loop
+    // PoV Down but with different event loop
     driverController.pov(0, 180, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.elevator.setGoalHeightMeters(0.4),
+            () -> superstructure.elevator.setGoalHeightMillimeters(40),
             superstructure));
 
     // FIXME FIXME FIXME: Everything is disabled for now
