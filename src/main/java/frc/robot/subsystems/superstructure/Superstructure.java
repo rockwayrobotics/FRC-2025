@@ -23,8 +23,8 @@ public class Superstructure extends SubsystemBase{
     grabber.periodic();
   }
 
-  public void setElevatorGoalHeightMeters(double heightMeters) {
-    elevator.setGoalHeightMeters(heightMeters);
+  public void setElevatorGoalHeightMillimeters(double heightMillimeters) {
+    elevator.setGoalHeightMillimeters(heightMillimeters);
   }
 
   public void setChutePivotGoalRads(double pivotAngleRads) {
