@@ -44,6 +44,8 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -75,6 +77,18 @@ public class Drive extends SubsystemBase {
   private double leftPositionShootTarget = Double.NaN;
   private double rightPositionShootTarget = Double.NaN;
   private int shootCounter = 0;
+
+  private AnalogInput ALGAE_ACQUIRED_DISTANCE_SENSOR = new AnalogInput(
+      Constants.Digital.ALGAE_ACQUIRED_DISTANCE_SENSOR);
+  private DigitalInput ALGAE_HOME_LIMIT_SWITCH = new DigitalInput(
+      Constants.Digital.ALGAE_HOME_LIMIT_SWITCH);
+  private DigitalInput CHUTE_HOME_LIMIT_SWITCH = new DigitalInput(Constants.Digital.CHUTE_HOME_LIMIT_SWITCH);
+  private DigitalInput CHUTE_SHOOT_CORAL_BEAMBREAK = new DigitalInput(
+      Constants.Digital.CHUTE_SHOOT_CORAL_BEAMBREAK);
+  private DigitalInput CHUTE_LOAD_CORAL_BEAMBREAK = new DigitalInput(
+      Constants.Digital.CHUTE_LOAD_CORAL_BEAMBREAK);
+  private DigitalInput ELEVATOR_HOME_BEAMBREAK = new DigitalInput(
+      Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
 
   // FIXME: Stop publishing twice to save bandwidth
   // Publish RobotPose for AdvantageScope
@@ -236,6 +250,15 @@ public class Drive extends SubsystemBase {
     gyroIO.updateInputs(gyroInputs);
     Logger.processInputs("Drive", inputs);
     Logger.processInputs("Drive/Gyro", gyroInputs);
+
+    System.out.println("*********************** START ***********************");
+    System.out.println(ALGAE_ACQUIRED_DISTANCE_SENSOR.getVoltage());
+    System.out.println(ALGAE_HOME_LIMIT_SWITCH.get());
+    System.out.println(CHUTE_HOME_LIMIT_SWITCH.get());
+    System.out.println(CHUTE_SHOOT_CORAL_BEAMBREAK.get());
+    System.out.println(CHUTE_LOAD_CORAL_BEAMBREAK.get());
+    System.out.println(ELEVATOR_HOME_BEAMBREAK.get());
+    System.out.println("*********************** END ***********************");
 
     beamBreak.periodic();
 

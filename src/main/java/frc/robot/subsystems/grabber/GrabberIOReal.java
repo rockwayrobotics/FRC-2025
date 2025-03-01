@@ -35,7 +35,7 @@ public class GrabberIOReal implements GrabberIO {
 
   protected final RelativeEncoder wristEncoder = wristMotor.getEncoder();
 
-  protected final DigitalInput homeSwitch = new DigitalInput(Constants.Digital.ALGAE_HOME_SWITCH);
+  protected final DigitalInput homeSwitch = new DigitalInput(Constants.Digital.ALGAE_HOME_LIMIT_SWITCH);
   protected final AnalogInput distanceSensor = new AnalogInput(Constants.Analog.ALGAE_DISTANCE_SENSOR);
 
   public GrabberIOReal() {

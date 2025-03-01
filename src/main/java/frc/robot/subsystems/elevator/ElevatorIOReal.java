@@ -26,7 +26,7 @@ public class ElevatorIOReal implements ElevatorIO {
   // Note that we may eventually have a second motor on the elevator
   protected final SparkFlex leftMotor = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR_LEFT, MotorType.kBrushless);
 
-  protected final DigitalInput homeSwitch = new DigitalInput(Constants.Digital.ELEVATOR_HOME_SWITCH);
+  protected final DigitalInput homeSwitch = new DigitalInput(Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
 
   final Tuner ElevatorFeedforwardkS = new Tuner("ElevatorFeedforwardkS", 0, true);
   final Tuner ElevatorFeedforwardkG = new Tuner("ElevatorFeedforwardkG", 0, true);

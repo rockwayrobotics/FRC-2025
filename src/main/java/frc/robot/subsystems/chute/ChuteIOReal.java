@@ -19,8 +19,8 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
 public class ChuteIOReal implements ChuteIO {
-  protected final DigitalInput coralLoadSensor = new DigitalInput(Constants.Digital.CORAL_LOAD_BEAMBREAK);
-  protected final DigitalInput coralShootSensor = new DigitalInput(Constants.Digital.CORAL_SHOOT_BEAMBREAK);
+  protected final DigitalInput coralLoadSensor = new DigitalInput(Constants.Digital.CHUTE_LOAD_CORAL_BEAMBREAK);
+  protected final DigitalInput coralShootSensor = new DigitalInput(Constants.Digital.CHUTE_SHOOT_CORAL_BEAMBREAK);
 
   protected final SparkMax pivotMotor = new SparkMax(Constants.CAN.PIVOT_MOTOR, MotorType.kBrushless);
   protected final SparkMax shooterMotor = new SparkMax(Constants.CAN.SHOOTER_MOTOR, MotorType.kBrushless);
