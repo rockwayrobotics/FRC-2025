@@ -62,8 +62,8 @@ public class ChuteIOReal implements ChuteIO {
     REVUtils.ifOk(pivotMotor, pivotEncoder::getVelocity, (value) -> inputs.pivotVelocityRadPerSec = value / 60.0);
     REVUtils.ifOk(shooterMotor, shooterEncoder::getVelocity, (value) -> inputs.shooterVelocityRadPerSec = value);
     // FIXME: Should we be reading this at 50Hz?
-    inputs.coralLoading = Sensors.getInstance().getChuteLoadCoralBeambreak();
-    inputs.coralReady = Sensors.getInstance().getChuteShootCoralBeambreak();
+    inputs.coralLoading = Sensors.getInstance().getChuteCoralLoadedBeambreak();
+    inputs.coralReady = Sensors.getInstance().getChuteCoralReadyBeambreak();
   }
 
   @Override

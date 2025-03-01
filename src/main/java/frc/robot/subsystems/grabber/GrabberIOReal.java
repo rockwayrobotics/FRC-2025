@@ -90,8 +90,8 @@ public class GrabberIOReal implements GrabberIO {
 
   @Override
   public void updateInputs(GrabberIOInputs inputs) {
-    inputs.algaeDistance = Sensors.getInstance().getAlgaeAcquiredDistanceSensor();
-    inputs.home = Sensors.getInstance().getAlgaeHomeLimitSwitch();
+    inputs.algaeDistance = Sensors.getInstance().getGrabberAcquiredDistance();
+    inputs.home = Sensors.getInstance().getGrabberHomeSwitch();
   }
 
   public void updateParams() {

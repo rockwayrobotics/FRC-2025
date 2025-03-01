@@ -8,22 +8,22 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.Constants;
 
 public class Sensors {
-  private AnalogInput AlgaeAcquiredDistanceSensor = new AnalogInput(
+  private AnalogInput GrabberAcquiredDistanceSensor = new AnalogInput(
       Constants.Analog.ALGAE_DISTANCE_SENSOR);
-  private DigitalInput AlgaeHomeLimitSwitch = new DigitalInput(
+  private DigitalInput GrabberHomeSwitch = new DigitalInput(
       Constants.Digital.ALGAE_HOME_LIMIT_SWITCH);
-  private DigitalInput ChuteHomeLimitSwitch = new DigitalInput(Constants.Digital.CHUTE_HOME_LIMIT_SWITCH);
-  private DigitalInput ChuteShootCoralBeambreak = new DigitalInput(
+  private DigitalInput ChuteHomeSwitch = new DigitalInput(Constants.Digital.CHUTE_HOME_LIMIT_SWITCH);
+  private DigitalInput ChuteCoralReadyBeambreak = new DigitalInput(
       Constants.Digital.CHUTE_SHOOT_CORAL_BEAMBREAK);
-  private DigitalInput ChuteLoadCoralBeambreak = new DigitalInput(
+  private DigitalInput ChuteCoralLoadedBeambreak = new DigitalInput(
       Constants.Digital.CHUTE_LOAD_CORAL_BEAMBREAK);
   // private DigitalInput ChuteLoadCoralBeambreak = new DigitalInput(3);
   private DigitalInput ElevatorHomeBeambreak = new DigitalInput(
       Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
 
-  private DoublePublisher AlgaeAcquiredDistanceSensorPublisher;
-  private BooleanPublisher AlgaeHomeLimitSwitchPublisher;
-  private BooleanPublisher ChuteHomeLimitSwitchPublisher;
+  private DoublePublisher GrabberAcquiredDistanceSensorPublisher;
+  private BooleanPublisher GrabberHomeSwitchPublisher;
+  private BooleanPublisher ChuteHomeSwitchPublisher;
   private BooleanPublisher ChuteShootCoralBeambreakPublisher;
   private BooleanPublisher ChuteLoadCoralBeambreakPublisher;
   private BooleanPublisher ElevatorHomeBeambreakPublisher;
@@ -32,18 +32,14 @@ public class Sensors {
 
   private Sensors() {
     var nt = NetworkTableInstance.getDefault();
-    this.AlgaeAcquiredDistanceSensorPublisher = nt
-        .getDoubleTopic(String.join("", "/Sensors/", "AlgaeAcquiredDistanceSensor")).publish();
-    this.AlgaeHomeLimitSwitchPublisher = nt.getBooleanTopic(String.join("", "/Sensors/", "AlgaeHomeLimitSwitch"))
-        .publish();
-    this.ChuteHomeLimitSwitchPublisher = nt.getBooleanTopic(String.join("", "/Sensors/", "ChuteHomeLimitSwitch"))
-        .publish();
-    this.ChuteShootCoralBeambreakPublisher = nt
-        .getBooleanTopic(String.join("", "/Sensors/", "ChuteShootCoralBeambreak")).publish();
-    this.ChuteLoadCoralBeambreakPublisher = nt.getBooleanTopic(String.join("", "/Sensors/", "ChuteLoadCoralBeambreak"))
-        .publish();
-    this.ElevatorHomeBeambreakPublisher = nt.getBooleanTopic(String.join("", "/Sensors/", "ElevatorHomeBeambreak"))
-        .publish();
+    this.GrabberAcquiredDistanceSensorPublisher = nt
+        .getDoubleTopic("/AdvantageKit/RealOutputs/Grabber/acquired_distance_unknown_units").publish();
+    // FIXME: determine units. It also floats around zero when nothing is in range
+    this.GrabberHomeSwitchPublisher = nt.getBooleanTopic("/AdvantageKit/RealOutputs/Grabber/home_sw").publish();
+    this.ChuteHomeSwitchPublisher = nt.getBooleanTopic("/AdvantageKit/RealOutputs/Chute/home_sw").publish();
+    this.ChuteShootCoralBeambreakPublisher = nt.getBooleanTopic("/AdvantageKit/RealOutputs/Chute/ready_sw").publish();
+    this.ChuteLoadCoralBeambreakPublisher = nt.getBooleanTopic("/AdvantageKit/RealOutputs/Chute/loaded_sw").publish();
+    this.ElevatorHomeBeambreakPublisher = nt.getBooleanTopic("/AdvantageKit/RealOutputs/Elevator/home_sw").publish();
 
     updateNT();
   }
@@ -56,34 +52,50 @@ public class Sensors {
   }
 
   public void updateNT() {
-    this.AlgaeAcquiredDistanceSensorPublisher.set(getAlgaeAcquiredDistanceSensor());
-    this.AlgaeHomeLimitSwitchPublisher.set(getAlgaeHomeLimitSwitch());
-    this.ChuteHomeLimitSwitchPublisher.set(getChuteHomeLimitSwitch());
-    this.ChuteShootCoralBeambreakPublisher.set(getChuteShootCoralBeambreak());
-    this.ChuteLoadCoralBeambreakPublisher.set(getChuteLoadCoralBeambreak());
+    this.GrabberAcquiredDistanceSensorPublisher.set(getGrabberAcquiredDistance());
+    this.GrabberHomeSwitchPublisher.set(getGrabberHomeSwitch());
+    this.ChuteHomeSwitchPublisher.set(getChuteHomeSwitch());
+    this.ChuteShootCoralBeambreakPublisher.set(getChuteCoralReadyBeambreak());
+    this.ChuteLoadCoralBeambreakPublisher.set(getChuteCoralLoadedBeambreak());
     this.ElevatorHomeBeambreakPublisher.set(getElevatorHomeBeambreak());
   }
 
-  public double getAlgaeAcquiredDistanceSensor() {
-    return AlgaeAcquiredDistanceSensor.getVoltage();
+  /**
+   * @return the distance from the algae acquired distance sensor, in unknown
+   *         units, FIXME! see above
+   */
+  public double getGrabberAcquiredDistance() {
+    return GrabberAcquiredDistanceSensor.getVoltage();
   }
 
-  public boolean getAlgaeHomeLimitSwitch() {
-    return AlgaeHomeLimitSwitch.get();
+  /**
+   * @return true if the grabber home limit switch is pressed. It is normally
+   *         'true'
+   *         when not pressed
+   */
+  public boolean getGrabberHomeSwitch() {
+    return GrabberHomeSwitch.get();
   }
 
-  public boolean getChuteHomeLimitSwitch() {
-    return ChuteHomeLimitSwitch.get();
+  /**
+   * @return true if the chute home limit switch is pressed. It is normally
+   *         'true' when not pressed
+   */
+  public boolean getChuteHomeSwitch() {
+    return ChuteHomeSwitch.get();
   }
 
-  public boolean getChuteShootCoralBeambreak() {
-    return ChuteShootCoralBeambreak.get();
+  /** @return False when beam is broken */
+  public boolean getChuteCoralReadyBeambreak() {
+    return ChuteCoralReadyBeambreak.get();
   }
 
-  public boolean getChuteLoadCoralBeambreak() {
-    return ChuteLoadCoralBeambreak.get();
+  /** @return False when beam is broken */
+  public boolean getChuteCoralLoadedBeambreak() {
+    return ChuteCoralLoadedBeambreak.get();
   }
 
+  /** @return False when elevator is home */
   public boolean getElevatorHomeBeambreak() {
     return ElevatorHomeBeambreak.get();
   }
