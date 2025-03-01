@@ -104,7 +104,7 @@ public class ElevatorIOReal implements ElevatorIO {
       // Constants.Elevator.GEAR_RATIO / 60);
 
       config.encoder.positionConversionFactor(Constants.Elevator.ELEVATOR_CONVERSION_FACTOR).velocityConversionFactor(
-          Constants.Elevator.ELEVATOR_CONVERSION_FACTOR);
+          Constants.Elevator.ELEVATOR_CONVERSION_FACTOR / 60);
     }
 
     config.softLimit.forwardSoftLimit(elevatorSoftLimitMax.get()).reverseSoftLimit(elevatorSoftLimitMin.get());

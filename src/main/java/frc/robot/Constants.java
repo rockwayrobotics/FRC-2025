@@ -154,6 +154,8 @@ public final class Constants {
     public static final double GEAR_RATIO = 2;
 
     public static final double ELEVATOR_CONVERSION_FACTOR = 281.5249266862;
+
+    public static final double SPROCKET_RADIUS_METERS = 0.0448060837;
     // March 1st 2025:
     // (375/1.33203125) = 281.5249266862
     // (1192/4.251) = 280.4046106798
