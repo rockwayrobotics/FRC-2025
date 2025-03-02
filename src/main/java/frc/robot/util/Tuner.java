@@ -3,6 +3,8 @@ package frc.robot.util;
 import java.util.EnumSet;
 import java.util.function.Consumer;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -34,6 +36,7 @@ public class Tuner {
     } else {
       this.defaultValue = defaultValue;
     }
+    Logger.recordOutput("/Tuning/Defaults/" + name, this.defaultValue);
 
     this.subscriber = topic.subscribe(this.defaultValue);
     topic.publish().set(this.defaultValue);

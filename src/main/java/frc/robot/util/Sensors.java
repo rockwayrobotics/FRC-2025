@@ -3,6 +3,7 @@ package frc.robot.util;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.AsynchronousInterrupt;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.Constants;
 
@@ -39,7 +40,7 @@ public class Sensors {
     Logger.recordOutput("Chute/home_sw", getChuteHomeSwitch());
     Logger.recordOutput("Chute/loaded_sw", getChuteCoralLoadedBeambreak());
     Logger.recordOutput("Chute/ready_sw", getChuteCoralReadyBeambreak());
-    Logger.recordOutput("Elevator/home_sw", getElevatorHomeBeambreak());
+    Logger.recordOutput("Elevator/home_sw", getElevatorHomeBeambroken());
   }
 
   /**
@@ -72,8 +73,31 @@ public class Sensors {
     return chuteCoralLoadedBeambreak.get();
   }
 
-  /** @return false when elevator is home */
-  public boolean getElevatorHomeBeambreak() {
-    return elevatorHomeBeambreak.get();
+  /** @return true when elevator beam is broken */
+  public boolean getElevatorHomeBeambroken() {
+    return !elevatorHomeBeambreak.get();
+  }
+
+  private AsynchronousInterrupt registerInterrupt(DigitalInput input, TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+    final AsynchronousInterrupt[] holder = new AsynchronousInterrupt[1];
+    final AsynchronousInterrupt interrupt = new AsynchronousInterrupt(input, (rising, falling) -> {
+      callback.accept(holder[0], rising, falling);
+    });
+    holder[0] = interrupt;
+    interrupt.setInterruptEdges(true, true);
+    interrupt.enable();
+    return interrupt;
+  }
+
+  public AsynchronousInterrupt registerElevatorHomeInterrupt(TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+    return registerInterrupt(elevatorHomeBeambreak, callback);
+  }
+
+  public AsynchronousInterrupt registerChuteHomeInterrupt(TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+    return registerInterrupt(chuteHomeSwitch, callback);
+  }
+
+  public AsynchronousInterrupt registerGrabberHomeInterrupt(TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+    return registerInterrupt(grabberHomeSwitch, callback);
   }
 }

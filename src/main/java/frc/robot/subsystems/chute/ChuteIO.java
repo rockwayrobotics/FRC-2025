@@ -1,5 +1,7 @@
 package frc.robot.subsystems.chute;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.littletonrobotics.junction.AutoLog;
 
 public interface ChuteIO {
@@ -25,6 +27,10 @@ public interface ChuteIO {
   }
 
   public default void setBrakeMode(boolean mode) {
+  }
+
+  public default CompletableFuture<Boolean> home() {
+    return null;
   }
 
   /**

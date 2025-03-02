@@ -2,8 +2,8 @@ package frc.robot.subsystems.chute;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.util.Interlock;
 import frc.robot.util.Tuner;
@@ -12,12 +12,13 @@ public class Chute {
   private final ChuteIO io;
   private final CoralIOInputsAutoLogged inputs = new CoralIOInputsAutoLogged();
 
-  final Interlock enabled = new Interlock("Chute");
+  final Interlock unlocked = new Interlock("Chute");
   final Tuner shooterSpeedTuner = new Tuner("ShooterSpeed", 0.3, true);
 
   private double pivotGoalRads = Constants.Chute.PIVOT_INITIAL_ANGLE_RADS;
   private boolean coralLoading = false;
   private boolean coralReady = false;
+  private boolean isHomed = false;
 
   public Chute(ChuteIO io) {
     this.io = io;
@@ -29,7 +30,7 @@ public class Chute {
     coralLoading = inputs.coralLoading;
     coralReady = inputs.coralReady;
 
-    if (DriverStation.isDisabled() || !enabled.get()) {
+    if (DriverStation.isDisabled() || !unlocked.get() || !isHomed) {
       io.stopPivot();
     } else {
       io.moveTowardsPivotGoal(pivotGoalRads, inputs.pivotAngleRadians);
@@ -37,7 +38,7 @@ public class Chute {
   }
 
   public void setPivotGoalRads(double pivotAngleRads) {
-    if (enabled.get()) {
+    if (unlocked.get()) {
       pivotGoalRads = pivotAngleRads;
     }
   }
@@ -64,5 +65,19 @@ public class Chute {
 
   public void setBrakeMode(boolean mode) {
     io.setBrakeMode(mode);
+  }
+
+  public void home() {
+    var promise = io.home();
+    Logger.recordOutput("Chute/Homing", true);
+    Commands.waitUntil(() -> promise.isDone()).finallyDo(() -> {
+      this.isHomed = promise.getNow(false);
+      Logger.recordOutput("Chute/Homing", false);
+      Logger.recordOutput("Chute/Homed", this.isHomed);
+    }).schedule();
+  }
+
+  public boolean isHomed() {
+    return isHomed;
   }
 }
