@@ -74,7 +74,7 @@ public class Chute {
       this.isHomed = promise.getNow(false);
       Logger.recordOutput("Chute/Homing", false);
       Logger.recordOutput("Chute/Homed", this.isHomed);
-    });
+    }).schedule();
   }
 
   public boolean isHomed() {
