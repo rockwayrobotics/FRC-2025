@@ -11,6 +11,10 @@ public class Grabber {
   public Grabber(GrabberIO io) {
     this.io = io;
   }
+
+  public void setBrakeMode(boolean mode) {
+    this.io.setBrakeMode(mode);
+  }
     
   public void periodic() {
     io.updateInputs(inputs);

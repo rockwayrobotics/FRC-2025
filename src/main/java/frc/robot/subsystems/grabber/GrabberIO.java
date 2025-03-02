@@ -15,6 +15,8 @@ public interface GrabberIO {
 
   public default void setGrabberMotor(double speed) {}
 
+  public default void setBrakeMode(boolean mode) {}
+
   // public default double getAlgaeDistance() {return 0;}
 
   // public default boolean atHome() {return false;}

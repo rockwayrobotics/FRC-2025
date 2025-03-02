@@ -18,7 +18,7 @@ public class Chute {
   private double pivotGoalRads = Constants.Chute.PIVOT_INITIAL_ANGLE_RADS;
   private boolean coralLoading = false;
   private boolean coralReady = false;
-  
+
   public Chute(ChuteIO io) {
     this.io = io;
   }
@@ -60,5 +60,9 @@ public class Chute {
 
   public boolean isCoralReady() {
     return coralReady;
+  }
+
+  public void setBrakeMode(boolean mode) {
+    io.setBrakeMode(mode);
   }
 }

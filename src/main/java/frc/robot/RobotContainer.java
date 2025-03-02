@@ -138,7 +138,7 @@ public class RobotContainer {
     // left bumper -> set drive scale to 0.3 when held
 
     // FIXME FIXME FIXME: Everything is disabled for now
-    boolean enabled = false;
+    boolean enabled = true;
     if (enabled) {
       driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
       driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
@@ -257,6 +257,8 @@ public class RobotContainer {
 
   public void setDriveBrakeMode(boolean brake) {
     drive.setBrakeMode(brake);
+    superstructure.chute.setBrakeMode(brake);
+    superstructure.grabber.setBrakeMode(brake);
   }
 
   /**

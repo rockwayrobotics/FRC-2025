@@ -11,6 +11,7 @@ import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.DigitalInput;
 
+import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import frc.robot.Constants;
@@ -116,5 +117,10 @@ public class ChuteIOReal implements ChuteIO {
     shooterConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
     REVUtils.tryUntilOk(
         () -> shooterMotor.configure(shooterConfig, resetMode, PersistMode.kPersistParameters));
+  }
+
+  public void setBrakeMode(boolean mode) {
+    pivotMotor.configure(new SparkMaxConfig().idleMode(mode ? IdleMode.kBrake : IdleMode.kCoast),
+        ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 }
