@@ -1,7 +1,6 @@
 package frc.robot.subsystems.chute;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 import org.littletonrobotics.junction.AutoLog;
 
