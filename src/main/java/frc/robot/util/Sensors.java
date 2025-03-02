@@ -1,8 +1,11 @@
 package frc.robot.util;
 
+import java.util.function.Consumer;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.AsynchronousInterrupt;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.Constants;
 
@@ -39,7 +42,7 @@ public class Sensors {
     Logger.recordOutput("Chute/home_sw", getChuteHomeSwitch());
     Logger.recordOutput("Chute/loaded_sw", getChuteCoralLoadedBeambreak());
     Logger.recordOutput("Chute/ready_sw", getChuteCoralReadyBeambreak());
-    Logger.recordOutput("Elevator/home_sw", getElevatorHomeBeambreak());
+    Logger.recordOutput("Elevator/home_sw", getElevatorHomeBeambroken());
   }
 
   /**
@@ -72,8 +75,29 @@ public class Sensors {
     return chuteCoralLoadedBeambreak.get();
   }
 
-  /** @return false when elevator is home */
-  public boolean getElevatorHomeBeambreak() {
-    return elevatorHomeBeambreak.get();
+  /** @return true when elevator beam is broken */
+  public boolean getElevatorHomeBeambroken() {
+    return !elevatorHomeBeambreak.get();
+  }
+
+  private AsynchronousInterrupt registerInterrupt(DigitalInput input, boolean risingEdge, Consumer<Boolean> callback) {
+    var interrupt = new AsynchronousInterrupt(input, (rising, falling) -> {
+      callback.accept(risingEdge ? rising : falling);
+    });
+    interrupt.setInterruptEdges(risingEdge, !risingEdge);
+    interrupt.enable();
+    return interrupt;
+  }
+
+  public AsynchronousInterrupt registerElevatorHomeInterrupt(boolean risingEdge, Consumer<Boolean> callback) {
+    return registerInterrupt(elevatorHomeBeambreak, risingEdge, callback);
+  }
+
+  public AsynchronousInterrupt registerChuteHomeInterrupt(boolean risingEdge, Consumer<Boolean> callback) {
+    return registerInterrupt(chuteHomeSwitch, risingEdge, callback);
+  }
+
+  public AsynchronousInterrupt registerGrabberHomeInterrupt(boolean risingEdge, Consumer<Boolean> callback) {
+    return registerInterrupt(grabberHomeSwitch, risingEdge, callback);
   }
 }
