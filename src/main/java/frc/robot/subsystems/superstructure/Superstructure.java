@@ -45,15 +45,15 @@ public class Superstructure extends SubsystemBase {
 
   public void home() {
     Commands.parallel(
+        // Commands.sequence(
+        //     Commands.runOnce(() -> elevator.home()),
+        //     Commands.waitUntil(() -> elevator.isHomed()),
+        //     Commands.runOnce(() -> elevator.setGoalHeightMillimeters(400))),
         Commands.sequence(
-            Commands.runOnce(() -> elevator.home()),
-            Commands.waitUntil(() -> elevator.isHomed()),
-            Commands.runOnce(() -> elevator.setGoalHeightMillimeters(400))),
-        Commands.sequence(
-            Commands
-                .waitUntil(() -> elevator.getGoalHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM
-                    && elevator.atGoal()),
-            // wait for elevator to be at 300mm / at least 280mm
+            // Commands
+            //     .waitUntil(() -> elevator.getGoalHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM
+            //         && elevator.atGoal()),
+            // // wait for elevator to be at 300mm / at least 280mm
             Commands.runOnce(() -> chute.home())),
         Commands.runOnce(() -> grabber.home()))
         .schedule();

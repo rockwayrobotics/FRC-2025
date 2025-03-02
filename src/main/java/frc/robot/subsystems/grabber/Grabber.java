@@ -9,8 +9,9 @@ public class Grabber {
   private final GrabberIO io;
   private final GrabberIOInputsAutoLogged inputs = new GrabberIOInputsAutoLogged();
 
-  final Interlock enabled = new Interlock("Grabber");
-  
+  final Interlock unlocked = new Interlock("Grabber");
+  private Boolean isHomed = false;
+
   private double wristGoalRads = 0;
 
   public Grabber(GrabberIO io) {
@@ -20,12 +21,12 @@ public class Grabber {
   public void setBrakeMode(boolean mode) {
     io.setBrakeMode(mode);
   }
-    
+
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Grabber", inputs);
 
-    if (DriverStation.isDisabled() || !enabled.get()) {
+    if (DriverStation.isDisabled() || !unlocked.get()) {
       io.stopWrist();
     } else {
       // right now positive wrist speed is up, negative is down
@@ -36,7 +37,7 @@ public class Grabber {
 
   public void setWristGoalRads(double wristAngleRads) {
     // right now positive wrist speed is up, negative is down
-    if (enabled.get()) {
+    if (unlocked.get()) {
       wristGoalRads = wristAngleRads;
     }
   }

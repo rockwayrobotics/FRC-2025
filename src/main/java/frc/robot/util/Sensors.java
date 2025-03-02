@@ -55,12 +55,12 @@ public class Sensors {
 
   /** @return true if the grabber home limit switch is pressed. */
   public boolean getGrabberHomeSwitch() {
-    return grabberHomeSwitch.get();
+    return !grabberHomeSwitch.get();
   }
 
   /** @return true if the chute home limit switch is pressed. */
   public boolean getChuteHomeSwitch() {
-    return chuteHomeSwitch.get();
+    return !chuteHomeSwitch.get();
   }
 
   /** @return false when beam is broken */
@@ -78,7 +78,8 @@ public class Sensors {
     return !elevatorHomeBeambreak.get();
   }
 
-  private AsynchronousInterrupt registerInterrupt(DigitalInput input, TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+  private AsynchronousInterrupt registerInterrupt(DigitalInput input,
+      TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
     final AsynchronousInterrupt[] holder = new AsynchronousInterrupt[1];
     final AsynchronousInterrupt interrupt = new AsynchronousInterrupt(input, (rising, falling) -> {
       callback.accept(holder[0], rising, falling);
@@ -89,15 +90,18 @@ public class Sensors {
     return interrupt;
   }
 
-  public AsynchronousInterrupt registerElevatorHomeInterrupt(TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+  public AsynchronousInterrupt registerElevatorHomeInterrupt(
+      TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
     return registerInterrupt(elevatorHomeBeambreak, callback);
   }
 
-  public AsynchronousInterrupt registerChuteHomeInterrupt(TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+  public AsynchronousInterrupt registerChuteHomeInterrupt(
+      TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
     return registerInterrupt(chuteHomeSwitch, callback);
   }
 
-  public AsynchronousInterrupt registerGrabberHomeInterrupt(TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+  public AsynchronousInterrupt registerGrabberHomeInterrupt(
+      TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
     return registerInterrupt(grabberHomeSwitch, callback);
   }
 }

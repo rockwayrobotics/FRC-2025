@@ -65,7 +65,7 @@ public class RobotContainer {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
 
-      Elevator elevator = new Elevator(new ElevatorIOReal());
+      Elevator elevator = new Elevator(new ElevatorIOSim(375)); // FIXME to be real
       Chute chute = new Chute(new ChuteIOReal());
       Grabber grabber = new Grabber(new GrabberIOSim());
       superstructure = new Superstructure(elevator, chute, grabber);
@@ -231,6 +231,8 @@ public class RobotContainer {
             () -> superstructure.chute
                 .setPivotGoalRads(Units.degreesToRadians(10)),
             superstructure));
+
+    driverController.a(testModelButtonLoop).onTrue(Commands.runOnce(() -> superstructure.home()));
 
     // FIXME FIXME FIXME: Everything is disabled for now
     boolean enabled = false;

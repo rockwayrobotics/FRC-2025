@@ -143,7 +143,7 @@ public class ChuteIOReal implements ChuteIO {
         () -> pivotMotor.configure(pivotConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters));
 
     if (Sensors.getInstance().getChuteHomeSwitch()) { // home switch is pressed
-      pivotMotor.set(-0.05); // away from the home switch
+      pivotMotor.set(0.05); // away from the home switch
       Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
         if (falling) {
           pivotMotor.set(0);
@@ -159,7 +159,7 @@ public class ChuteIOReal implements ChuteIO {
         }
       });
     } else if (!Sensors.getInstance().getChuteHomeSwitch()) {
-      pivotMotor.set(0.05); // to the home switch
+      pivotMotor.set(-0.05); // to the home switch
       Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
         if (falling) {
           pivotMotor.set(0);
@@ -170,7 +170,7 @@ public class ChuteIOReal implements ChuteIO {
           promise.complete(true);
           interrupt.close();
         } else if (rising) {
-          pivotMotor.set(-0.05); // away from the home switch
+          pivotMotor.set(0.05); // away from the home switch
         }
       });
     }
