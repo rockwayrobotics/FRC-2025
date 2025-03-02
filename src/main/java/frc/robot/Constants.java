@@ -75,8 +75,8 @@ public final class Constants {
     public static final int ELEVATOR_MOTOR = 6;
 
     // NEO with Spark MAX
-    public static final int GRABBER_RIGHT_MOTOR = 7;
-    public static final int GRABBER_LEFT_MOTOR = 8;
+    public static final int GRABBER_LEFT_MOTOR = 7;
+    public static final int GRABBER_RIGHT_MOTOR = 8;
     public static final int GRABBER_WRIST_MOTOR = 9;
 
     // NEO with Spark MAX

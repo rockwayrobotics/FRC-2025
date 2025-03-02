@@ -101,7 +101,7 @@ public class ChuteIOReal implements ChuteIO {
     pivotFeedforward = new ArmFeedforward(pivotFeedforwardkS.get(), pivotFeedforwardkG.get(), 0);
     SparkMaxConfig pivotConfig = new SparkMaxConfig();
     if (resetSafe) {
-      pivotConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
+      pivotConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0).inverted(true);
       pivotConfig.encoder.positionConversionFactor(2 * Math.PI / Constants.Chute.PIVOT_GEAR_RATIO)
           .velocityConversionFactor(2 * Math.PI / Constants.Chute.PIVOT_GEAR_RATIO / 60);
     }
