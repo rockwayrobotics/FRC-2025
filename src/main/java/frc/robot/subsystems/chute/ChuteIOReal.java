@@ -3,11 +3,15 @@ package frc.robot.subsystems.chute;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj2.command.Commands;
 
 import com.revrobotics.spark.config.SparkMaxConfig;
 
@@ -125,5 +129,51 @@ public class ChuteIOReal implements ChuteIO {
   public void setBrakeMode(boolean mode) {
     pivotMotor.configure(new SparkMaxConfig().idleMode(mode ? IdleMode.kBrake : IdleMode.kCoast),
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+  }
+
+  public CompletableFuture<Boolean> home() {
+    var promise = new CompletableFuture<Boolean>();
+    pivotEncoder.setPosition(0);
+    SparkMaxConfig pivotConfig = new SparkMaxConfig();
+    pivotConfig.softLimit.forwardSoftLimit(Units.degreesToRadians(10))
+        .reverseSoftLimit(Units.degreesToRadians(-10)).forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
+    pivotConfig.smartCurrentLimit(10);
+
+    REVUtils.tryUntilOk(
+        () -> pivotMotor.configure(pivotConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters));
+
+    if (Sensors.getInstance().getChuteHomeSwitch()) { // home switch is pressed
+      pivotMotor.set(-0.05); // away from the home switch
+      Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
+        if (falling) {
+          pivotMotor.set(0);
+          pivotEncoder.setPosition(0);
+
+          updateParams(true);
+
+          promise.complete(true);
+          interrupt.close();
+        } else {
+          System.err.println("something bad happened, home switch was pressed, rising edge");
+          promise.complete(false);
+        }
+      });
+    } else if (!Sensors.getInstance().getChuteHomeSwitch()) {
+      pivotMotor.set(0.05); // to the home switch
+      Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
+        if (falling) {
+          pivotMotor.set(0);
+          pivotEncoder.setPosition(0);
+
+          updateParams(true);
+
+          promise.complete(true);
+          interrupt.close();
+        } else if (rising) {
+          pivotMotor.set(-0.05); // away from the home switch
+        }
+      });
+    }
+    return promise;
   }
 }

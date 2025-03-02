@@ -4,6 +4,7 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.util.Interlock;
+import frc.robot.util.Sensors;
 
 public class Elevator {
   private final ElevatorIO io;
@@ -56,5 +57,14 @@ public class Elevator {
 
   public boolean isHomed() {
     return homed;
+  }
+
+  public void home() {
+    if (!Sensors.getInstance().getElevatorHomeBeambroken()) {
+      io.zeroEncoder();
+      homed = true;
+    } else {
+      System.err.println("Elevator home beam is NOT broken. It is NOT homed.");
+    }
   }
 }

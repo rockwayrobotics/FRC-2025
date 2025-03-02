@@ -120,4 +120,8 @@ public class GrabberIOReal implements GrabberIO {
     wristMotor.configure(new SparkMaxConfig().idleMode(mode ? IdleMode.kBrake : IdleMode.kCoast),
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
+
+  public void home() {
+    // wristEncoder.setPosition(0);
+  }
 }

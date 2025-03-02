@@ -23,6 +23,8 @@ public interface GrabberIO {
 
   public default void moveTowardsGoal(double goalAngleRadians, double currentAngleRadians) {}
 
+  public default void home() {}
+
   // public default double getAlgaeDistance() {return 0;}
 
   // public default boolean atHome() {return false;}

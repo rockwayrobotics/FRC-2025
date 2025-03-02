@@ -3,6 +3,7 @@ package frc.robot.subsystems.chute;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.util.Interlock;
 import frc.robot.util.Tuner;
@@ -17,6 +18,7 @@ public class Chute {
   private double pivotGoalRads = Constants.Chute.PIVOT_INITIAL_ANGLE_RADS;
   private boolean coralLoading = false;
   private boolean coralReady = false;
+  private boolean isHomed = false;
 
   public Chute(ChuteIO io) {
     this.io = io;
@@ -63,5 +65,16 @@ public class Chute {
 
   public void setBrakeMode(boolean mode) {
     io.setBrakeMode(mode);
+  }
+
+  public void home() {
+    var promise = io.home();
+    Commands.waitUntil(() -> promise.isDone()).finallyDo(() -> {
+      this.isHomed = promise.getNow(false);
+    });
+  }
+
+  public boolean isHomed() {
+    return isHomed;
   }
 }

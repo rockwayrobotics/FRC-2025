@@ -110,4 +110,8 @@ public class ElevatorIOReal implements ElevatorIO {
     config.closedLoop.outputRange(elevatorMinNormalizedSpeed.get(), elevatorMaxNormalizedSpeed.get());
     REVUtils.tryUntilOk(() -> motor.configure(config, resetMode, PersistMode.kPersistParameters));
   }
+
+  public void zeroEncoder() {
+    encoder.setPosition(0);
+  }
 }

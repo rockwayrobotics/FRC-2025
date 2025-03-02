@@ -44,4 +44,8 @@ public class Grabber {
   public double getWristGoalRads() {
     return wristGoalRads;
   }
+
+  public void home() {
+    io.home();
+  }
 }

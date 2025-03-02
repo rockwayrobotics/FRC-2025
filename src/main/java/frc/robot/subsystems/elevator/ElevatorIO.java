@@ -31,4 +31,7 @@ public interface ElevatorIO {
 
   public default void periodic() {
   }
+
+  public default void zeroEncoder() {
+  }
 }
