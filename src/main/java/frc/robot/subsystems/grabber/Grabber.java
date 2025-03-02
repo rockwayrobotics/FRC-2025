@@ -2,28 +2,46 @@ package frc.robot.subsystems.grabber;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.util.Interlock;
+
 public class Grabber {
   private final GrabberIO io;
   private final GrabberIOInputsAutoLogged inputs = new GrabberIOInputsAutoLogged();
+
+  final Interlock enabled = new Interlock("Grabber");
   
-  private double wristSpeed = 0;
+  private double wristGoalRads = 0;
 
   public Grabber(GrabberIO io) {
     this.io = io;
   }
 
   public void setBrakeMode(boolean mode) {
-    this.io.setBrakeMode(mode);
+    io.setBrakeMode(mode);
   }
     
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Grabber", inputs);
 
-    // right now positive wrist speed is up, negative is down
-    if (inputs.home && wristSpeed > 0) {
-      wristSpeed = 0;
+    if (DriverStation.isDisabled() || !enabled.get()) {
+      io.stopWrist();
+    } else {
+      // right now positive wrist speed is up, negative is down
+      io.moveTowardsGoal(wristGoalRads, inputs.wristAngleRadians);
     }
-    io.setWristMotor(wristSpeed);
+
+  }
+
+  public void setWristGoalRads(double wristAngleRads) {
+    // right now positive wrist speed is up, negative is down
+    if (enabled.get()) {
+      wristGoalRads = wristAngleRads;
+    }
+  }
+
+  public double getWristGoalRads() {
+    return wristGoalRads;
   }
 }

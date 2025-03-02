@@ -2,7 +2,6 @@ package frc.robot.subsystems.chute;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
 import frc.robot.util.Interlock;

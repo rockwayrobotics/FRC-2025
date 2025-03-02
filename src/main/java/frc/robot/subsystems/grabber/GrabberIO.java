@@ -5,6 +5,8 @@ import org.littletonrobotics.junction.AutoLog;
 public interface GrabberIO {
   @AutoLog
   public static class GrabberIOInputs {
+    public double wristAngleRadians = 0;
+    public double wristVelocityRadPerSec = 0;
     public double algaeDistance = 0;
     public boolean home = false;
   }
@@ -16,6 +18,10 @@ public interface GrabberIO {
   public default void setGrabberMotor(double speed) {}
 
   public default void setBrakeMode(boolean mode) {}
+
+  public default void stopWrist() {}
+
+  public default void moveTowardsGoal(double goalAngleRadians, double currentAngleRadians) {}
 
   // public default double getAlgaeDistance() {return 0;}
 

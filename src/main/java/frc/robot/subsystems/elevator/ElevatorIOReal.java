@@ -25,8 +25,8 @@ public class ElevatorIOReal implements ElevatorIO {
   // Note that we may eventually have a second motor on the elevator
   protected final SparkFlex motor = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR, MotorType.kBrushless);
 
-  final Tuner elevatorFeedforwardkS = new Tuner("Elevator/feedforward_kS", 0, true);
-  final Tuner elevatorFeedforwardkG = new Tuner("Elevator/feedforward_kG", 0, true);
+  final Tuner elevatorFeedforwardkS = new Tuner("Elevator/feedforward_Ks", 0, true);
+  final Tuner elevatorFeedforwardkG = new Tuner("Elevator/feedforward_Kg", 0, true);
   final Tuner elevatorPID_P = new Tuner("Elevator/Kp", 0, true);
   final Tuner elevatorPID_D = new Tuner("Elevator/Kd", 0, true);
   final Tuner elevatorMaxNormalizedSpeed = new Tuner("Elevator/normalized_speed_max", 0.1, true);

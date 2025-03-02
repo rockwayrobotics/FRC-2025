@@ -7,6 +7,7 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.util.Units;
 
 import com.revrobotics.spark.config.SparkMaxConfig;
 
@@ -38,11 +39,11 @@ public class ChuteIOReal implements ChuteIO {
   final Tuner pivotPID_D = new Tuner("Chute/pivot_Kd", 0, true);
   final Tuner pivotMaxNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_max", 0.1, true);
   final Tuner pivotMinNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_min", -0.1, true);
-  final Tuner pivotSoftLimitMinAngleRads = new Tuner("Chute/soft_limit_min_angle_rads",
-      Radians.convertFrom(-10, Degrees),
+  final Tuner pivotSoftLimitMinAngleRads = new Tuner("Chute/pivot_soft_limit_min_angle_rads",
+      Units.degreesToRadians(-10),
       true);
-  final Tuner pivotSoftLimitMaxAngleRads = new Tuner("Chute/soft_limit_max_angle_rads",
-      Radians.convertFrom(10, Degrees),
+  final Tuner pivotSoftLimitMaxAngleRads = new Tuner("Chute/pivot_soft_limit_max_angle_rads",
+      Units.degreesToRadians(10),
       true);
 
   protected ArmFeedforward pivotFeedforward;
