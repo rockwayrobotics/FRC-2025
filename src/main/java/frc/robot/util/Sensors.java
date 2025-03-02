@@ -1,7 +1,5 @@
 package frc.robot.util;
 
-import java.util.function.Consumer;
-
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj.AnalogInput;
@@ -80,24 +78,26 @@ public class Sensors {
     return !elevatorHomeBeambreak.get();
   }
 
-  private AsynchronousInterrupt registerInterrupt(DigitalInput input, boolean risingEdge, Consumer<Boolean> callback) {
-    var interrupt = new AsynchronousInterrupt(input, (rising, falling) -> {
-      callback.accept(risingEdge ? rising : falling);
+  private AsynchronousInterrupt registerInterrupt(DigitalInput input, TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+    final AsynchronousInterrupt[] holder = new AsynchronousInterrupt[1];
+    final AsynchronousInterrupt interrupt = new AsynchronousInterrupt(input, (rising, falling) -> {
+      callback.accept(holder[0], rising, falling);
     });
-    interrupt.setInterruptEdges(risingEdge, !risingEdge);
+    holder[0] = interrupt;
+    interrupt.setInterruptEdges(true, true);
     interrupt.enable();
     return interrupt;
   }
 
-  public AsynchronousInterrupt registerElevatorHomeInterrupt(boolean risingEdge, Consumer<Boolean> callback) {
-    return registerInterrupt(elevatorHomeBeambreak, risingEdge, callback);
+  public AsynchronousInterrupt registerElevatorHomeInterrupt(TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+    return registerInterrupt(elevatorHomeBeambreak, callback);
   }
 
-  public AsynchronousInterrupt registerChuteHomeInterrupt(boolean risingEdge, Consumer<Boolean> callback) {
-    return registerInterrupt(chuteHomeSwitch, risingEdge, callback);
+  public AsynchronousInterrupt registerChuteHomeInterrupt(TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+    return registerInterrupt(chuteHomeSwitch, callback);
   }
 
-  public AsynchronousInterrupt registerGrabberHomeInterrupt(boolean risingEdge, Consumer<Boolean> callback) {
-    return registerInterrupt(grabberHomeSwitch, risingEdge, callback);
+  public AsynchronousInterrupt registerGrabberHomeInterrupt(TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+    return registerInterrupt(grabberHomeSwitch, callback);
   }
 }
