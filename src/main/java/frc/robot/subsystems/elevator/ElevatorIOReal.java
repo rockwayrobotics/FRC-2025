@@ -95,7 +95,7 @@ public class ElevatorIOReal implements ElevatorIO {
     feedforward = new ElevatorFeedforward(elevatorFeedforwardkS.get(), elevatorFeedforwardkG.get(), 0);
     SparkMaxConfig config = new SparkMaxConfig();
     if (resetSafe) {
-      config.idleMode(IdleMode.kBrake).smartCurrentLimit(80).voltageCompensation(12.0).inverted(true);
+      config.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0).inverted(true);
 
       config.encoder.positionConversionFactor(Constants.Elevator.ELEVATOR_CONVERSION_FACTOR).velocityConversionFactor(
           Constants.Elevator.ELEVATOR_CONVERSION_FACTOR / 60);
