@@ -2,7 +2,6 @@ package frc.robot.subsystems.elevator;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
@@ -53,6 +52,8 @@ public class ElevatorIOReal implements ElevatorIO {
     elevatorPID_D.addListener((_e) -> updateParams(false));
     elevatorMaxNormalizedSpeed.addListener((_e) -> updateParams(false));
     elevatorMinNormalizedSpeed.addListener((_e) -> updateParams(false));
+    elevatorSoftLimitMin.addListener((_e) -> updateParams(false));
+    elevatorSoftLimitMax.addListener((_e) -> updateParams(false));
   }
 
   @Override

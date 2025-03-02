@@ -6,12 +6,8 @@ import static edu.wpi.first.units.Units.Radians;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.wpilibj.DigitalInput;
 
-import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import frc.robot.Constants;
@@ -57,8 +53,14 @@ public class ChuteIOReal implements ChuteIO {
     // At creation time, set encoder positions to our initial position
     REVUtils.tryUntilOk(() -> pivotEncoder.setPosition(Constants.Chute.PIVOT_INITIAL_ANGLE_RADS));
 
+    pivotFeedforwardkS.addListener((_e) -> updateParams(false));
+    pivotFeedforwardkG.addListener((_e) -> updateParams(false));
     pivotPID_P.addListener((_e) -> updateParams(false));
     pivotPID_D.addListener((_e) -> updateParams(false));
+    pivotMaxNormalizedSpeed.addListener((_e) -> updateParams(false));
+    pivotMinNormalizedSpeed.addListener((_e) -> updateParams(false));
+    pivotSoftLimitMinAngleRads.addListener((_e) -> updateParams(false));
+    pivotSoftLimitMaxAngleRads.addListener((_e) -> updateParams(false));
   }
 
   @Override
