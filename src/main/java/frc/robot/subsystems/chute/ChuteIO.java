@@ -5,6 +5,7 @@ import org.littletonrobotics.junction.AutoLog;
 public interface ChuteIO {
   @AutoLog
   public static class CoralIOInputs {
+    public boolean homed = false;
     // TODO: Figure out proper coordinate system
     public double pivotAngleRadians = 0.0;
     public double pivotVelocityRadPerSec = 0.0;
@@ -16,7 +17,9 @@ public interface ChuteIO {
 
   public default void updateInputs(CoralIOInputs inputs) {}
 
-  public default void setPivotGoal(double pivotAngleRadians) {}
+  public default void moveTowardsPivotGoal(double goalAngleRadians, double currentAngleRadians) {}
+
+  public default void stopPivot() {}
 
   /**
    * Set the shooter to a normalized speed in [-1, 1].

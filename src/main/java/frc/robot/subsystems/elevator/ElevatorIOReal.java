@@ -101,7 +101,8 @@ public class ElevatorIOReal implements ElevatorIO {
           Constants.Elevator.ELEVATOR_CONVERSION_FACTOR / 60);
     }
 
-    config.softLimit.forwardSoftLimit(elevatorSoftLimitMax.get()).reverseSoftLimit(elevatorSoftLimitMin.get());
+    config.softLimit.forwardSoftLimit(elevatorSoftLimitMax.get()).reverseSoftLimit(elevatorSoftLimitMin.get())
+        .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
     // No ff term here because we want position control not velocity
     config.closedLoop.pidf(elevatorPID_P.get(), 0, elevatorPID_D.get(), 0);

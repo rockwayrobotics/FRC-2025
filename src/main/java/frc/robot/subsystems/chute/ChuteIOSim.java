@@ -46,8 +46,13 @@ public class ChuteIOSim implements ChuteIO {
   }
 
   @Override
-  public void setPivotGoal(double pivotAngleRadians) {
+  public void moveTowardsPivotGoal(double pivotAngleRadians, double currentAngleRadians) {
     pivotPid.setSetpoint(pivotAngleRadians);
+  }
+
+  @Override
+  public void stopPivot() {
+    // FIXME
   }
 
   @Override

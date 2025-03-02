@@ -66,7 +66,7 @@ public class RobotContainer {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
 
       Elevator elevator = new Elevator(new ElevatorIOReal());
-      Chute chute = new Chute(new ChuteIOSim());
+      Chute chute = new Chute(new ChuteIOReal());
       Grabber grabber = new Grabber(new GrabberIOSim());
       superstructure = new Superstructure(elevator, chute, grabber);
       climp = new Climp(new ClimpIOSim());
@@ -219,21 +219,22 @@ public class RobotContainer {
             () -> superstructure.elevator.setGoalHeightMillimeters(100),
             superstructure));
 
+    // PoV Right but with different event loop
+    driverController.pov(0, 90, testModelButtonLoop)
+        .onTrue(Commands.runOnce(
+            () -> superstructure.chute
+                .setPivotGoalRads(Units.degreesToRadians(-10)),
+            superstructure));
+    // PoV Left but with different event loop
+    driverController.pov(0, 270, testModelButtonLoop)
+        .onTrue(Commands.runOnce(
+            () -> superstructure.chute
+                .setPivotGoalRads(Units.degreesToRadians(10)),
+            superstructure));
+
     // FIXME FIXME FIXME: Everything is disabled for now
     boolean enabled = false;
     if (enabled) {
-      // PoV Right but with different event loop
-      driverController.pov(0, 90, testModelButtonLoop)
-          .onTrue(Commands.runOnce(
-              () -> superstructure.chute
-                  .setPivotGoalRads(-Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
-              superstructure));
-      // PoV Left but with different event loop
-      driverController.pov(0, 270, testModelButtonLoop)
-          .onTrue(Commands.runOnce(
-              () -> superstructure.chute
-                  .setPivotGoalRads(Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
-              superstructure));
       driverController.a(testModelButtonLoop)
           .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)
               .finallyDo(() -> superstructure.chute.stopShooting()));
