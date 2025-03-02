@@ -299,7 +299,12 @@ def main():
                 if key.lower() == 'q':
                     break
                 elif key.lower() == 'c':
-                    cam = cam1 if cam == cam0 else cam0
+                    if cam == cam0:
+                        cam = cam1
+                        selectCameraPublisher.set("aft")
+                    else:
+                        cam = cam0
+                        selectCameraPublisher.set("fore")
                     print(f'Switched to camera {cam.id}')
 
     finally:
