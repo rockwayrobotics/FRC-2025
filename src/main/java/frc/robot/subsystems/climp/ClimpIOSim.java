@@ -9,4 +9,19 @@ public class ClimpIOSim implements ClimpIO {
   public void updateInputs(ClimpIOInputs inputs) {
 
   }
+
+  @Override
+  public void setNormalizedSpeed(double speed) {
+
+  }
+
+  @Override
+  public void stop() {
+
+  }
+
+  @Override
+  public void moveTowardsGoal(double goalAngleRadians, double currentAngleRadians) {
+
+  }
 }

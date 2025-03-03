@@ -13,7 +13,7 @@ public class Elevator {
   private double heightMillimeters = 0;
   private boolean homeBeamBroken = false;
 
-  final Interlock enabled = new Interlock("Elevator");
+  final Interlock unlocked = new Interlock("Elevator");
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -25,7 +25,7 @@ public class Elevator {
     heightMillimeters = inputs.positionMillimeters;
     homeBeamBroken = inputs.homeBeamBroken;
 
-    if (DriverStation.isDisabled() || !enabled.get()) {
+    if (DriverStation.isDisabled() || !unlocked.get()) {
       io.stop();
     } else {
       io.moveTowardsGoal(goalHeightMillimeters, heightMillimeters);
@@ -33,7 +33,7 @@ public class Elevator {
   }
 
   public void setGoalHeightMillimeters(double heightMillimeters) {
-    if (enabled.get()) {
+    if (unlocked.get()) {
       goalHeightMillimeters = heightMillimeters;
     }
   }

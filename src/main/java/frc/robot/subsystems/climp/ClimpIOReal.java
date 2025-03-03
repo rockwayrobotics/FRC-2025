@@ -37,8 +37,8 @@ public class ClimpIOReal implements ClimpIO {
 
   @Override
   public void updateInputs(ClimpIOInputs inputs) {
-    REVUtils.ifOk(climpMotor, encoder::getPosition, (value) -> inputs.positionMeters = value);
-    REVUtils.ifOk(climpMotor, encoder::getVelocity, (value) -> inputs.velocityMetersPerSec = value);
+    REVUtils.ifOk(climpMotor, encoder::getPosition, (value) -> inputs.angleRadians = value);
+    REVUtils.ifOk(climpMotor, encoder::getVelocity, (value) -> inputs.velocityRadsPerSec = value);
     REVUtils.ifOk(climpMotor, new DoubleSupplier[] {
         climpMotor::getAppliedOutput, climpMotor::getBusVoltage
     }, (values) -> inputs.appliedVoltage = values[0] * values[1]);
@@ -46,7 +46,19 @@ public class ClimpIOReal implements ClimpIO {
   }
 
   @Override
-  public void setClimpMotor(double speed) {
+  public void setNormalizedSpeed(double speed) {
+    climpMotor.set(speed);
+  }
+
+  @Override
+  public void stop() {
+    climpMotor.set(0);
+  }
+
+  @Override
+  public void moveTowardsGoal(double goalPositionMeters, double currentPositionMeters) {
+    double error = goalPositionMeters - currentPositionMeters;
+    double speed = error * pid_p.get();
     climpMotor.set(speed);
   }
 
@@ -55,6 +67,8 @@ public class ClimpIOReal implements ClimpIO {
     SparkFlexConfig config = new SparkFlexConfig();
     if (resetSafe) {
       config.idleMode(IdleMode.kBrake).voltageCompensation(12.0);
+      config.encoder.positionConversionFactor(2 * Math.PI / Constants.Climp.PIVOT_GEAR_RATIO)
+          .velocityConversionFactor(2 * Math.PI / Constants.Climp.PIVOT_GEAR_RATIO / 60);
     }
     config.smartCurrentLimit((int) currentLimit.get());
     config.closedLoop.pidf(pid_p.get(), 0, pid_d.get(), 0);

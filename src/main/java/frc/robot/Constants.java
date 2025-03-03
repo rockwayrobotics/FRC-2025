@@ -115,6 +115,10 @@ public final class Constants {
     public static final double CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM = 375;
   }
 
+  public static final class Climp {
+    public static final double PIVOT_GEAR_RATIO = 540;
+  }
+
   public static final class Drive {
     // Our target speed for scoring in m/s
     public static final double SCORING_SPEED = 0.45;
