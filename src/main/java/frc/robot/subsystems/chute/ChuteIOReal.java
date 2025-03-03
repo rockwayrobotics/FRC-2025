@@ -135,33 +135,42 @@ public class ChuteIOReal implements ChuteIO {
     var promise = new CompletableFuture<Boolean>();
     pivotEncoder.setPosition(0);
     SparkMaxConfig pivotConfig = new SparkMaxConfig();
-    pivotConfig.softLimit.forwardSoftLimit(Units.degreesToRadians(10))
-        .reverseSoftLimit(Units.degreesToRadians(-10)).forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
-    pivotConfig.smartCurrentLimit(10);
+    pivotConfig.softLimit.forwardSoftLimit(Units.degreesToRadians(20))
+        .reverseSoftLimit(Units.degreesToRadians(-20)).forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
+    pivotConfig.smartCurrentLimit(20);
 
     REVUtils.tryUntilOk(
-        () -> pivotMotor.configure(pivotConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters));
+        () -> pivotMotor.configure(pivotConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters));
 
     if (Sensors.getInstance().getChuteHomeSwitch()) { // home switch is pressed
-      pivotMotor.set(0.05); // away from the home switch
-      Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
-        if (falling) {
-          System.out.println("home switch is pressed, falling. start");
-          pivotMotor.set(0);
-          pivotEncoder.setPosition(0);
+      // Commands.run(() -> pivotMotor.set(0.1)).onlyWhile(() ->
+      // Sensors.getInstance().getChuteHomeSwitch()).schedule();
+      // Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling)
+      // -> {
+      // if (falling) {
+      // System.out.println("home switch is un pressed, falling. start");
+      // // to the home switch
+      // } else {
+      // pivotMotor.set(0);
+      // pivotEncoder.setPosition(0);
+      // updateParams(true);
 
-          updateParams(true);
-
-          promise.complete(true);
-          interrupt.close();
-          System.out.println("home switch is pressed, falling. done");
-        } else {
-          System.err.println("something bad happened, home switch was pressed, rising edge");
-          promise.complete(false);
-        }
-      });
+      // promise.complete(true);
+      // interrupt.close();
+      // System.out.println("home switch is pressed, rising. done");
+      // }
+      // });
+      // if (falling) {
+      // System.out.println("home switch is un pressed, falling. start");
+      // // to the home switch
+      // } else {
+      pivotMotor.set(0);
+      pivotEncoder.setPosition(0);
+      updateParams(true);
+      promise.complete(true);
+      System.out.println("home switch was pressed. No action");
     } else if (!Sensors.getInstance().getChuteHomeSwitch()) {
-      pivotMotor.set(-0.05); // to the home switch
+      Commands.run(() -> pivotMotor.set(-0.1)).onlyWhile(() -> !Sensors.getInstance().getChuteHomeSwitch()).schedule();
       Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
         if (falling) {
           System.out.println("home switch started not pressed, it is now unpressed, falling. start");
@@ -175,7 +184,9 @@ public class ChuteIOReal implements ChuteIO {
           System.out.println("home switch started not pressed, it is now unpressed, falling. done");
         } else if (rising) {
           System.out.println("home switch started not pressed, it is now pressed , rising. done");
-          pivotMotor.set(0.05); // away from the home switch
+          // away from the home switch
+          Commands.run(() -> pivotMotor.set(0.1)).onlyWhile(() -> Sensors.getInstance().getChuteHomeSwitch())
+              .schedule();
         }
       });
     }

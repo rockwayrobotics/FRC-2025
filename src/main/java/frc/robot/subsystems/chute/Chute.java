@@ -75,6 +75,7 @@ public class Chute {
 
   public void home() {
     var promise = io.home();
+    System.out.println("home starting");
     Logger.recordOutput("Chute/Homing", true);
     Commands.waitUntil(() -> promise.isDone()).finallyDo(() -> {
       this.isHomed = promise.getNow(false);
@@ -87,4 +88,9 @@ public class Chute {
   public boolean isHomed() {
     return isHomed;
   }
+}
+
+((a,b)->(a,b) ,c)->{
+
+  a,b,c
 }
