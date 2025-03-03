@@ -131,6 +131,8 @@ class AprilTagDetection:
             pose1 = cam2Field(absolutePose, poseEstimate.pose1)
             pose2 = cam2Field(absolutePose, poseEstimate.pose2)
             print(f'\rAmbiguity={ambiguity}')
+            # _buf = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+            # print(tag.getCorners(_buf))
             self.ambiguityTopic.set(ambiguity * 100)
             if pose1 is not None:
                 print(f'\r{poseEstimate.error1} Pose1={round(pose1.x,2)},{round(pose1.y,2)},{round(pose1.rotation().degrees())}')
@@ -299,17 +301,36 @@ def main():
                 if key.lower() == 'q':
                     break
                 elif key.lower() == 'c':
-                    cam = cam1 if cam == cam0 else cam0
+                    if cam == cam0:
+                        cam = cam1
+                        selectCameraPublisher.set("aft")
+                    else:
+                        cam = cam0
+                        selectCameraPublisher.set("fore")
                     print(f'Switched to camera {cam.id}')
 
     finally:
-        del console
-        print()
+        del console # this should restore original kb settings
+        print('exiting')
         cam0.stop()
         cam1.stop()
         if args.save:
+            print('closing files')
             cam0stream.close()
             cam1stream.close()
+
+        # # These are an attempt to speed up shutdown, which currently
+        # # stalls for some reason after we return from this routine.
+        # mjpegTopic.close()
+        # nt.stopServer()
+        # source.setConnected(False)
+        # nt.stopClient()
+
+        # import threading
+        # print(threading.enumerate())
+        # print(dir(nt))
+
+        print('exiting main')
 
 if __name__ == '__main__':
     import argparse

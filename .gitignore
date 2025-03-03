@@ -205,3 +205,4 @@ akit*.toml
 *.jpg
 *.jpeg
 *.mjpeg
+logs
