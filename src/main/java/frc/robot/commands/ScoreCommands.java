@@ -74,10 +74,10 @@ public class ScoreCommands {
           drive.setTankDrive(new ChassisSpeeds(Constants.Drive.SCORING_SPEED, 0, 0));
         }),
         Commands.runOnce(() -> {
-          superstructure.elevator.setGoalHeightMillimeters(RobotTracker.getInstance().getScoringState().reefHeight.elevatorHeight());
+          superstructure.setElevatorGoalHeightMillimeters(RobotTracker.getInstance().getScoringState().reefHeight.elevatorHeight());
         }),
         Commands.runOnce(() -> {
-          superstructure.chute.setPivotGoalRads(RobotTracker.getInstance().getScoringState().pivotRadians());
+          superstructure.setChutePivotGoalRads(RobotTracker.getInstance().getScoringState().pivotRadians());
         }),
         Commands.sequence(
             Commands.waitUntil(() -> {
@@ -111,10 +111,10 @@ public class ScoreCommands {
               return Math.abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
             }),
             Commands.run(() -> {
-              superstructure.chute.startShooting();
+              superstructure.startShooting();
             }).withTimeout(2.0),
             Commands.runOnce(() -> {
-              superstructure.chute.stopShooting();
+              superstructure.stopShooting();
             })));
     command.addRequirements(drive, superstructure);
     cancellableGroup.addCommands(command);
@@ -122,7 +122,7 @@ public class ScoreCommands {
       piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
-      superstructure.chute.stopShooting();
+      superstructure.stopShooting();
       // FIXME: Reset? Detect if coral was shot?
     });
   }

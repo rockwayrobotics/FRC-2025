@@ -28,10 +28,14 @@ public class Superstructure extends SubsystemBase {
   }
 
   public void setElevatorGoalHeightMillimeters(double heightMillimeters) {
+    // FIXME: Check if elevator is homed. If not... do nothing?
+    // FIXME: Check chute state, if not safe, move it first? Or do nothing?
     elevator.setGoalHeightMillimeters(heightMillimeters);
   }
 
   public void setChutePivotGoalRads(double pivotAngleRads) {
+    // FIXME: Check if chute is homed. If not... do nothing?
+    // FIXME: Check elevator height, if not safe, move it first? Or do nothing?
     chute.setPivotGoalRads(pivotAngleRads);
   }
 
