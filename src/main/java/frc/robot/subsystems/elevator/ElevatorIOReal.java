@@ -63,8 +63,8 @@ public class ElevatorIOReal implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    inputs.homed = Sensors.getInstance().getElevatorHomeBeambroken();
-    if (inputs.homed) {
+    inputs.homeBeamBroken = Sensors.getInstance().getElevatorHomeBeambroken();
+    if (inputs.homeBeamBroken) {
       // REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
     }
 

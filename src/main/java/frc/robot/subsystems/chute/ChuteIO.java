@@ -7,7 +7,7 @@ import org.littletonrobotics.junction.AutoLog;
 public interface ChuteIO {
   @AutoLog
   public static class CoralIOInputs {
-    public boolean homed = false;
+    public boolean homeSwitchPressed = false;
     // TODO: Figure out proper coordinate system
     public double pivotAngleRadians = 0.0;
     public double pivotVelocityRadPerSec = 0.0;

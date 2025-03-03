@@ -16,6 +16,7 @@ public class Chute {
   final Tuner shooterSpeedTuner = new Tuner("ShooterSpeed", 0.3, true);
 
   private double pivotGoalRads = Constants.Chute.PIVOT_INITIAL_ANGLE_RADS;
+  private double pivotAngleRads = Constants.Chute.PIVOT_INITIAL_ANGLE_RADS;
   private boolean coralLoading = false;
   private boolean coralReady = false;
   private boolean isHomed = false;
@@ -29,6 +30,7 @@ public class Chute {
     Logger.processInputs("Chute", inputs);
     coralLoading = inputs.coralLoading;
     coralReady = inputs.coralReady;
+    pivotAngleRads = inputs.pivotAngleRadians;
 
     if (DriverStation.isDisabled() || !unlocked.get() || !isHomed) {
       io.stopPivot();
@@ -45,6 +47,10 @@ public class Chute {
 
   public double getPivotGoalRads() {
     return pivotGoalRads;
+  }
+
+  public double getPivotAngleRads() {
+    return pivotAngleRads;
   }
 
   public void startShooting() {

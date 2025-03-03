@@ -70,8 +70,8 @@ public class ChuteIOReal implements ChuteIO {
 
   @Override
   public void updateInputs(CoralIOInputs inputs) {
-    inputs.homed = Sensors.getInstance().getChuteHomeSwitch();
-    if (inputs.homed) {
+    inputs.homeSwitchPressed = Sensors.getInstance().getChuteHomeSwitch();
+    if (inputs.homeSwitchPressed) {
       // REVUtils.tryUntilOk(() ->
       // pivotEncoder.setPosition(Constants.Chute.PIVOT_INITIAL_ANGLE_RADS));
     }

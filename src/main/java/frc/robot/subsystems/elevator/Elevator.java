@@ -11,7 +11,7 @@ public class Elevator {
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private double goalHeightMillimeters = 0;
   private double heightMillimeters = 0;
-  private boolean homed = false;
+  private boolean homeBeamBroken = false;
 
   final Interlock enabled = new Interlock("Elevator");
 
@@ -23,7 +23,7 @@ public class Elevator {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
     heightMillimeters = inputs.positionMillimeters;
-    homed = inputs.homed;
+    homeBeamBroken = inputs.homeBeamBroken;
 
     if (DriverStation.isDisabled() || !enabled.get()) {
       io.stop();
@@ -55,14 +55,14 @@ public class Elevator {
     io.stop();
   }
 
-  public boolean isHomed() {
-    return homed;
+  public boolean isHomeBeamBroken() {
+    return homeBeamBroken;
   }
 
   public void home() {
     if (!Sensors.getInstance().getElevatorHomeBeambroken()) {
       io.zeroEncoder();
-      homed = true;
+      homeBeamBroken = true;
     } else {
       System.err.println("Elevator home beam is NOT broken. It is NOT homed.");
     }

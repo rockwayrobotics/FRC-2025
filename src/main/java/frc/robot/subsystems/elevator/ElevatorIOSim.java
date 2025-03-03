@@ -29,7 +29,7 @@ public class ElevatorIOSim implements ElevatorIO {
     inputs.positionMillimeters = Millimeters.convertFrom(sim.getPositionMeters(), Meters);
     inputs.velocityMillimetersPerSec = sim.getVelocityMetersPerSecond();
     inputs.supplyCurrentAmps = sim.getCurrentDrawAmps();
-    inputs.homed = inputs.positionMillimeters < 1;
+    inputs.homeBeamBroken = inputs.positionMillimeters < 1;
   }
 
   @Override
