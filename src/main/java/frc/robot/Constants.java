@@ -72,7 +72,8 @@ public final class Constants {
     public static final int CLIMP_MOTOR = 5;
 
     // Vortex with Spark Flex
-    public static final int ELEVATOR_MOTOR = 6;
+    public static final int ELEVATOR_MOTOR_BACK = 6;
+    public static final int ELEVATOR_MOTOR_FRONT = 12;
 
     // NEO with Spark MAX
     public static final int GRABBER_LEFT_MOTOR = 7;
@@ -190,12 +191,11 @@ public final class Constants {
   }
 
   public static final class Digital {
-    public static final int ALGAE_HOME_LIMIT_SWITCH = 1; // normally open
-    public static final int CHUTE_HOME_LIMIT_SWITCH = 2; // normally open, when intake is to the left it is clsoed
-    // 3 is empty
-    public static final int CHUTE_SHOOT_CORAL_BEAMBREAK = 4;
-    public static final int CHUTE_LOAD_CORAL_BEAMBREAK = 5;
+    public static final int CHUTE_SHOOT_CORAL_BEAMBREAK = 3;
+    public static final int CHUTE_LOAD_CORAL_BEAMBREAK = 4;
+    public static final int ALGAE_HOME_LIMIT_SWITCH = 5;
     public static final int ELEVATOR_HOME_BEAMBREAK = 6;
+    public static final int CHUTE_HOME_LIMIT_SWITCH = 7;
   }
 
   public static final class Analog {

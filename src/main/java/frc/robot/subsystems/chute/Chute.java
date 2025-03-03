@@ -73,7 +73,8 @@ public class Chute {
     Commands.waitUntil(() -> promise.isDone()).finallyDo(() -> {
       this.isHomed = promise.getNow(false);
       Logger.recordOutput("Chute/Homing", false);
-      Logger.recordOutput("Chute/Homed", this.isHomed);
+      Logger.recordOutput("Chute/Homed_real", this.isHomed);
+      System.out.println("home finished");
     }).schedule();
   }
 

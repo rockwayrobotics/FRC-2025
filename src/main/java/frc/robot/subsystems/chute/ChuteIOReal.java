@@ -146,6 +146,7 @@ public class ChuteIOReal implements ChuteIO {
       pivotMotor.set(0.05); // away from the home switch
       Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
         if (falling) {
+          System.out.println("home switch is pressed, falling. start");
           pivotMotor.set(0);
           pivotEncoder.setPosition(0);
 
@@ -153,6 +154,7 @@ public class ChuteIOReal implements ChuteIO {
 
           promise.complete(true);
           interrupt.close();
+          System.out.println("home switch is pressed, falling. done");
         } else {
           System.err.println("something bad happened, home switch was pressed, rising edge");
           promise.complete(false);
@@ -162,6 +164,7 @@ public class ChuteIOReal implements ChuteIO {
       pivotMotor.set(-0.05); // to the home switch
       Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
         if (falling) {
+          System.out.println("home switch started not pressed, it is now unpressed, falling. start");
           pivotMotor.set(0);
           pivotEncoder.setPosition(0);
 
@@ -169,7 +172,9 @@ public class ChuteIOReal implements ChuteIO {
 
           promise.complete(true);
           interrupt.close();
+          System.out.println("home switch started not pressed, it is now unpressed, falling. done");
         } else if (rising) {
+          System.out.println("home switch started not pressed, it is now pressed , rising. done");
           pivotMotor.set(0.05); // away from the home switch
         }
       });
