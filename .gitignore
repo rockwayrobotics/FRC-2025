@@ -206,3 +206,4 @@ akit*.toml
 *.jpeg
 *.mjpeg
 logs
+tof-logs/
