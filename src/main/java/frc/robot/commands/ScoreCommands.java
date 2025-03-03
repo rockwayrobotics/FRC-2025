@@ -74,7 +74,7 @@ public class ScoreCommands {
           drive.setTankDrive(new ChassisSpeeds(Constants.Drive.SCORING_SPEED, 0, 0));
         }),
         Commands.runOnce(() -> {
-          superstructure.elevator.setGoalHeightMeters(RobotTracker.getInstance().getScoringState().reefHeight.elevatorHeight());
+          superstructure.elevator.setGoalHeightMillimeters(RobotTracker.getInstance().getScoringState().reefHeight.elevatorHeight());
         }),
         Commands.runOnce(() -> {
           superstructure.chute.setPivotGoalRads(RobotTracker.getInstance().getScoringState().pivotRadians());

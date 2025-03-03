@@ -44,6 +44,8 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -56,6 +58,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
+import frc.robot.util.Sensors;
 import frc.robot.util.TimestampSynchronizer;
 import frc.robot.util.Tuner;
 
@@ -97,7 +100,7 @@ public class Drive extends SubsystemBase {
 
   TimeInterpolatableBuffer<Double> leftPositionBuffer;
   TimeInterpolatableBuffer<Double> rightPositionBuffer;
-  TempBeamBreak beamBreak;
+
 
   public Drive(DriveIO io, GyroIO gyroIO) {
     this.io = io;
@@ -105,7 +108,6 @@ public class Drive extends SubsystemBase {
     this.differentialDrive = io.getDifferentialDrive();
 
     // Temporary stuff for drive-by ToF measurement
-    beamBreak = new TempBeamBreak();
     leftPositionBuffer = TimeInterpolatableBuffer.createDoubleBuffer(60);
     rightPositionBuffer = TimeInterpolatableBuffer.createDoubleBuffer(60);
 
@@ -120,53 +122,6 @@ public class Drive extends SubsystemBase {
             (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
         new SysIdRoutine.Mechanism(
             (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), null, this));
-  }
-
-  /**
-   * Meant to be called in the Drive constructor if and when we try to re-enable
-   * PathPlanner.
-   */
-  private void setupPathPlanner() {
-    double rElem0 = 1;
-    Logger.recordOutput("VelocityControlFF", rElem0);
-    AutoBuilder.configure(
-        () -> RobotTracker.getInstance().getEstimatedPose(),
-        this::setPose,
-        () -> RobotTracker.getInstance().getDriveKinematics().toChassisSpeeds(getWheelSpeeds()),
-        // Could run closed loop here or add software PID
-        (ChassisSpeeds speeds) -> setTankDrive(speeds),
-        new PPLTVController(
-            VecBuilder.fill(0.0625, 0.125, 0.5),
-            VecBuilder.fill(rElem0, 2),
-            0.02,
-            Constants.Drive.MAX_SPEED_MPS),
-        Constants.PathPlanner.CONFIG,
-        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-        this);
-
-    // This is for logging pathfinding, by setting up our own pathfinder that
-    // intercepts
-    // the calls to log them.
-    // Pathfinding.setPathfinder(new LocalADStarAK());
-    PathPlannerLogging.setLogActivePathCallback(
-        (activePath) -> {
-          // FIXME: Logging
-          Logger.recordOutput(
-              "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
-        });
-
-    PathPlannerLogging.setLogTargetPoseCallback(
-        (targetPose) -> {
-          Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-        });
-  }
-
-  public void enable() {
-    beamBreak.enable();
-  }
-
-  public void disable() {
-    beamBreak.disable();
   }
 
   private void tofDistancePeriodic(double now) {
@@ -236,8 +191,6 @@ public class Drive extends SubsystemBase {
     gyroIO.updateInputs(gyroInputs);
     Logger.processInputs("Drive", inputs);
     Logger.processInputs("Drive/Gyro", gyroInputs);
-
-    beamBreak.periodic();
 
     double now = Timer.getFPGATimestamp();
     tofDistancePeriodic(now);
@@ -399,5 +352,44 @@ public class Drive extends SubsystemBase {
 
   public void setBrakeMode(boolean brake) {
     io.setBrakeMode(brake);
+  }
+
+  /**
+   * Meant to be called in the Drive constructor if and when we try to re-enable
+   * PathPlanner.
+   */
+  private void _setupPathPlanner() {
+    double rElem0 = 1;
+    Logger.recordOutput("VelocityControlFF", rElem0);
+    AutoBuilder.configure(
+        () -> RobotTracker.getInstance().getEstimatedPose(),
+        this::setPose,
+        () -> RobotTracker.getInstance().getDriveKinematics().toChassisSpeeds(getWheelSpeeds()),
+        // Could run closed loop here or add software PID
+        (ChassisSpeeds speeds) -> setTankDrive(speeds),
+        new PPLTVController(
+            VecBuilder.fill(0.0625, 0.125, 0.5),
+            VecBuilder.fill(rElem0, 2),
+            0.02,
+            Constants.Drive.MAX_SPEED_MPS),
+        Constants.PathPlanner.CONFIG,
+        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+        this);
+
+    // This is for logging pathfinding, by setting up our own pathfinder that
+    // intercepts
+    // the calls to log them.
+    // Pathfinding.setPathfinder(new LocalADStarAK());
+    PathPlannerLogging.setLogActivePathCallback(
+        (activePath) -> {
+          // FIXME: Logging
+          Logger.recordOutput(
+              "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
+        });
+
+    PathPlannerLogging.setLogTargetPoseCallback(
+        (targetPose) -> {
+          Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+        });
   }
 }

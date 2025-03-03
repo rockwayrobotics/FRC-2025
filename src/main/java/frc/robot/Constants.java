@@ -69,20 +69,19 @@ public final class Constants {
     public static final int RIGHT_DRIVE_MOTOR_F = 4;
 
     // Vortex with Spark Flex
-    public static final int ELEVATOR_MOTOR_LEFT = 5;
-    public static final int ELEVATOR_MOTOR_RIGHT = 6;
-
-    // NEO with Spark MAX
-    public static final int PIVOT_MOTOR = 7;
-    public static final int SHOOTER_MOTOR = 8;
+    public static final int CLIMP_MOTOR = 5;
 
     // Vortex with Spark Flex
-    public static final int CLIMP_MOTOR = 9;
+    public static final int ELEVATOR_MOTOR = 6;
 
     // NEO with Spark MAX
-    public static final int GRABBER_WRIST_MOTOR = 10;
-    public static final int GRABBER_LEFT_MOTOR = 11;
-    public static final int GRABBER_RIGHT_MOTOR = 12;
+    public static final int GRABBER_LEFT_MOTOR = 7;
+    public static final int GRABBER_RIGHT_MOTOR = 8;
+    public static final int GRABBER_WRIST_MOTOR = 9;
+
+    // NEO with Spark MAX
+    public static final int PIVOT_MOTOR = 10;
+    public static final int SHOOTER_MOTOR = 11;
   }
 
   public static final class Chute {
@@ -111,6 +110,8 @@ public final class Constants {
     // Measured with 0 as the center of the robot frame, positive x forwards
     public static final double CHUTE_CENTER_X_POSITION_METERS = Dimensions.FRAME_X_LENGTH_METERS / 2 - 0.276
         + CHUTE_X_THICKNESS_METERS / 2;
+
+    public static final double CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM = 375;
   }
 
   public static final class Drive {
@@ -143,22 +144,29 @@ public final class Constants {
   }
 
   public static final class Elevator {
-    // Predefined heights in meters
-    public static final double TROUGH_HEIGHT = 1.0;
-    public static final double L2_HEIGHT = 2.0;
-    public static final double L3_HEIGHT = 3.0;
-    public static final double LOAD_HEIGHT = 4.0;
-    public static final double ALGAE_L2_HEIGHT = 2.0;
-    public static final double ALGAE_L3_HEIGHT = 3.0;
+    // Predefined heights in millimeters
+    public static final double TROUGH_HEIGHT = 1000.0;
+    public static final double L2_HEIGHT = 1000.0;
+    public static final double L3_HEIGHT = 1000.0;
+    public static final double LOAD_HEIGHT = 1000.0;
+    public static final double ALGAE_L2_HEIGHT = 1000.0;
+    public static final double ALGAE_L3_HEIGHT = 1000.0;
     public static final double CLIMB_HEIGHT = 0.0;
 
-    public static final double SPROCKET_RADIUS_METERS = 0.042;
     public static final double GEAR_RATIO = 2;
+
+    public static final double ELEVATOR_CONVERSION_FACTOR = 281.5249266862;
+
+    public static final double SPROCKET_DIAMETER_METERS = 0.0448060837;
+    // March 1st 2025:
+    // (375/1.33203125) = 281.5249266862
+    // (1192/4.251) = 280.4046106798
+
     public static final double CARRIAGE_MASS_KG = 5;
     // Minimum height of pivot center
     public static final double MIN_PIVOT_HEIGHT_METERS = 0.24;
-    // Maximum extension height of elevator - FIXME: Not measured
-    public static final double MAX_HEIGHT_METERS = 1.5;
+    // Maximum extension height of elevator
+    public static final double MAX_HEIGHT_METERS = 1.320;
   }
 
   public static final class Grabber {
@@ -182,15 +190,16 @@ public final class Constants {
   }
 
   public static final class Digital {
-    public static final int CORAL_LOAD_BEAMBREAK = 0;
-    public static final int CORAL_SHOOT_BEAMBREAK = 1;
-    public static final int ALGAE_HOME_SWITCH = 2;
-    public static final int ELEVATOR_HOME_SWITCH = 3;
-    public static final int CHUTE_HOME_SWITCH = 4;
+    public static final int ALGAE_HOME_LIMIT_SWITCH = 1; // normally open
+    public static final int CHUTE_HOME_LIMIT_SWITCH = 2; // normally open, when intake is to the left it is clsoed
+    // 3 is empty
+    public static final int CHUTE_SHOOT_CORAL_BEAMBREAK = 4;
+    public static final int CHUTE_LOAD_CORAL_BEAMBREAK = 5;
+    public static final int ELEVATOR_HOME_BEAMBREAK = 6;
   }
 
   public static final class Analog {
-    public static final int ALGAE_DISTANCE_SENSOR = 0;
+    public static final int ALGAE_DISTANCE_SENSOR = 3;
   }
 
   public static final class PathPlanner {

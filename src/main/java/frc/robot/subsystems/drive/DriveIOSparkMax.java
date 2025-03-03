@@ -38,8 +38,8 @@ public class DriveIOSparkMax implements DriveIO {
   protected final SimpleMotorFeedforward feedForward = new SimpleMotorFeedforward(Constants.Drive.REAL_KS,
       Constants.Drive.REAL_KV);
 
-  protected final Tuner DrivebasePID_P = new Tuner("Drivebase PID P", 0.5, true);
-  protected final Tuner DrivebasePID_I = new Tuner("Drivebase PID I", 0, true);
+  protected final Tuner DrivebasePID_P = new Tuner("Drive/PID_kp", 0.5, true);
+  protected final Tuner DrivebasePID_I = new Tuner("Drive/PID_ki", 0, true);
 
   protected final Tuner cameraAutoDeadband = new Tuner("Camera Auto Deadband", 0, true);
 

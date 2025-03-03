@@ -8,8 +8,8 @@ public interface ElevatorIO {
     public boolean homed = false;
     // TODO: Figure out how to report faults / connectivity?
     // public boolean motorConnected = true;
-    public double positionMeters = 0.0;
-    public double velocityMetersPerSec = 0.0;
+    public double positionMillimeters = 0.0;
+    public double velocityMillimetersPerSec = 0.0;
     public double appliedVoltage = 0.0;
     public double supplyCurrentAmps = 0.0;
     public double tempCelsius = 0.0;
@@ -23,12 +23,15 @@ public interface ElevatorIO {
    * Command a specific height from the elevator. Up is positive, down is
    * negative.
    */
-  public default void moveTowardsGoal(double goalHeightMeters, double currentHeightMeters) {
+  public default void moveTowardsGoal(double goalHeightMillimeters, double currentHeightMillimeters) {
   }
 
   public default void stop() {
   }
 
   public default void periodic() {
+  }
+
+  public default void zeroEncoder() {
   }
 }

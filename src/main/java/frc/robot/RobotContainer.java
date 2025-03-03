@@ -35,19 +35,20 @@ import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIOInputsAutoLogged;
 import frc.robot.subsystems.elevator.ElevatorIOReal;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.grabber.Grabber;
 import frc.robot.subsystems.grabber.GrabberIOReal;
 import frc.robot.subsystems.grabber.GrabberIOSim;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.util.Sensors;
 
 public class RobotContainer {
   // Subsystems are listed here
   private final Drive drive;
   private final Superstructure superstructure;
   private final Climp climp;
-
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
   private final CommandXboxController operatorController = new CommandXboxController(Constants.Gamepads.OPERATOR);
@@ -63,9 +64,9 @@ public class RobotContainer {
   public RobotContainer() {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
-      // FIXME: replace with real io once motors are on the robot
-      Elevator elevator = new Elevator(new ElevatorIOSim(0));
-      Chute chute = new Chute(new ChuteIOSim());
+
+      Elevator elevator = new Elevator(new ElevatorIOSim(375)); // FIXME to be real
+      Chute chute = new Chute(new ChuteIOReal());
       Grabber grabber = new Grabber(new GrabberIOSim());
       superstructure = new Superstructure(elevator, chute, grabber);
       climp = new Climp(new ClimpIOSim());
@@ -99,14 +100,6 @@ public class RobotContainer {
 
     configureBindings();
 
-  }
-
-  public void enable() {
-    drive.enable();
-  }
-
-  public void disable() {
-    drive.disable();
   }
 
   public WorldSimulation getWorldSimulation() {
@@ -143,61 +136,67 @@ public class RobotContainer {
     // driver & operator right bumper held -> landing sequence
 
     // left bumper -> set drive scale to 0.3 when held
-    driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
-    driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-    driverController.a().whileTrue(ScoreCommands.score(drive, superstructure));
+    // FIXME FIXME FIXME: Everything is disabled for now
+    boolean enabled = true;
+    if (enabled) {
+      driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
+      driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-    operatorController.povUpLeft().onTrue(new InstantCommand(() -> {
-      RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
-    }));
-    operatorController.povUpRight().onTrue(new InstantCommand(() -> {
-      RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
-    }));
-    operatorController.povDownLeft().onTrue(new InstantCommand(() -> {
-      RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
-    }));
-    operatorController.povDownRight().onTrue(new InstantCommand(() -> {
-      RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
-    }));
-    operatorController.povLeft().onTrue(new InstantCommand(() -> {
-      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
-      if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
-      } else {
-        // Default to front
+      driverController.a().whileTrue(ScoreCommands.score(drive, superstructure));
+
+      operatorController.povUpLeft().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
-      }
-    }));
-    operatorController.povRight().onTrue(new InstantCommand(() -> {
-      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
-      if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
-      } else {
-        // Default to front
+      }));
+      operatorController.povUpRight().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
-      }
-    }));
-    operatorController.povDown().onTrue(new InstantCommand(() -> {
-      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
-      if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
-      } else {
-        // Default to left
+      }));
+      operatorController.povDownLeft().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
-      }
-    }));
-    operatorController.povUp().onTrue(new InstantCommand(() -> {
-      var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
-      if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
-      } else {
-        // Default to left
-        RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
-      }
-    }));
+      }));
+      operatorController.povDownRight().onTrue(new InstantCommand(() -> {
+        RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
+      }));
+      operatorController.povLeft().onTrue(new InstantCommand(() -> {
+        var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+        if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
+        } else {
+          // Default to front
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
+        }
+      }));
+      operatorController.povRight().onTrue(new InstantCommand(() -> {
+        var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+        if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
+        } else {
+          // Default to front
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
+        }
+      }));
+      operatorController.povDown().onTrue(new InstantCommand(() -> {
+        var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+        if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
+        } else {
+          // Default to left
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
+        }
+      }));
+      operatorController.povUp().onTrue(new InstantCommand(() -> {
+        var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
+        if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
+        } else {
+          // Default to left
+          RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
+        }
+      }));
 
-    drive.setDefaultCommand(DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
+      drive.setDefaultCommand(
+          DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
+    }
   }
 
   public void setupTestBindings() {
@@ -212,33 +211,44 @@ public class RobotContainer {
     // PoV Up but with different event loop
     driverController.pov(0, 0, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.elevator.setGoalHeightMeters(superstructure.elevator.getGoalHeightMeters() + 0.01),
+            () -> superstructure.elevator.setGoalHeightMillimeters(400),
             superstructure));
-    // PoV Up but with different event loop
+    // PoV Down but with different event loop
     driverController.pov(0, 180, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.elevator.setGoalHeightMeters(superstructure.elevator.getGoalHeightMeters() - 0.01),
+            () -> superstructure.elevator.setGoalHeightMillimeters(100),
             superstructure));
+
     // PoV Right but with different event loop
     driverController.pov(0, 90, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.chute.setPivotGoalRads(-Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
+            () -> superstructure.chute
+                .setPivotGoalRads(Units.degreesToRadians(-10)),
             superstructure));
     // PoV Left but with different event loop
     driverController.pov(0, 270, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.chute.setPivotGoalRads(Units.degreesToRadians(1) + superstructure.chute.getPivotGoalRads()),
+            () -> superstructure.chute
+                .setPivotGoalRads(Units.degreesToRadians(10)),
             superstructure));
-    driverController.a(testModelButtonLoop)
-        .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure).finallyDo(() -> superstructure.chute.stopShooting()));
-    driverController.b(testModelButtonLoop)
-        .whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
 
-    // This sets the default command to drive very slowly. Remember to reset this
-    // when exiting test mode.
-    CommandScheduler.getInstance().cancel(drive.getDefaultCommand());
-    drive.setDefaultCommand(DriveCommands.defaultDrive(() -> driverController.getLeftY() * 0.1,
-        () -> driverController.getRightX() * 0.1, drive));
+    driverController.a(testModelButtonLoop).onTrue(Commands.runOnce(() -> superstructure.home()));
+
+    // FIXME FIXME FIXME: Everything is disabled for now
+    boolean enabled = false;
+    if (enabled) {
+      driverController.a(testModelButtonLoop)
+          .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)
+              .finallyDo(() -> superstructure.chute.stopShooting()));
+      driverController.b(testModelButtonLoop)
+          .whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
+
+      // This sets the default command to drive very slowly. Remember to reset this
+      // when exiting test mode.
+      CommandScheduler.getInstance().cancel(drive.getDefaultCommand());
+      drive.setDefaultCommand(DriveCommands.defaultDrive(() -> driverController.getLeftY() * 0.1,
+          () -> driverController.getRightX() * 0.1, drive));
+    }
   }
 
   public void resetTestBindings() {
@@ -249,6 +259,8 @@ public class RobotContainer {
 
   public void setDriveBrakeMode(boolean brake) {
     drive.setBrakeMode(brake);
+    superstructure.chute.setBrakeMode(brake);
+    superstructure.grabber.setBrakeMode(brake);
   }
 
   /**
