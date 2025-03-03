@@ -89,8 +89,3 @@ public class Chute {
     return isHomed;
   }
 }
-
-((a,b)->(a,b) ,c)->{
-
-  a,b,c
-}
