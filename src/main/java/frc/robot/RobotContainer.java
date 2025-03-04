@@ -238,7 +238,7 @@ public class RobotContainer {
       })).onFalse(Commands.runOnce(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
       }));
-    } 
+    }
   }
 
   public void setupTestBindings() {
@@ -263,10 +263,10 @@ public class RobotContainer {
 
     // PoV Right but with different event loop
     driverController.pov(0, 90, testModelButtonLoop)
-        .onTrue(Commands.runOnce(() -> superstructure.chute.setPivotGoalRads(2.2), superstructure));
+        .onTrue(Commands.runOnce(() -> superstructure.chute.setPivotGoalRads(1), superstructure));
     // PoV Left but with different event loop
     driverController.pov(0, 270, testModelButtonLoop)
-        .onTrue(Commands.runOnce(() -> superstructure.chute.setPivotGoalRads(2.5), superstructure));
+        .onTrue(Commands.runOnce(() -> superstructure.chute.setPivotGoalRads(-1), superstructure));
 
     driverController.a(testModelButtonLoop).onTrue(Commands.runOnce(() -> superstructure.home()));
 

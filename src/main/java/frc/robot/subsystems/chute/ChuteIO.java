@@ -15,6 +15,7 @@ public interface ChuteIO {
     public boolean coralLoading = false;
     public boolean coralReady = false;
     public double shooterVelocityRadPerSec = 0.0;
+    public double appliedOutput = 0.0;
   }
 
   public default void updateInputs(CoralIOInputs inputs) {

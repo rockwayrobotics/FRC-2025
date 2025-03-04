@@ -2,7 +2,12 @@ package frc.robot;
 
 import org.littletonrobotics.junction.Logger;
 
+import frc.robot.util.TunableSetpoints;
+
 public class ScoringState {
+
+  public final TunableSetpoints setpoints = new TunableSetpoints();
+  
   public enum SensorState {
     NONE(0),
     FRONT_LEFT(1),

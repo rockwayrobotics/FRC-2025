@@ -12,6 +12,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
 import com.revrobotics.spark.config.SparkMaxConfig;
 
@@ -43,8 +44,10 @@ public class ChuteIOReal implements ChuteIO {
   final Tuner pivotPID_D = new Tuner("Chute/pivot_Kd", 0, true);
   final Tuner pivotMaxNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_max", 0.3, true);
   final Tuner pivotMinNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_min", -0.3, true);
-  final Tuner pivotSoftLimitMinAngleRads = new Tuner("Chute/pivot_soft_limit_min_angle_rads", 0, true);
-  final Tuner pivotSoftLimitMaxAngleRads = new Tuner("Chute/pivot_soft_limit_max_angle_rads", 3.1, true);
+  final Tuner pivotSoftLimitMinAngleRads = new Tuner("Chute/pivot_soft_limit_min_angle_rads",
+      Units.degreesToRadians(-90), true);
+  final Tuner pivotSoftLimitMaxAngleRads = new Tuner("Chute/pivot_soft_limit_max_angle_rads",
+      Units.degreesToRadians(90), true);
 
   protected ArmFeedforward pivotFeedforward;
   protected double shooterSpeed = 0;
@@ -78,6 +81,8 @@ public class ChuteIOReal implements ChuteIO {
     REVUtils.ifOk(pivotMotor, pivotEncoder::getPosition, (value) -> inputs.pivotAngleRadians = value);
     REVUtils.ifOk(pivotMotor, pivotEncoder::getVelocity, (value) -> inputs.pivotVelocityRadPerSec = value);
     REVUtils.ifOk(shooterMotor, shooterEncoder::getVelocity, (value) -> inputs.shooterVelocityRadPerSec = value);
+    REVUtils.ifOk(pivotMotor, pivotMotor::getAppliedOutput, (value) -> inputs.appliedOutput = value);
+
     // FIXME: Should we be reading this at 50Hz?
     inputs.coralLoading = Sensors.getInstance().getChuteCoralLoadedBeambreak();
     inputs.coralReady = Sensors.getInstance().getChuteCoralReadyBeambreak();
@@ -87,7 +92,7 @@ public class ChuteIOReal implements ChuteIO {
   public void moveTowardsPivotGoal(double goalAngleRadians, double currentAngleRadians) {
     // Arm feed forward expects 0 to be parallel to the floor, but for us, 0 is
     // pointed straight down.
-    var ff = pivotFeedforward.calculate(Math.PI - currentAngleRadians,
+    var ff = pivotFeedforward.calculate(Math.PI - currentAngleRadians + Units.degreesToRadians(90),
         Math.signum(goalAngleRadians - currentAngleRadians));
     pivotController.setReference(goalAngleRadians, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff);
   }
@@ -99,7 +104,6 @@ public class ChuteIOReal implements ChuteIO {
 
   @Override
   public void setShooterSpeed(double speed) {
-    System.out.println(String.join(" ", "this.shooterSpeed = speed in setShooterSpeed:", new Double(speed).toString()));
     this.shooterSpeed = speed;
   }
 
@@ -108,7 +112,7 @@ public class ChuteIOReal implements ChuteIO {
     pivotFeedforward = new ArmFeedforward(pivotFeedforwardkS.get(), pivotFeedforwardkG.get(), 0);
     SparkMaxConfig pivotConfig = new SparkMaxConfig();
     if (resetSafe) {
-      pivotConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0).inverted(true);
+      pivotConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(38).voltageCompensation(12.0).inverted(true);
       pivotConfig.encoder.positionConversionFactor(2 * Math.PI / Constants.Chute.PIVOT_GEAR_RATIO)
           .velocityConversionFactor(2 * Math.PI / Constants.Chute.PIVOT_GEAR_RATIO / 60);
     }
@@ -133,53 +137,30 @@ public class ChuteIOReal implements ChuteIO {
 
   public CompletableFuture<Boolean> home() {
     var promise = new CompletableFuture<Boolean>();
-    pivotEncoder.setPosition(0);
     SparkMaxConfig pivotConfig = new SparkMaxConfig();
-    pivotConfig.softLimit.forwardSoftLimit(Units.degreesToRadians(20))
-        .reverseSoftLimit(Units.degreesToRadians(-20)).forwardSoftLimitEnabled(false).reverseSoftLimitEnabled(false);
+    pivotConfig.softLimit.forwardSoftLimitEnabled(false).reverseSoftLimitEnabled(false);
     pivotConfig.smartCurrentLimit(20);
-
     REVUtils.tryUntilOk(
         () -> pivotMotor.configure(pivotConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters));
 
-    if (Sensors.getInstance().getChuteHomeSwitch()) { // home switch is pressed
-      // Commands.run(() -> pivotMotor.set(0.1)).onlyWhile(() ->
-      // Sensors.getInstance().getChuteHomeSwitch()).schedule();
-      // Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling)
-      // -> {
-      // if (falling) {
-      // System.out.println("home switch is un pressed, falling. start");
-      // // to the home switch
-      // } else {
-      // pivotMotor.set(0);
-      // pivotEncoder.setPosition(0);
-      // updateParams(true);
+    pivotMotor.set(0);
 
-      // promise.complete(true);
-      // interrupt.close();
-      // System.out.println("home switch is pressed, rising. done");
-      // }
-      // });
-      // if (falling) {
-      // System.out.println("home switch is un pressed, falling. start");
-      // // to the home switch
-      // } else {
-      pivotMotor.set(0);
-      pivotEncoder.setPosition(0);
+    Runnable finishHoming = () -> {
+      pivotEncoder.setPosition(Units.degreesToRadians(-90));
       updateParams(true);
       promise.complete(true);
+    };
+
+    if (Sensors.getInstance().getChuteHomeSwitch()) { // home switch is pressed
+      finishHoming.run();
       System.out.println("home switch was pressed. No action");
-    } else if (!Sensors.getInstance().getChuteHomeSwitch()) {
+    } else {
       Commands.run(() -> pivotMotor.set(-0.1)).onlyWhile(() -> !Sensors.getInstance().getChuteHomeSwitch()).schedule();
+
       Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
         if (falling) {
           System.out.println("home switch started not pressed, it is now unpressed, falling. start");
-          pivotMotor.set(0);
-          pivotEncoder.setPosition(0);
-
-          updateParams(true);
-
-          promise.complete(true);
+          finishHoming.run();
           interrupt.close();
           System.out.println("home switch started not pressed, it is now unpressed, falling. done");
         } else if (rising) {
