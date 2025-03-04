@@ -1,9 +1,7 @@
 from vl53l1x import TofSensor
 import time
 
-def main():
-    # Create and configure sensor
-    sensor = TofSensor(bus=1)
+def setup(sensor):
     sensor.init(True)  # Initialize with 2.8V mode
 
     # Configure sensor parameters
@@ -11,26 +9,45 @@ def main():
     sensor.set_timing_budget_ms(20)  # 20ms is minimum for short mode
     sensor.set_inter_measurement_period_ms(25)  # Must be >= timing budget
 
-    # Print configuration
-    print("Sensor Configuration:")
-    print(f"Timing budget: {sensor.get_timing_budget_ms()} ms")
-    print(f"Inter-measurement period: {sensor.get_inter_measurement_period_ms()} ms")
-
-    # Start streaming mode
-    print("\nStarting streaming mode...")
-    # sensor.start_ranging()
     sensor.start_streaming()
+
+
+def main():
+    # Create and configure sensor
+    initialized = False
+    sensor = TofSensor(bus=1)
 
     try:
         # Main loop
+        print("running")
         last = 0
         while True:
-            if reading := sensor.get_latest_reading():
-                timestamp, distance = reading
+            if not initialized:
+                try:
+                    setup(sensor)
+                except:
+                    time.sleep(0.1)
+                    continue
+                initialized = True
+
+                print("sensor found, initialized")
+
+                # print("getting reading")
+            reading = sensor.get_latest_reading()
+
+            if reading is None:
+                initialized = False
+                print(f"failed to read")
+                continue
+
+            # print("got reading")
+            timestamp, distance, valid = reading
+            print(timestamp, distance, valid)
+            if valid:
                 if timestamp != last:
                     print(f"Delta: {timestamp - last} | Time: {timestamp:8.4f}ms | Distance: {distance:4d}mm")
                     last = timestamp
-            time.sleep(0.001)  # Small sleep to prevent CPU spinning
+            time.sleep(0.01)  # Small sleep to prevent CPU spinning
 
     except KeyboardInterrupt:
         print("\nStopping streaming...")

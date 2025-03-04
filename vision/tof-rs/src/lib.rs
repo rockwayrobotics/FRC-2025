@@ -273,16 +273,36 @@ impl TofSensor {
                 while *is_streaming.lock().unwrap() {
                     if last >= timing_budget {
                         let mut sensor = sensor.lock().unwrap();
-                        if sensor.is_data_ready().unwrap_or(false) {
-                            if let Ok(distance) = sensor.get_distance() {
-                                let reading = SensorReading {
-                                    timestamp: Instant::now().duration_since(start_time).as_millis()
-                                        as f64, // Monotonic time since start
-                                    distance,
-                                };
-                                *latest_reading.lock().unwrap() = Some(reading);
-                                sensor.clear_interrupt().ok();
-                                last = 0;
+                        match sensor.is_data_ready() {
+                            Ok(true) => {
+                                if let Ok(distance) = sensor.get_distance() {
+                                    let reading = SensorReading {
+                                        timestamp: Instant::now()
+                                            .duration_since(start_time)
+                                            .as_millis()
+                                            as f64, // Monotonic time since start
+                                        distance,
+                                    };
+                                    *latest_reading.lock().unwrap() = Some(reading);
+                                    sensor.clear_interrupt().ok();
+                                    last = 0;
+                                }
+                            }
+                            Ok(false) => {
+                              // let reading = SensorReading {
+                              //     timestamp: Instant::now()
+                              //         .duration_since(start_time)
+                              //         .as_millis()
+                              //         as f64, // Monotonic time since start
+                              //     distance: 0,
+                              //     valid: false,
+                              // };
+
+                              // *latest_reading.lock().unwrap() = Some(reading);
+                            }
+                            Err(e) => {
+                                *latest_reading.lock().unwrap() = None;
+                                eprintln!("Error checking data ready: {:?}", e);
                             }
                         }
                     }
@@ -309,9 +329,9 @@ impl TofSensor {
         Ok(())
     }
 
-    fn get_latest_reading(&self) -> PyResult<Option<(f64, u16)>> {
+    fn get_latest_reading(&self) -> PyResult<Option<(f64, u16, bool)>> {
         let reading = self.latest_reading.lock().unwrap();
-        Ok(reading.as_ref().map(|r| (r.timestamp, r.distance)))
+        Ok(reading.as_ref().map(|r| (r.timestamp, r.distance, r.valid)))
     }
 
     fn stop_streaming(&mut self) -> PyResult<()> {

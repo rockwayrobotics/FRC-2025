@@ -3,7 +3,6 @@ import vl53l1x
 # Create a PinSetup instance with sensor option 1
 # This will set GPIO pin 5 to output mode and drive it low
 pin_setup = vl53l1x.PinSetup(1)
-print(f"Current sensor option: {pin_setup.get_sensor_option}")
 
 # Create a ToF sensor instance
 tof = vl53l1x.TofSensor(1)  # Using i2c bus 1
