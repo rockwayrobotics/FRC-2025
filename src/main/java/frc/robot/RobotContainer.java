@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.ScoringState.SensorState;
@@ -53,7 +54,7 @@ public class RobotContainer {
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
   private final CommandXboxController operatorController = new CommandXboxController(Constants.Gamepads.OPERATOR);
-  private final CommandXboxController operator2Controller = new CommandXboxController(Constants.Gamepads.OPERATOR_2);
+  private final GenericHID operator2Controller = new GenericHID(Constants.Gamepads.OPERATOR_2);
 
   // Dashboard inputs
   private final SendableChooser<Command> autoChooser = new SendableChooser<>();
@@ -202,37 +203,37 @@ public class RobotContainer {
 
     boolean stubBindings = false;
     if (stubBindings) {
-      operator2Controller.leftBumper().whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 5).whileTrue(Commands.runOnce(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 1);
       })).onFalse(Commands.runOnce(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
       }));
 
-      operator2Controller.leftTrigger().whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 7).whileTrue(Commands.runOnce(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 1);
       })).onFalse(Commands.runOnce(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
       }));
 
-      operator2Controller.rightBumper().whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 6).whileTrue(Commands.runOnce(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.01);
       })).onFalse(Commands.runOnce(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }));
 
-      operator2Controller.y().whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 4).whileTrue(Commands.runOnce(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.01);
       })).onFalse(Commands.runOnce(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }));
 
-      operator2Controller.x().whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 1).whileTrue(Commands.runOnce(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads() + 0.01);
       })).onFalse(Commands.runOnce(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
       }));
 
-      operator2Controller.a().whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 2).whileTrue(Commands.runOnce(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads() - 0.01);
       })).onFalse(Commands.runOnce(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
