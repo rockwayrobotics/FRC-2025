@@ -27,7 +27,8 @@ impl SetPins {
     pub fn set_index_high(&mut self, i: Option<u8>) {
         let offsets: Vec<u32> = self.pins.iter().map(|&pin| pin as u32).collect();
         let line_config = Options::output(&offsets).values(&vec![false; offsets.len()]);
-        let _ = self.chip
+        let _ = self
+            .chip
             .request_lines(line_config)
             .map_err(|e| eprintln!("Error requesting lines: {:?}", e));
 

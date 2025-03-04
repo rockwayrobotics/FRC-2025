@@ -11,6 +11,7 @@ use std::sync::{
 use std::thread;
 use std::time::Duration;
 use thread_priority::{ThreadBuilder, ThreadPriority};
+use vl53l1x_uld::roi::{ROICenter, ROI};
 use vl53l1x_uld::{DistanceMode, IOVoltage, VL53L1X};
 
 // use crate::sensor_chooser::SensorChooser;
@@ -201,6 +202,24 @@ impl TofSensor {
             .map_err(|e| {
                 PyErr::new::<PyValueError, _>(format!("Failed to set distance mode: {:?}", e))
             })
+    }
+
+    fn set_roi(&self, width: u16, height: u16) -> PyResult<()> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor
+            .set_roi(ROI {
+                width: width,
+                height: height,
+            })
+            .map_err(|e| PyErr::new::<PyValueError, _>(format!("Failed to set ROI: {:?}", e)))
+    }
+
+    fn set_roi_center(&self, x: u8, y: u8) -> PyResult<()> {
+        let mut sensor = self.sensor.lock().unwrap();
+        let roi_center = ROICenter::new(x, y);
+        sensor.set_roi_center(roi_center).map_err(|e| {
+            PyErr::new::<PyValueError, _>(format!("Failed to set ROI center: {:?}", e))
+        })
     }
 
     // Enhanced streaming methods with channel-based communication
