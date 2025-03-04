@@ -229,9 +229,9 @@ public class RobotContainer {
     driverController.a(testModelButtonLoop).onTrue(Commands.runOnce(() -> superstructure.home()));
 
     // FIXME FIXME FIXME: Everything is disabled for now
-    boolean enabled = false;
+    boolean enabled = true;
     if (enabled) {
-      driverController.a(testModelButtonLoop)
+      driverController.x(testModelButtonLoop)
           .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)
               .finallyDo(() -> superstructure.chute.stopShooting()));
       driverController.b(testModelButtonLoop)

@@ -34,6 +34,7 @@ public class Chute {
 
     if (DriverStation.isDisabled() || !unlocked.get() || !isHomed) {
       io.stopPivot();
+      io.setShooterSpeed(0);
     } else {
       io.moveTowardsPivotGoal(pivotGoalRads, inputs.pivotAngleRadians);
     }

@@ -47,6 +47,7 @@ public class ChuteIOReal implements ChuteIO {
   final Tuner pivotSoftLimitMaxAngleRads = new Tuner("Chute/pivot_soft_limit_max_angle_rads", 3.1, true);
 
   protected ArmFeedforward pivotFeedforward;
+  protected double shooterSpeed = 0;
 
   public ChuteIOReal() {
     updateParams(true);
@@ -72,6 +73,8 @@ public class ChuteIOReal implements ChuteIO {
       // pivotEncoder.setPosition(Constants.Chute.PIVOT_INITIAL_ANGLE_RADS));
     }
 
+    shooterMotor.set(this.shooterSpeed);
+
     REVUtils.ifOk(pivotMotor, pivotEncoder::getPosition, (value) -> inputs.pivotAngleRadians = value);
     REVUtils.ifOk(pivotMotor, pivotEncoder::getVelocity, (value) -> inputs.pivotVelocityRadPerSec = value);
     REVUtils.ifOk(shooterMotor, shooterEncoder::getVelocity, (value) -> inputs.shooterVelocityRadPerSec = value);
@@ -96,7 +99,8 @@ public class ChuteIOReal implements ChuteIO {
 
   @Override
   public void setShooterSpeed(double speed) {
-    shooterMotor.set(speed);
+    System.out.println(String.join(" ", "this.shooterSpeed = speed in setShooterSpeed:", new Double(speed).toString()));
+    this.shooterSpeed = speed;
   }
 
   private void updateParams(boolean resetSafe) {
