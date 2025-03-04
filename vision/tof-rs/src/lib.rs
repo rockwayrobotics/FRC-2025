@@ -1,15 +1,17 @@
-use crossbeam_channel::{bounded, Sender, Receiver, TrySendError};
+use crossbeam_channel::{bounded, Receiver, Sender, TrySendError};
 use linux_embedded_hal::I2cdev;
 use nix::time::{clock_gettime, ClockId};
-use pyo3::prelude::*;
 use pyo3::create_exception;
-use pyo3::exceptions::{PyIOError, PyOverflowError, PyException};
-use std::sync::{Arc, Mutex, atomic::{AtomicBool, Ordering}};
+use pyo3::exceptions::{PyException, PyIOError, PyOverflowError, PyValueError};
+use pyo3::prelude::*;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
 use std::thread;
-use std::time::{Duration};
+use std::time::Duration;
 use thread_priority::{ThreadBuilder, ThreadPriority};
 use vl53l1x_uld::{DistanceMode, IOVoltage, VL53L1X};
-
 
 // use crate::sensor_chooser::SensorChooser;
 mod set_pins;
@@ -30,9 +32,9 @@ struct SensorReading {
 
 // Message types for the channel
 enum SensorResult {
-    Reading(SensorReading),       // Normal reading
-    I2CError(String),             // I2C communication error
-    ThreadExit(Option<String>)    // Normal or unexpected exit
+    Reading(SensorReading),     // Normal reading
+    I2CError(String),           // I2C communication error
+    ThreadExit(Option<String>), // Normal or unexpected exit
 }
 
 // The main ToF sensor class
@@ -43,15 +45,15 @@ enum SensorResult {
          Inter-measurement period must be >= timing budget."]
 struct TofSensor {
     sensor: Arc<Mutex<VL53L1X<I2cdev>>>,
-    
+
     // Channel for communication between thread and Python
     reading_sender: Option<Sender<SensorResult>>,
     reading_receiver: Option<Receiver<SensorResult>>,
-    
+
     // Thread management
     thread_handle: Option<thread::JoinHandle<()>>,
     is_running: Arc<AtomicBool>,
-    
+
     // Flags for error conditions
     overflow_flag: Arc<Mutex<bool>>,
 }
@@ -61,9 +63,8 @@ impl TofSensor {
     #[new]
     #[pyo3(signature = (bus, address=None))]
     fn new(bus: u8, address: Option<u8>) -> PyResult<Self> {
-        let i2c = I2cdev::new(format!("/dev/i2c-{}", bus)).map_err(|e| {
-            PyErr::new::<PyIOError, _>(format!("Failed to open I2C bus: {}", e))
-        })?;
+        let i2c = I2cdev::new(format!("/dev/i2c-{}", bus))
+            .map_err(|e| PyErr::new::<PyIOError, _>(format!("Failed to open I2C bus: {}", e)))?;
 
         Ok(TofSensor {
             sensor: Arc::new(Mutex::new(VL53L1X::new(i2c, address.unwrap_or(0x29)))),
@@ -85,70 +86,55 @@ impl TofSensor {
                 IOVoltage::Volt1_8
             })
             .map_err(|e| {
-                PyErr::new::<PyIOError, _>(format!(
-                    "Failed to initialize sensor: {:?}",
-                    e
-                ))
+                PyErr::new::<PyIOError, _>(format!("Failed to initialize sensor: {:?}", e))
             })
     }
 
     fn start_ranging(&self) -> PyResult<()> {
         let mut sensor = self.sensor.lock().unwrap();
-        sensor.start_ranging().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
-                "Failed to start ranging: {:?}",
-                e
-            ))
-        })
+        sensor
+            .start_ranging()
+            .map_err(|e| PyErr::new::<PyIOError, _>(format!("Failed to start ranging: {:?}", e)))
     }
 
     fn stop_ranging(&self) -> PyResult<()> {
         let mut sensor = self.sensor.lock().unwrap();
-        sensor.stop_ranging().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Failed to stop ranging: {:?}", e))
-        })
+        sensor
+            .stop_ranging()
+            .map_err(|e| PyErr::new::<PyIOError, _>(format!("Failed to stop ranging: {:?}", e)))
     }
 
     fn is_data_ready(&self) -> PyResult<bool> {
         let mut sensor = self.sensor.lock().unwrap();
-        sensor.is_data_ready().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
-                "Failed to check data ready: {:?}",
-                e
-            ))
-        })
+        sensor
+            .is_data_ready()
+            .map_err(|e| PyErr::new::<PyIOError, _>(format!("Failed to check data ready: {:?}", e)))
     }
 
     fn get_distance(&self) -> PyResult<u16> {
         let mut sensor = self.sensor.lock().unwrap();
-        sensor.get_distance().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Failed to get distance: {:?}", e))
-        })
+        sensor
+            .get_distance()
+            .map_err(|e| PyErr::new::<PyIOError, _>(format!("Failed to get distance: {:?}", e)))
     }
 
     fn get_range_status(&self) -> PyResult<u8> {
         let mut sensor = self.sensor.lock().unwrap();
         Ok(sensor.get_range_status().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
-                "Failed to get range status: {:?}",
-                e
-            ))
+            PyErr::new::<PyIOError, _>(format!("Failed to get range status: {:?}", e))
         })? as u8)
     }
 
     fn clear_interrupt(&self) -> PyResult<()> {
         let mut sensor = self.sensor.lock().unwrap();
-        sensor.clear_interrupt().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
-                "Failed to clear interrupt: {:?}",
-                e
-            ))
-        })
+        sensor
+            .clear_interrupt()
+            .map_err(|e| PyErr::new::<PyIOError, _>(format!("Failed to clear interrupt: {:?}", e)))
     }
 
     fn set_timing_budget_ms(&self, budget_ms: u16) -> PyResult<()> {
         if !VALID_TIMING_BUDGETS.contains(&budget_ms) {
-            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+            return Err(PyErr::new::<PyValueError, _>(format!(
                 "Invalid timing budget. Must be one of: {:?}",
                 VALID_TIMING_BUDGETS
             )));
@@ -156,24 +142,18 @@ impl TofSensor {
 
         let mut sensor = self.sensor.lock().unwrap();
         sensor.set_timing_budget_ms(budget_ms).map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
-                "Failed to set timing budget: {:?}",
-                e
-            ))
+            PyErr::new::<PyValueError, _>(format!("Failed to set timing budget: {:?}", e))
         })
     }
 
     fn set_inter_measurement_period_ms(&self, period_ms: u16) -> PyResult<()> {
         let mut sensor = self.sensor.lock().unwrap();
         let current_budget = sensor.get_timing_budget_ms().map_err(|e| {
-            PyErr::new::<PyIOError, _>(format!(
-                "Failed to get timing budget: {:?}",
-                e
-            ))
+            PyErr::new::<PyIOError, _>(format!("Failed to get timing budget: {:?}", e))
         })?;
 
         if period_ms < current_budget {
-            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+            return Err(PyErr::new::<PyValueError, _>(
                 format!("Inter-measurement period ({} ms) must be greater than or equal to timing budget ({} ms)",
                     period_ms, current_budget)
             ));
@@ -182,17 +162,14 @@ impl TofSensor {
         sensor
             .set_inter_measurement_period_ms(period_ms)
             .map_err(|e| {
-                PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                PyErr::new::<PyValueError, _>(format!(
                     "Failed to set inter-measurement period: {:?}",
                     e
                 ))
             })?;
 
         let actual_period = sensor.get_inter_measurement_period_ms().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
-                "Failed to get inter-measurement period: {:?}",
-                e
-            ))
+            PyErr::new::<PyIOError, _>(format!("Failed to get inter-measurement period: {:?}", e))
         })?;
         println!("actual_inter_measurement_period: {}", actual_period);
 
@@ -202,20 +179,14 @@ impl TofSensor {
     fn get_timing_budget_ms(&self) -> PyResult<u16> {
         let mut sensor = self.sensor.lock().unwrap();
         sensor.get_timing_budget_ms().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
-                "Failed to get timing budget: {:?}",
-                e
-            ))
+            PyErr::new::<PyIOError, _>(format!("Failed to get timing budget: {:?}", e))
         })
     }
 
     fn get_inter_measurement_period_ms(&self) -> PyResult<u16> {
         let mut sensor = self.sensor.lock().unwrap();
         sensor.get_inter_measurement_period_ms().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyIOError, _>(format!(
-                "Failed to get inter-measurement period: {:?}",
-                e
-            ))
+            PyErr::new::<PyIOError, _>(format!("Failed to get inter-measurement period: {:?}", e))
         })
     }
 
@@ -228,10 +199,7 @@ impl TofSensor {
                 DistanceMode::Short
             })
             .map_err(|e| {
-                PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
-                    "Failed to set distance mode: {:?}",
-                    e
-                ))
+                PyErr::new::<PyValueError, _>(format!("Failed to set distance mode: {:?}", e))
             })
     }
 
@@ -241,32 +209,33 @@ impl TofSensor {
         if self.is_running.load(Ordering::Relaxed) {
             return Ok(());
         }
-        
+
         // Reset the overflow flag
         *self.overflow_flag.lock().unwrap() = false;
-        
+
         // Create a bounded channel with appropriate capacity
         // Adjust capacity based on your needs and memory constraints
         let (sender, receiver) = bounded(5);
         self.reading_sender = Some(sender);
         self.reading_receiver = Some(receiver);
-        
+
         // Create clones of the shared resources for the thread
         let sensor = Arc::clone(&self.sensor);
         let is_running = Arc::clone(&self.is_running);
         let overflow_flag = Arc::clone(&self.overflow_flag);
         let sender = self.reading_sender.as_ref().unwrap().clone();
-        
+
         // Set the running flag before starting thread
         is_running.store(true, Ordering::SeqCst);
-        
+
         // Initialize the sensor for ranging
         {
             let mut sensor = sensor.lock().unwrap();
             if let Err(e) = sensor.start_ranging() {
-                return Err(PyErr::new::<PyIOError, _>(
-                    format!("Failed to start ranging: {:?}", e)
-                ));
+                return Err(PyErr::new::<PyIOError, _>(format!(
+                    "Failed to start ranging: {:?}",
+                    e
+                )));
             }
         }
 
@@ -278,7 +247,7 @@ impl TofSensor {
             .spawn(move |_| {
                 // Worker thread implementation
                 let _ = reading_loop(sensor, thread_is_running.clone(), overflow_flag, sender);
-                
+
                 // Always mark as not running when thread exits
                 thread_is_running.store(false, Ordering::SeqCst);
             })
@@ -286,49 +255,55 @@ impl TofSensor {
                 is_running.store(false, Ordering::SeqCst);
                 PyErr::new::<PyException, _>(format!("Failed to spawn sensor thread: {}", e))
             })?;
-        
+
         self.thread_handle = Some(thread);
         Ok(())
     }
-    
+
     fn get_reading(&self, py: Python<'_>) -> PyResult<Option<(f64, u16, u8)>> {
         // Get receiver
         let receiver = match &self.reading_receiver {
             Some(r) => r,
-            None => return Err(PyErr::new::<PyIOError, _>("Sensor not streaming".to_string())),
+            None => {
+                return Err(PyErr::new::<PyIOError, _>(
+                    "Sensor not streaming".to_string(),
+                ))
+            }
         };
-        
+
         // If channel is empty and thread is not running, check for overflow first
         if !self.is_running.load(Ordering::Relaxed) && receiver.is_empty() {
             if *self.overflow_flag.lock().unwrap() {
-                return Err(PyErr::new::<PyOverflowError, _>("Sensor reading channel overflow".to_string()));
+                return Err(PyErr::new::<PyOverflowError, _>(
+                    "Sensor reading channel overflow".to_string(),
+                ));
             }
             // Normal thread exit with empty channel
             return Ok(None);
         }
-        
+
         // Block and allow Python to release GIL while waiting
         let result = py.allow_threads(|| receiver.recv());
-        
+
         match result {
             Ok(SensorResult::Reading(reading)) => {
                 Ok(Some((reading.timestamp, reading.distance, reading.status)))
-            },
-            Ok(SensorResult::I2CError(err)) => {
-                Err(PyErr::new::<PyIOError, _>(err))
-            },
+            }
+            Ok(SensorResult::I2CError(err)) => Err(PyErr::new::<PyIOError, _>(err)),
             Ok(SensorResult::ThreadExit(None)) => {
                 // Normal exit
                 Ok(None)
-            },
+            }
             Ok(SensorResult::ThreadExit(Some(err))) => {
                 // Error exit
                 Err(ThreadError::new_err(err))
-            },
+            }
             Err(_) => {
                 // Channel closed unexpectedly
                 if *self.overflow_flag.lock().unwrap() {
-                    Err(PyErr::new::<PyOverflowError, _>("Sensor reading channel overflow".to_string()))
+                    Err(PyErr::new::<PyOverflowError, _>(
+                        "Sensor reading channel overflow".to_string(),
+                    ))
                 } else {
                     // Normal shutdown
                     Ok(None)
@@ -336,53 +311,51 @@ impl TofSensor {
             }
         }
     }
-    
+
     fn is_running(&self) -> bool {
         self.is_running.load(Ordering::Relaxed)
     }
-    
+
     fn stop_streaming(&mut self) -> PyResult<()> {
         // Signal thread to stop
         self.is_running.store(false, Ordering::SeqCst);
-        
+
         // Try to send a normal exit message
         if let Some(sender) = &self.reading_sender {
             let _ = sender.try_send(SensorResult::ThreadExit(None));
         }
-        
+
         // Join thread if possible
         if let Some(handle) = self.thread_handle.take() {
             handle.join().ok();
         }
-        
+
         // Stop the sensor
         let mut sensor = self.sensor.lock().unwrap();
         let _ = sensor.stop_ranging();
-        
+
         // Clean up channel
         self.reading_sender = None;
         self.reading_receiver = None;
-        
+
         Ok(())
     }
 }
 
 fn get_monotime() -> f64 {
     match clock_gettime(ClockId::CLOCK_MONOTONIC) {
-        Ok(ts) => {
-            ts.tv_sec() as f64 + (ts.tv_nsec() as f64 / 1_000_000_000.0)
-        }
+        Ok(ts) => ts.tv_sec() as f64 + (ts.tv_nsec() as f64 / 1_000_000_000.0),
 
-        Err(_) => 0.0  // never expecting this
+        Err(_) => 0.0, // never expecting this
     }
 }
 
 // Worker function for the sensor reading thread
 fn reading_loop(
-    sensor: Arc<Mutex<VL53L1X<I2cdev>>>, 
+    sensor: Arc<Mutex<VL53L1X<I2cdev>>>,
     is_running: Arc<AtomicBool>,
     overflow_flag: Arc<Mutex<bool>>,
-    sender: Sender<SensorResult>
+    sender: Sender<SensorResult>,
 ) -> Result<(), String> {
     // Retrieve timing parameters so we know how long to wait.
     let timing_budget = {
@@ -395,7 +368,7 @@ fn reading_loop(
             Err(e) => return Err(format!("Failed to get timing budget: {:?}", e)),
         }
     } as u64;
-    
+
     // Initially pause 1ms less than the timing budget, at which
     // point we'll begin more frequent checks.
     let mut delay = timing_budget;
@@ -412,7 +385,7 @@ fn reading_loop(
                 return Err(err);
             }
         };
-        
+
         match sensor_guard.is_data_ready() {
             Ok(true) => {
                 // Initially pause 1ms less than the timing budget, at which
@@ -425,64 +398,64 @@ fn reading_loop(
                         // Get range status
                         let status = match sensor_guard.get_range_status() {
                             Ok(val) => val as u8,
-                            _ => 0
+                            _ => 0,
                         };
-                        
+
                         // Create reading
                         let reading = SensorReading {
                             timestamp: get_monotime(),
                             distance,
                             status,
                         };
-                        
+
                         // Clear the interrupt
                         let _ = sensor_guard.clear_interrupt();
-                        
+
                         // Drop the lock before potentially blocking on send
                         drop(sensor_guard);
-                        
+
                         // Try to send reading, handle channel overflow
                         match sender.try_send(SensorResult::Reading(reading)) {
                             Ok(_) => {
                                 // Successfully sent reading
-                            },
+                            }
                             Err(TrySendError::Full(_)) => {
                                 // Channel full - critical error condition
                                 *overflow_flag.lock().unwrap() = true;
                                 return Err("Reading channel overflow".to_string());
-                            },
+                            }
                             Err(TrySendError::Disconnected(_)) => {
                                 // Receiver dropped - exit normally
                                 return Ok(());
                             }
                         }
-                    },
+                    }
                     Err(e) => {
                         // I2C error reading distance
                         let err = format!("Failed to get distance: {:?}", e);
                         drop(sensor_guard);
-                        
+
                         // Try to send error
                         let _ = sender.try_send(SensorResult::I2CError(err.clone()));
                         return Err(err);
                     }
                 }
-            },
+            }
             Ok(false) => {
                 // No data ready, just wait
                 drop(sensor_guard);
-            },
+            }
             Err(e) => {
                 // I2C error checking data ready
                 let err = format!("Error checking data ready: {:?}", e);
                 drop(sensor_guard);
-                
+
                 // Try to send error
                 let _ = sender.try_send(SensorResult::I2CError(err.clone()));
                 return Err(err);
             }
         }
-        
+
         // Pause to avoid busy wait.  The initial pause after a reading
         // is just shorter than the timing budget, and as soon as we've
         // done that long a delay we'll adjust so subsequent delays are
@@ -490,7 +463,7 @@ fn reading_loop(
         thread::sleep(Duration::from_millis(delay));
         delay = 1;
     }
-    
+
     // Normal exit
     let _ = sender.try_send(SensorResult::ThreadExit(None));
     Ok(())

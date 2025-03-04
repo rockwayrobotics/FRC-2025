@@ -1,5 +1,14 @@
-from vl53l1x import TofSensor
+#!/usr/bin/env python3
+'''Test script for vl53l1x package.'''
+
+# pylint: disable=missing-function-docstring,no-name-in-module
+# At least temporarily don't whine about "except Exception" as we haven't
+# stabilized the set of exceptions we'll actually be using.
+# pylint: disable=broad-exception-caught
+
 import time
+
+from vl53l1x import TofSensor #, ThreadError, SetPins
 
 def setup(sensor):
     sensor.init(True)  # Initialize with 2.8V mode
@@ -13,41 +22,48 @@ def setup(sensor):
 
 
 def main():
-    # Create and configure sensor
-    initialized = False
+    # This will raise OSError if there's no /dev/i2c-1.
     sensor = TofSensor(bus=1)
 
+    ts_last = 0 # remember previous timestamp in order to show delta
+
+    running = False
     try:
         # Main loop
         print("running")
-        last = 0
         while True:
-            if not initialized:
+            if not running:
                 try:
                     setup(sensor)
-                except:
+                except Exception:
                     time.sleep(0.1)
                     continue
-                initialized = True
+                running = True
 
-                print("sensor found, initialized")
+                print("sensor enabled")
 
-                # print("getting reading")
-            reading = sensor.get_latest_reading()
+            try:
+                # This should block until there's a reading or error.
+                reading = sensor.get_reading()
 
-            if reading is None:
-                initialized = False
-                print(f"failed to read")
+                if reading is None:
+                    running = False
+                    print("thread ended")
+                    continue
+
+            except Exception as ex:
+                print(f"Error: {ex}")
+                running = False
                 continue
 
             # print("got reading")
-            timestamp, distance, valid = reading
-            print(timestamp, distance, valid)
-            if valid:
-                if timestamp != last:
-                    print(f"Delta: {timestamp - last} | Time: {timestamp:8.4f}ms | Distance: {distance:4d}mm")
-                    last = timestamp
-            time.sleep(0.01)  # Small sleep to prevent CPU spinning
+            timestamp, distance, status = reading
+            print(timestamp, distance, status)
+            print(f"Time: {timestamp:8.4f}ms | Dist: {distance:4d}mm"
+                f" Delta: {timestamp - ts_last}")
+            ts_last = timestamp
+
+            # time.sleep(0.01)  # Small sleep to prevent CPU spinning
 
     except KeyboardInterrupt:
         print("\nStopping streaming...")
