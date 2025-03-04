@@ -37,18 +37,14 @@ public class ChuteIOReal implements ChuteIO {
 
   protected final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
 
-  final Tuner pivotFeedforwardkS = new Tuner("Chute/pivot_feedforward_Ks", 0, true);
-  final Tuner pivotFeedforwardkG = new Tuner("Chute/pivot_feedforward_Kg", 0, true);
-  final Tuner pivotPID_P = new Tuner("Chute/pivot_Kp", 0, true);
+  final Tuner pivotFeedforwardkS = new Tuner("Chute/pivot_feedforward_Ks", 0.106, true);
+  final Tuner pivotFeedforwardkG = new Tuner("Chute/pivot_feedforward_Kg", 0.07, true);
+  final Tuner pivotPID_P = new Tuner("Chute/pivot_Kp", 0.4, true);
   final Tuner pivotPID_D = new Tuner("Chute/pivot_Kd", 0, true);
-  final Tuner pivotMaxNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_max", 0.1, true);
-  final Tuner pivotMinNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_min", -0.1, true);
-  final Tuner pivotSoftLimitMinAngleRads = new Tuner("Chute/pivot_soft_limit_min_angle_rads",
-      Units.degreesToRadians(-10),
-      true);
-  final Tuner pivotSoftLimitMaxAngleRads = new Tuner("Chute/pivot_soft_limit_max_angle_rads",
-      Units.degreesToRadians(10),
-      true);
+  final Tuner pivotMaxNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_max", 0.3, true);
+  final Tuner pivotMinNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_min", -0.3, true);
+  final Tuner pivotSoftLimitMinAngleRads = new Tuner("Chute/pivot_soft_limit_min_angle_rads", 0, true);
+  final Tuner pivotSoftLimitMaxAngleRads = new Tuner("Chute/pivot_soft_limit_max_angle_rads", 3.1, true);
 
   protected ArmFeedforward pivotFeedforward;
 
@@ -88,7 +84,7 @@ public class ChuteIOReal implements ChuteIO {
   public void moveTowardsPivotGoal(double goalAngleRadians, double currentAngleRadians) {
     // Arm feed forward expects 0 to be parallel to the floor, but for us, 0 is
     // pointed straight down.
-    var ff = pivotFeedforward.calculate(currentAngleRadians - Math.PI / 2,
+    var ff = pivotFeedforward.calculate(Math.PI - currentAngleRadians,
         Math.signum(goalAngleRadians - currentAngleRadians));
     pivotController.setReference(goalAngleRadians, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff);
   }
@@ -136,7 +132,7 @@ public class ChuteIOReal implements ChuteIO {
     pivotEncoder.setPosition(0);
     SparkMaxConfig pivotConfig = new SparkMaxConfig();
     pivotConfig.softLimit.forwardSoftLimit(Units.degreesToRadians(20))
-        .reverseSoftLimit(Units.degreesToRadians(-20)).forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
+        .reverseSoftLimit(Units.degreesToRadians(-20)).forwardSoftLimitEnabled(false).reverseSoftLimitEnabled(false);
     pivotConfig.smartCurrentLimit(20);
 
     REVUtils.tryUntilOk(

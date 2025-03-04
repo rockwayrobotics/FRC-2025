@@ -221,16 +221,10 @@ public class RobotContainer {
 
     // PoV Right but with different event loop
     driverController.pov(0, 90, testModelButtonLoop)
-        .onTrue(Commands.runOnce(
-            () -> superstructure.chute
-                .setPivotGoalRads(Units.degreesToRadians(-10)),
-            superstructure));
+        .onTrue(Commands.runOnce(() -> superstructure.chute.setPivotGoalRads(2.2), superstructure));
     // PoV Left but with different event loop
     driverController.pov(0, 270, testModelButtonLoop)
-        .onTrue(Commands.runOnce(
-            () -> superstructure.chute
-                .setPivotGoalRads(Units.degreesToRadians(10)),
-            superstructure));
+        .onTrue(Commands.runOnce(() -> superstructure.chute.setPivotGoalRads(2.5), superstructure));
 
     driverController.a(testModelButtonLoop).onTrue(Commands.runOnce(() -> superstructure.home()));
 
