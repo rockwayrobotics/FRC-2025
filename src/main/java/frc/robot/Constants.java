@@ -44,6 +44,7 @@ public final class Constants {
   public static final class Gamepads {
     public static final int DRIVER = 0;
     public static final int OPERATOR = 1;
+    public static final int OPERATOR_2 = 2;
 
     // Since the default joystick has negative as forward, this scale is negative
     // when MASTER_ORIENTATION_REVERSED is false; you should probably never have to
