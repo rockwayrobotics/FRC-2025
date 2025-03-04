@@ -4,6 +4,7 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -52,6 +53,7 @@ public class RobotContainer {
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
   private final CommandXboxController operatorController = new CommandXboxController(Constants.Gamepads.OPERATOR);
+  private final CommandXboxController operator2Controller = new CommandXboxController(Constants.Gamepads.OPERATOR_2);
 
   // Dashboard inputs
   private final SendableChooser<Command> autoChooser = new SendableChooser<>();
@@ -197,6 +199,45 @@ public class RobotContainer {
       drive.setDefaultCommand(
           DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
     }
+
+    boolean stubBindings = false;
+    if (stubBindings) {
+      operator2Controller.leftBumper().whileTrue(Commands.runOnce(() -> {
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 1);
+      })).onFalse(Commands.runOnce(() -> {
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
+      }));
+
+      operator2Controller.leftTrigger().whileTrue(Commands.runOnce(() -> {
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 1);
+      })).onFalse(Commands.runOnce(() -> {
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
+      }));
+
+      operator2Controller.rightBumper().whileTrue(Commands.runOnce(() -> {
+        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.01);
+      })).onFalse(Commands.runOnce(() -> {
+        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
+      }));
+
+      operator2Controller.y().whileTrue(Commands.runOnce(() -> {
+        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.01);
+      })).onFalse(Commands.runOnce(() -> {
+        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
+      }));
+
+      operator2Controller.x().whileTrue(Commands.runOnce(() -> {
+        climp.setClimpGoalRads(climp.getClimpAngleRads() + 0.01);
+      })).onFalse(Commands.runOnce(() -> {
+        climp.setClimpGoalRads(climp.getClimpAngleRads());
+      }));
+
+      operator2Controller.a().whileTrue(Commands.runOnce(() -> {
+        climp.setClimpGoalRads(climp.getClimpAngleRads() - 0.01);
+      })).onFalse(Commands.runOnce(() -> {
+        climp.setClimpGoalRads(climp.getClimpAngleRads());
+      }));
+    } 
   }
 
   public void setupTestBindings() {

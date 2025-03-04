@@ -55,4 +55,8 @@ public class Climp extends SubsystemBase {
       this.climpGoalRads = climpGoalRads;
     }
   }
+
+  public double getClimpAngleRads() {
+    return inputs.angleRadians;
+  } 
 }
