@@ -68,7 +68,7 @@ public class RobotContainer {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
 
-      Elevator elevator = new Elevator(new ElevatorIOSim(375)); // FIXME to be real
+      Elevator elevator = new Elevator(new ElevatorIOReal());
       Chute chute = new Chute(new ChuteIOReal());
       Grabber grabber = new Grabber(new GrabberIOSim());
       superstructure = new Superstructure(elevator, chute, grabber);

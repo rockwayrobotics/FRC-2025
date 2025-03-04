@@ -11,7 +11,6 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
@@ -24,8 +23,8 @@ import frc.robot.util.Tuner;
 
 public class ElevatorIOReal implements ElevatorIO {
   // Note that we may eventually have a second motor on the elevator
-  protected final SparkFlex motorFront = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR_FRONT, MotorType.kBrushless);
-  protected final SparkFlex motorBack = new SparkFlex(Constants.CAN.ELEVATOR_MOTOR_BACK, MotorType.kBrushless);
+  protected final SparkMax motorFront = new SparkMax(Constants.CAN.ELEVATOR_MOTOR_FRONT, MotorType.kBrushless);
+  protected final SparkMax motorBack = new SparkMax(Constants.CAN.ELEVATOR_MOTOR_BACK, MotorType.kBrushless);
 
   final Tuner elevatorFeedforwardkS = new Tuner("Elevator/feedforward_Ks", 0, true);
   final Tuner elevatorFeedforwardkG = new Tuner("Elevator/feedforward_Kg", 1, true);
