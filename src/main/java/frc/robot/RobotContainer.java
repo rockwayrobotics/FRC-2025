@@ -225,13 +225,13 @@ public class RobotContainer {
 
       // FIXME: get instead of goal
       new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
-        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.01);
+        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.4);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }, superstructure));
 
       new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
-        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.01);
+        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.4);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }, superstructure));
@@ -282,6 +282,10 @@ public class RobotContainer {
         superstructure.grabber.setGrabberMotor(-1);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setGrabberMotor(0);
+      }, superstructure));
+
+      new JoystickButton(operator1Controller, 9).onTrue(Commands.runOnce(() -> {
+        superstructure.home();
       }, superstructure));
     }
   }

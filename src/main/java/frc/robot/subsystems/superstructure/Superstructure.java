@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -8,6 +9,7 @@ import frc.robot.Constants;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.grabber.Grabber;
+import frc.robot.util.Tuner;
 
 public class Superstructure extends SubsystemBase {
   public final Elevator elevator;
@@ -34,7 +36,8 @@ public class Superstructure extends SubsystemBase {
 
   public void setElevatorGoalHeightMillimeters(double heightMillimeters) {
     // FIXME: Check if elevator is homed. If not... do nothing?
-    // FIXME done?????: Check chute state, if not safe, move it first? Or do nothing?
+    // FIXME done?????: Check chute state, if not safe, move it first? Or do
+    // nothing?
     if (heightMillimeters < Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
       if (chute.getPivotAngleRads() <= 0) {
         chute.setPivotGoalRads(Units.degreesToRadians(-90));
@@ -42,8 +45,8 @@ public class Superstructure extends SubsystemBase {
         chute.setPivotGoalRads(Units.degreesToRadians(90));
       }
     }
-
-    elevator.setGoalHeightMillimeters(heightMillimeters);
+    // ; // FIXME: make constant
+    elevator.setGoalHeightMillimeters(MathUtil.clamp(heightMillimeters, 0, 1200 - 1));
   }
 
   public double getElevatorHeightMillimeters() {
