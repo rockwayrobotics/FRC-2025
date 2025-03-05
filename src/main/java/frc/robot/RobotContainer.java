@@ -229,14 +229,13 @@ public class RobotContainer {
         // - 3);
       }, superstructure));
 
-      // FIXME: get instead of goal
-      new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
+      new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.4);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }, superstructure));
 
-      new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
+      new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.4);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
@@ -254,37 +253,37 @@ public class RobotContainer {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
       }, climp));
 
-      new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
-        superstructure.chute.setShooterMotor(0.2);
+      new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
+        superstructure.chute.setShooterMotor(-0.5);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setShooterMotor(0);
       }, superstructure));
 
-      new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
-        superstructure.chute.setShooterMotor(-0.2);
+      new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
+        superstructure.chute.setShooterMotor(0.1);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setShooterMotor(0);
       }, superstructure));
 
       new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
-        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.1);
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.5);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
       }, superstructure));
 
       new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
-        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.1);
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.5);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
       }, superstructure));
 
-      new POVButton(operator2Controller, 90).whileTrue(Commands.run(() -> {
+      new POVButton(operator2Controller, 0).whileTrue(Commands.run(() -> {
         superstructure.grabber.setGrabberMotor(1);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setGrabberMotor(0);
       }, superstructure));
 
-      new POVButton(operator2Controller, 0).whileTrue(Commands.run(() -> {
+      new POVButton(operator2Controller, 90).whileTrue(Commands.run(() -> {
         superstructure.grabber.setGrabberMotor(-1);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setGrabberMotor(0);

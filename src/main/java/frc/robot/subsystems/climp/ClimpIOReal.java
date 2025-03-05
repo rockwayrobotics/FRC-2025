@@ -5,9 +5,9 @@ import java.util.function.DoubleSupplier;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import frc.robot.Constants;
@@ -15,7 +15,7 @@ import frc.robot.util.REVUtils;
 import frc.robot.util.Tuner;
 
 public class ClimpIOReal implements ClimpIO {
-  protected final SparkFlex climpMotor = new SparkFlex(Constants.CAN.CLIMP_MOTOR, MotorType.kBrushless);
+  protected final SparkMax climpMotor = new SparkMax(Constants.CAN.CLIMP_MOTOR, MotorType.kBrushless);
 
   final Tuner pid_p = new Tuner("Climp/Kp", 0, true);
   final Tuner pid_d = new Tuner("Climp/Kd", 0, true);
@@ -64,7 +64,7 @@ public class ClimpIOReal implements ClimpIO {
 
   private void updateParams(boolean resetSafe) {
     ResetMode resetMode = resetSafe ? ResetMode.kResetSafeParameters : ResetMode.kNoResetSafeParameters;
-    SparkFlexConfig config = new SparkFlexConfig();
+    SparkMaxConfig config = new SparkMaxConfig();
     if (resetSafe) {
       config.idleMode(IdleMode.kBrake).voltageCompensation(12.0);
       config.encoder.positionConversionFactor(2 * Math.PI / Constants.Climp.PIVOT_GEAR_RATIO)
