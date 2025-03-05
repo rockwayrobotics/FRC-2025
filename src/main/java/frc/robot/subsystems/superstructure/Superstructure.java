@@ -33,10 +33,18 @@ public class Superstructure extends SubsystemBase {
     elevator.setGoalHeightMillimeters(heightMillimeters);
   }
 
+  public double getElevatorHeightMillimeters() {
+    return elevator.getHeightMillimeters();
+  }
+
   public void setChutePivotGoalRads(double pivotAngleRads) {
     // FIXME: Check if chute is homed. If not... do nothing?
     // FIXME: Check elevator height, if not safe, move it first? Or do nothing?
     chute.setPivotGoalRads(pivotAngleRads);
+  }
+
+  public double getPivotAngleRads() {
+    return chute.getPivotAngleRads();
   }
 
   public void startShooting() {

@@ -1,5 +1,7 @@
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
+
 import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.util.Units;
@@ -285,14 +287,15 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(() -> superstructure.chute.setPivotGoalRads(-1), superstructure));
 
     driverController.a(testModelButtonLoop).onTrue(Commands.runOnce(() -> superstructure.home()));
-
-    // FIXME FIXME FIXME: Everything is disabled for now
+    // FIXME FIXME FIXME: Disable potentially unsafe commands
     boolean enabled = true;
     if (enabled) {
+      driverController.b(testModelButtonLoop).whileTrue(ScoreCommands.testScore(drive, superstructure, driverController.leftBumper(testModelButtonLoop), driverController.rightBumper(testModelButtonLoop)));
+
       driverController.x(testModelButtonLoop)
           .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)
               .finallyDo(() -> superstructure.chute.stopShooting()));
-      driverController.b(testModelButtonLoop)
+      driverController.y(testModelButtonLoop)
           .whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
 
       // This sets the default command to drive very slowly. Remember to reset this
