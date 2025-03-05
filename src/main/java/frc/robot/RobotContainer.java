@@ -76,7 +76,7 @@ public class RobotContainer {
 
       Elevator elevator = new Elevator(new ElevatorIOReal());
       Chute chute = new Chute(new ChuteIOReal());
-      Grabber grabber = new Grabber(new GrabberIOSim());
+      Grabber grabber = new Grabber(new GrabberIOReal());
       superstructure = new Superstructure(elevator, chute, grabber);
       climp = new Climp(new ClimpIOSim());
     } else {
@@ -281,6 +281,9 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(
             () -> superstructure.setElevatorGoalHeightMillimeters(100),
             superstructure));
+
+    driverController.leftBumper().onTrue(Commands.runOnce(() -> superstructure.grabber.setWristGoalRads(1)));
+    driverController.rightBumper().onTrue(Commands.runOnce(() -> superstructure.grabber.setWristGoalRads(2)));
 
     // PoV Right but with different event loop
     driverController.pov(0, 90, testModelButtonLoop)

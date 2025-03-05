@@ -26,7 +26,7 @@ public class Grabber {
     io.updateInputs(inputs);
     Logger.processInputs("Grabber", inputs);
 
-    if (DriverStation.isDisabled() || !unlocked.get()) {
+    if (DriverStation.isDisabled() || !unlocked.get()) { // FIXME: add homed check when we have a homing sequence
       io.stopWrist();
     } else {
       // right now positive wrist speed is up, negative is down
