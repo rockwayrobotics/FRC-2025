@@ -224,39 +224,39 @@ public class RobotContainer {
       // FIXME: get instead of goal
       new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.01);
-      })).onFalse(Commands.run(() -> {
+      }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
-      }));
+      }, superstructure));
 
       new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.01);
-      })).onFalse(Commands.run(() -> {
+      }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
-      }));
+      }, superstructure));
 
       new JoystickButton(operator2Controller, 1).whileTrue(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads() + 0.01);
-      })).onFalse(Commands.run(() -> {
+      }, climp)).onFalse(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
-      }));
+      }, climp));
 
       new JoystickButton(operator2Controller, 2).whileTrue(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads() - 0.01);
-      })).onFalse(Commands.run(() -> {
+      }, climp)).onFalse(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
-      }));
+      }, climp));
 
       new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
         superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.01);
-      })).onFalse(Commands.run(() -> {
+      }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
-      }));
+      }, superstructure));
 
       new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
         superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.01);
-      })).onFalse(Commands.run(() -> {
+      }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
-      }));
+      }, superstructure));
     }
   }
 
