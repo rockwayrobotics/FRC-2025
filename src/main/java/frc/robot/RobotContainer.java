@@ -260,26 +260,26 @@ public class RobotContainer {
         superstructure.chute.setShooterMotor(0);
       }, superstructure));
 
-      new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
-        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.01);
+      new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.1);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
       }, superstructure));
 
-      new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
-        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.01);
+      new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.1);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
       }, superstructure));
 
       new POVButton(operator2Controller, 90).whileTrue(Commands.run(() -> {
-        superstructure.grabber.setGrabberMotor(0.2);
+        superstructure.grabber.setGrabberMotor(1);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setGrabberMotor(0);
       }, superstructure));
 
       new POVButton(operator2Controller, 0).whileTrue(Commands.run(() -> {
-        superstructure.grabber.setGrabberMotor(-0.2);
+        superstructure.grabber.setGrabberMotor(-1);
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setGrabberMotor(0);
       }, superstructure));
@@ -306,8 +306,10 @@ public class RobotContainer {
             () -> superstructure.setElevatorGoalHeightMillimeters(100),
             superstructure));
 
-    driverController.leftBumper().onTrue(Commands.runOnce(() -> superstructure.grabber.setWristGoalRads(1)));
-    driverController.rightBumper().onTrue(Commands.runOnce(() -> superstructure.grabber.setWristGoalRads(2)));
+    driverController.leftBumper(testModelButtonLoop)
+        .onTrue(Commands.runOnce(() -> superstructure.grabber.setWristGoalRads(-1), superstructure));
+    driverController.rightBumper(testModelButtonLoop)
+        .onTrue(Commands.runOnce(() -> superstructure.grabber.setWristGoalRads(0.1), superstructure));
 
     // PoV Right but with different event loop
     driverController.pov(0, 90, testModelButtonLoop)

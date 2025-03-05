@@ -16,6 +16,11 @@ public class Grabber {
 
   public Grabber(GrabberIO io) {
     this.io = io;
+    unlocked.addListener((e) -> {
+      if (e.valueData.value.getBoolean()) {
+        wristGoalRads = getCurrentRads();
+      }
+    });
   }
 
   public void setBrakeMode(boolean mode) {
@@ -25,18 +30,19 @@ public class Grabber {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Grabber", inputs);
+    Logger.recordOutput("Grabber/goal_radian", wristGoalRads);
 
     if (DriverStation.isDisabled() || !unlocked.get()) { // FIXME: add homed check when we have a homing sequence
       io.stopWrist();
     } else {
-      // right now positive wrist speed is up, negative is down
+      // right now negative wrist speed is up, positive is down
       io.moveTowardsGoal(wristGoalRads, inputs.wristAngleRadians);
     }
 
   }
 
   public void setWristGoalRads(double wristAngleRads) {
-    // right now positive wrist speed is up, negative is down
+    // right now negative wrist speed is up, positive is down
     if (unlocked.get()) {
       wristGoalRads = wristAngleRads;
     }
