@@ -58,9 +58,9 @@ def main():
 
             # print("got reading")
             timestamp, distance, status = reading
-            print(timestamp, distance, status)
-            print(f"Time: {timestamp:8.4f}ms | Dist: {distance:4d}mm"
-                f" Delta: {timestamp - ts_last}")
+            # print(timestamp, distance, status)
+            # print(f"Time: {timestamp:8.4f}ms | Dist: {distance:4d}mm"
+            #     f" Delta: {timestamp - ts_last}")
             ts_last = timestamp
 
             # time.sleep(0.01)  # Small sleep to prevent CPU spinning

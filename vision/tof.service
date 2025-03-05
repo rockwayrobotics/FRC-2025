@@ -1,0 +1,17 @@
+[Unit]
+Description=TimeOfFlight (TOF) Sensor Service
+After=network.target
+
+[Service]
+User=user
+Group=user
+WorkingDirectory=/home/user/FRC-2025/vision
+ExecStart=/home/user/env3.11/bin/python -m tof
+Restart=on-failure
+
+# Add these lines to grant thread priority capabilities
+AmbientCapabilities=CAP_SYS_NICE
+CapabilityBoundingSet=CAP_SYS_NICE
+
+[Install]
+WantedBy=multi-user.target

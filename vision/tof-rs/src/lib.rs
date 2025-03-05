@@ -9,7 +9,7 @@ use std::sync::{
     Arc, Mutex,
 };
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use thread_priority::{ThreadBuilder, ThreadPriority};
 use vl53l1x_uld::roi::{ROICenter, ROI};
 use vl53l1x_uld::{DistanceMode, IOVoltage, VL53L1X};
@@ -388,9 +388,12 @@ fn reading_loop(
         }
     } as u64;
 
-    // Initially pause 1ms less than the timing budget, at which
-    // point we'll begin more frequent checks.
-    let mut delay = timing_budget;
+    // Delay this much after each check. The idea is we start with no delay
+    // but then delay a short time (rapid poll) until we get a reading,
+    // then wait a bit less than the timing budget until we get another.
+    // That's more efficient than busy-waiting all the time.
+    let mut delay = 0;
+    let mut ts = Instant::now();
 
     // Main reading loop
     while is_running.load(Ordering::Relaxed) {
@@ -407,9 +410,10 @@ fn reading_loop(
 
         match sensor_guard.is_data_ready() {
             Ok(true) => {
-                // Initially pause 1ms less than the timing budget, at which
+                // Initially pause a bit less than the timing budget, at which
                 // point we'll begin more frequent checks.
-                delay = timing_budget.saturating_sub(1);
+                delay = timing_budget.saturating_sub(5) + 1;
+                // delay = 1;
 
                 // Data is ready, try to read distance
                 match sensor_guard.get_distance() {
@@ -419,6 +423,18 @@ fn reading_loop(
                             Ok(val) => val as u8,
                             _ => 0,
                         };
+                        // Notes
+                        // 0 = good reading
+                        // 1 = sigma failure (noisy signal), increase timing budget?
+                        // 2 = signal failure, signal too weak, target too far
+                        //     or not reflective enough or too small (or missing)
+                        // 4 = out of bounds (warning), at upper limit of dist
+                        // 7 = wraparound, also past upper end of range
+                        // We get solid 0s with an object within valid range.
+                        // We can probably ignore 1 (but logging them may be
+                        // useful), and treat 2, 4, 7 as errors but possibly
+                        // just convert reading to a large value so our distance
+                        // filtering just ignores it.
 
                         // Create reading
                         let reading = SensorReading {
@@ -430,8 +446,17 @@ fn reading_loop(
                         // Clear the interrupt
                         let _ = sensor_guard.clear_interrupt();
 
+                        let delta = Instant::now() - ts;
+                        ts += delta;
+                        println!(
+                            "delta {:>2}, dist {:>4}, status {:>2}",
+                            delta.as_millis(),
+                            distance,
+                            status
+                        );
+
                         // Drop the lock before potentially blocking on send
-                        drop(sensor_guard);
+                        // drop(sensor_guard);
 
                         // Try to send reading, handle channel overflow
                         match sender.try_send(SensorResult::Reading(reading)) {
@@ -452,7 +477,7 @@ fn reading_loop(
                     Err(e) => {
                         // I2C error reading distance
                         let err = format!("Failed to get distance: {:?}", e);
-                        drop(sensor_guard);
+                        // drop(sensor_guard);
 
                         // Try to send error
                         let _ = sender.try_send(SensorResult::I2CError(err.clone()));
@@ -462,18 +487,20 @@ fn reading_loop(
             }
             Ok(false) => {
                 // No data ready, just wait
-                drop(sensor_guard);
+                // drop(sensor_guard);
             }
             Err(e) => {
                 // I2C error checking data ready
                 let err = format!("Error checking data ready: {:?}", e);
-                drop(sensor_guard);
+                // drop(sensor_guard);
 
                 // Try to send error
                 let _ = sender.try_send(SensorResult::I2CError(err.clone()));
                 return Err(err);
             }
         }
+
+        drop(sensor_guard);
 
         // Pause to avoid busy wait.  The initial pause after a reading
         // is just shorter than the timing budget, and as soon as we've
