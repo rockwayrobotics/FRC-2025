@@ -50,6 +50,10 @@ public class Grabber {
     return wristGoalRads;
   }
 
+  public void setGrabberMotor(double speed) {
+    io.setGrabberMotor(speed);
+  }
+
   public void home() {
     io.home();
   }

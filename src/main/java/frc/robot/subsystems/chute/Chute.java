@@ -58,6 +58,10 @@ public class Chute {
     io.setShooterSpeed(shooterSpeedTuner.get());
   }
 
+  public void setShooterMotor(double speed) {
+    io.setShooterSpeed(speed);
+  }
+
   public void stopShooting() {
     io.setShooterSpeed(0);
   }
