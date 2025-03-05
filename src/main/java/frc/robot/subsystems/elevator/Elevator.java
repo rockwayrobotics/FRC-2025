@@ -17,6 +17,11 @@ public class Elevator {
 
   public Elevator(ElevatorIO io) {
     this.io = io;
+    unlocked.addListener((e) -> {
+      if (e.valueData.value.getBoolean()) {
+        setGoalHeightMillimeters(heightMillimeters);
+      }
+    });
   }
 
   public void periodic() {

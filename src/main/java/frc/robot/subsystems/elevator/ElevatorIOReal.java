@@ -23,8 +23,8 @@ import frc.robot.util.Tuner;
 
 public class ElevatorIOReal implements ElevatorIO {
   // Note that we may eventually have a second motor on the elevator
-  protected final SparkMax motorFront = new SparkMax(Constants.CAN.ELEVATOR_MOTOR_FRONT, MotorType.kBrushless);
-  protected final SparkMax motorBack = new SparkMax(Constants.CAN.ELEVATOR_MOTOR_BACK, MotorType.kBrushless);
+  protected final SparkMax motorMain = new SparkMax(Constants.CAN.ELEVATOR_MOTOR_FRONT, MotorType.kBrushless);
+  protected final SparkMax motorFollower = new SparkMax(Constants.CAN.ELEVATOR_MOTOR_BACK, MotorType.kBrushless);
 
   final Tuner elevatorFeedforwardkS = new Tuner("Elevator/feedforward_Ks", 0, true);
   final Tuner elevatorFeedforwardkG = new Tuner("Elevator/feedforward_Kg", 1, true);
@@ -35,8 +35,8 @@ public class ElevatorIOReal implements ElevatorIO {
   final Tuner elevatorSoftLimitMin = new Tuner("Elevator/soft_limit_min_mm", 5, true);
   final Tuner elevatorSoftLimitMax = new Tuner("Elevator/soft_limit_max_mm", 1300, true);
 
-  protected final RelativeEncoder encoder = motorFront.getEncoder();
-  protected final SparkClosedLoopController controller = motorFront.getClosedLoopController();
+  protected final RelativeEncoder encoder = motorMain.getEncoder();
+  protected final SparkClosedLoopController controller = motorMain.getClosedLoopController();
   protected ElevatorFeedforward feedforward;
 
   // FIXME: Not used and not measured - only needs to be arbitrary positive
@@ -46,9 +46,9 @@ public class ElevatorIOReal implements ElevatorIO {
     updateParams(true);
 
     REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
-    var followConfig = new SparkMaxConfig().follow(motorFront, true);
+    var followConfig = new SparkMaxConfig().follow(motorMain);
     REVUtils.tryUntilOk(
-        () -> motorBack.configure(followConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+        () -> motorFollower.configure(followConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
     elevatorFeedforwardkS.addListener((_e) -> updateParams(false));
     elevatorFeedforwardkG.addListener((_e) -> updateParams(false));
@@ -68,12 +68,12 @@ public class ElevatorIOReal implements ElevatorIO {
     }
 
     // FIXME: Measure CAN bus usage with all these queries?
-    REVUtils.ifOk(motorFront, encoder::getPosition, (value) -> inputs.positionMillimeters = value);
-    REVUtils.ifOk(motorFront, encoder::getVelocity, (value) -> inputs.velocityMillimetersPerSec = value);
-    REVUtils.ifOk(motorFront, new DoubleSupplier[] {
-        motorFront::getAppliedOutput, motorFront::getBusVoltage
+    REVUtils.ifOk(motorMain, encoder::getPosition, (value) -> inputs.positionMillimeters = value);
+    REVUtils.ifOk(motorMain, encoder::getVelocity, (value) -> inputs.velocityMillimetersPerSec = value);
+    REVUtils.ifOk(motorMain, new DoubleSupplier[] {
+        motorMain::getAppliedOutput, motorMain::getBusVoltage
     }, (values) -> inputs.appliedVoltage = values[0] * values[1]);
-    REVUtils.ifOk(motorFront, motorFront::getOutputCurrent, (value) -> inputs.supplyCurrentAmps = value);
+    REVUtils.ifOk(motorMain, motorMain::getOutputCurrent, (value) -> inputs.supplyCurrentAmps = value);
     // FIXME: Could ask for temperature?
     // REVUtils.ifOk(motor, motor::getMotorTemperature, (value) ->
     // inputs.tempCelsius = value);
@@ -92,7 +92,7 @@ public class ElevatorIOReal implements ElevatorIO {
 
   @Override
   public void stop() {
-    motorFront.set(0);
+    motorMain.set(0);
   }
 
   public void updateParams(boolean resetSafe) {
@@ -113,7 +113,7 @@ public class ElevatorIOReal implements ElevatorIO {
     // No ff term here because we want position control not velocity
     config.closedLoop.pidf(elevatorPID_P.get(), 0, elevatorPID_D.get(), 0);
     config.closedLoop.outputRange(elevatorMinNormalizedSpeed.get(), elevatorMaxNormalizedSpeed.get());
-    REVUtils.tryUntilOk(() -> motorFront.configure(config, resetMode, PersistMode.kPersistParameters));
+    REVUtils.tryUntilOk(() -> motorMain.configure(config, resetMode, PersistMode.kPersistParameters));
   }
 
   public void zeroEncoder() {

@@ -201,7 +201,7 @@ public class RobotContainer {
           DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
     }
 
-    boolean stubBindings = false;
+    boolean stubBindings = true;
     if (stubBindings) {
       new JoystickButton(operator2Controller, 5).whileTrue(Commands.runOnce(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 1);
@@ -253,7 +253,7 @@ public class RobotContainer {
     // PoV Up but with different event loop
     driverController.pov(0, 0, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.setElevatorGoalHeightMillimeters(400),
+            () -> superstructure.setElevatorGoalHeightMillimeters(1000),
             superstructure));
     // PoV Down but with different event loop
     driverController.pov(0, 180, testModelButtonLoop)
