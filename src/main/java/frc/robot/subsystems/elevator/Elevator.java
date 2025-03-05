@@ -17,6 +17,11 @@ public class Elevator {
 
   public Elevator(ElevatorIO io) {
     this.io = io;
+    unlocked.addListener((e) -> {
+      if (e.valueData.value.getBoolean()) {
+        setGoalHeightMillimeters(heightMillimeters);
+      }
+    });
   }
 
   public void periodic() {
@@ -24,6 +29,7 @@ public class Elevator {
     Logger.processInputs("Elevator", inputs);
     heightMillimeters = inputs.positionMillimeters;
     homeBeamBroken = inputs.homeBeamBroken;
+    Logger.recordOutput("Elevator/goal_height_mm", goalHeightMillimeters);
 
     if (DriverStation.isDisabled() || !unlocked.get()) {
       io.stop();

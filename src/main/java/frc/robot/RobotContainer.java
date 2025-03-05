@@ -1,5 +1,7 @@
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
+
 import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.util.Units;
@@ -17,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.ScoringState.SensorState;
@@ -51,10 +54,13 @@ public class RobotContainer {
   private final Drive drive;
   private final Superstructure superstructure;
   private final Climp climp;
+
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
-  private final CommandXboxController operatorController = new CommandXboxController(Constants.Gamepads.OPERATOR);
+  private final GenericHID operator1Controller = new GenericHID(Constants.Gamepads.OPERATOR_1);
   private final GenericHID operator2Controller = new GenericHID(Constants.Gamepads.OPERATOR_2);
+  // FIXME this should be the same as operator controller probably
+  private final CommandXboxController testController = new CommandXboxController(Constants.Gamepads.TEST);
 
   // Dashboard inputs
   private final SendableChooser<Command> autoChooser = new SendableChooser<>();
@@ -70,7 +76,7 @@ public class RobotContainer {
 
       Elevator elevator = new Elevator(new ElevatorIOReal());
       Chute chute = new Chute(new ChuteIOReal());
-      Grabber grabber = new Grabber(new GrabberIOSim());
+      Grabber grabber = new Grabber(new GrabberIOReal());
       superstructure = new Superstructure(elevator, chute, grabber);
       climp = new Climp(new ClimpIOSim());
     } else {
@@ -141,26 +147,26 @@ public class RobotContainer {
     // left bumper -> set drive scale to 0.3 when held
 
     // FIXME FIXME FIXME: Everything is disabled for now
-    boolean enabled = true;
+    boolean enabled = false;
     if (enabled) {
       driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
       driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
       driverController.a().whileTrue(ScoreCommands.score(drive, superstructure));
 
-      operatorController.povUpLeft().onTrue(new InstantCommand(() -> {
+      testController.povUpLeft().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
       }));
-      operatorController.povUpRight().onTrue(new InstantCommand(() -> {
+      testController.povUpRight().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
       }));
-      operatorController.povDownLeft().onTrue(new InstantCommand(() -> {
+      testController.povDownLeft().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
       }));
-      operatorController.povDownRight().onTrue(new InstantCommand(() -> {
+      testController.povDownRight().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
       }));
-      operatorController.povLeft().onTrue(new InstantCommand(() -> {
+      testController.povLeft().onTrue(new InstantCommand(() -> {
         var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
         if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
@@ -169,7 +175,7 @@ public class RobotContainer {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
         }
       }));
-      operatorController.povRight().onTrue(new InstantCommand(() -> {
+      testController.povRight().onTrue(new InstantCommand(() -> {
         var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
         if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
@@ -178,7 +184,7 @@ public class RobotContainer {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
         }
       }));
-      operatorController.povDown().onTrue(new InstantCommand(() -> {
+      testController.povDown().onTrue(new InstantCommand(() -> {
         var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
         if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
@@ -187,7 +193,7 @@ public class RobotContainer {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
         }
       }));
-      operatorController.povUp().onTrue(new InstantCommand(() -> {
+      testController.povUp().onTrue(new InstantCommand(() -> {
         var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
         if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
@@ -201,43 +207,82 @@ public class RobotContainer {
           DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
     }
 
-    boolean stubBindings = false;
+    boolean stubBindings = true;
     if (stubBindings) {
-      new JoystickButton(operator2Controller, 5).whileTrue(Commands.runOnce(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 1);
-      })).onFalse(Commands.runOnce(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
-      }));
+      new JoystickButton(operator2Controller, 1).whileTrue(Commands.run(() -> {
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 60);
+      }, superstructure)).onFalse(Commands.runOnce(() -> {
+        // superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters()
+        // + 3);
+      }, superstructure));
 
-      new JoystickButton(operator2Controller, 7).whileTrue(Commands.runOnce(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 1);
-      })).onFalse(Commands.runOnce(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
-      }));
+      new JoystickButton(operator2Controller, 2).whileTrue(Commands.run(() -> {
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 60);
+      }, superstructure)).onFalse(Commands.runOnce(() -> {
+        // superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters()
+        // - 3);
+      }, superstructure));
 
-      new JoystickButton(operator2Controller, 6).whileTrue(Commands.runOnce(() -> {
+      // FIXME: get instead of goal
+      new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.01);
-      })).onFalse(Commands.runOnce(() -> {
+      }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
-      }));
+      }, superstructure));
 
-      new JoystickButton(operator2Controller, 4).whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.01);
-      })).onFalse(Commands.runOnce(() -> {
+      }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
-      }));
+      }, superstructure));
 
-      new JoystickButton(operator2Controller, 1).whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads() + 0.01);
-      })).onFalse(Commands.runOnce(() -> {
+      }, climp)).onFalse(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
-      }));
+      }, climp));
 
-      new JoystickButton(operator2Controller, 2).whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads() - 0.01);
-      })).onFalse(Commands.runOnce(() -> {
+      }, climp)).onFalse(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
-      }));
+      }, climp));
+
+      new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
+        superstructure.chute.setShooterMotor(0.2);
+      }, superstructure)).onFalse(Commands.run(() -> {
+        superstructure.chute.setShooterMotor(0);
+      }, superstructure));
+
+      new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
+        superstructure.chute.setShooterMotor(-0.2);
+      }, superstructure)).onFalse(Commands.run(() -> {
+        superstructure.chute.setShooterMotor(0);
+      }, superstructure));
+
+      new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.1);
+      }, superstructure)).onFalse(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
+      }, superstructure));
+
+      new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.1);
+      }, superstructure)).onFalse(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
+      }, superstructure));
+
+      new POVButton(operator2Controller, 90).whileTrue(Commands.run(() -> {
+        superstructure.grabber.setGrabberMotor(1);
+      }, superstructure)).onFalse(Commands.run(() -> {
+        superstructure.grabber.setGrabberMotor(0);
+      }, superstructure));
+
+      new POVButton(operator2Controller, 0).whileTrue(Commands.run(() -> {
+        superstructure.grabber.setGrabberMotor(-1);
+      }, superstructure)).onFalse(Commands.run(() -> {
+        superstructure.grabber.setGrabberMotor(0);
+      }, superstructure));
     }
   }
 
@@ -253,13 +298,18 @@ public class RobotContainer {
     // PoV Up but with different event loop
     driverController.pov(0, 0, testModelButtonLoop)
         .onTrue(Commands.runOnce(
-            () -> superstructure.setElevatorGoalHeightMillimeters(400),
+            () -> superstructure.setElevatorGoalHeightMillimeters(1000),
             superstructure));
     // PoV Down but with different event loop
     driverController.pov(0, 180, testModelButtonLoop)
         .onTrue(Commands.runOnce(
             () -> superstructure.setElevatorGoalHeightMillimeters(100),
             superstructure));
+
+    driverController.leftBumper(testModelButtonLoop)
+        .onTrue(Commands.runOnce(() -> superstructure.grabber.setWristGoalRads(-1), superstructure));
+    driverController.rightBumper(testModelButtonLoop)
+        .onTrue(Commands.runOnce(() -> superstructure.grabber.setWristGoalRads(0.1), superstructure));
 
     // PoV Right but with different event loop
     driverController.pov(0, 90, testModelButtonLoop)
@@ -269,14 +319,16 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(() -> superstructure.chute.setPivotGoalRads(-1), superstructure));
 
     driverController.a(testModelButtonLoop).onTrue(Commands.runOnce(() -> superstructure.home()));
-
-    // FIXME FIXME FIXME: Everything is disabled for now
+    // FIXME FIXME FIXME: Disable potentially unsafe commands
     boolean enabled = true;
     if (enabled) {
+      driverController.b(testModelButtonLoop).whileTrue(ScoreCommands.testScore(drive, superstructure,
+          driverController.leftBumper(testModelButtonLoop), driverController.rightBumper(testModelButtonLoop)));
+
       driverController.x(testModelButtonLoop)
           .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)
               .finallyDo(() -> superstructure.chute.stopShooting()));
-      driverController.b(testModelButtonLoop)
+      driverController.y(testModelButtonLoop)
           .whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
 
       // This sets the default command to drive very slowly. Remember to reset this
