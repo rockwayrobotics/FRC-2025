@@ -22,14 +22,27 @@ public class Superstructure extends SubsystemBase {
 
   @Override
   public void periodic() {
-    elevator.periodic();
+    if (elevator.getGoalHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+      elevator.periodic();
+    } else if ((Math.abs(chute.getPivotAngleRads()) - Units.degreesToRadians(90)) < 0.1) {
+      System.out.println("passed check");
+      elevator.periodic();
+    }
     chute.periodic();
     grabber.periodic();
   }
 
   public void setElevatorGoalHeightMillimeters(double heightMillimeters) {
     // FIXME: Check if elevator is homed. If not... do nothing?
-    // FIXME: Check chute state, if not safe, move it first? Or do nothing?
+    // FIXME done?????: Check chute state, if not safe, move it first? Or do nothing?
+    if (heightMillimeters < Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+      if (chute.getPivotAngleRads() <= 0) {
+        chute.setPivotGoalRads(Units.degreesToRadians(-90));
+      } else {
+        chute.setPivotGoalRads(Units.degreesToRadians(90));
+      }
+    }
+
     elevator.setGoalHeightMillimeters(heightMillimeters);
   }
 
