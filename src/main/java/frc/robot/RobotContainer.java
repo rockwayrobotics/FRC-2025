@@ -59,7 +59,7 @@ public class RobotContainer {
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
   private final GenericHID operator1Controller = new GenericHID(Constants.Gamepads.OPERATOR_1);
   private final GenericHID operator2Controller = new GenericHID(Constants.Gamepads.OPERATOR_2);
-  // FIXME this should be the same as operator controller probably 
+  // FIXME this should be the same as operator controller probably
   private final CommandXboxController testController = new CommandXboxController(Constants.Gamepads.TEST);
 
   // Dashboard inputs
@@ -210,17 +210,18 @@ public class RobotContainer {
     boolean stubBindings = true;
     if (stubBindings) {
       new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 1);
-      })).onFalse(Commands.run(() -> {
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 10);
+      }, superstructure)).onFalse(Commands.runOnce(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
-      }));
+      }, superstructure));
 
       new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 1);
-      })).onFalse(Commands.run(() -> {
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 10);
+      }, superstructure)).onFalse(Commands.runOnce(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
-      }));
+      }, superstructure));
 
+      // FIXME: get instead of goal
       new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.01);
       })).onFalse(Commands.run(() -> {
@@ -256,7 +257,7 @@ public class RobotContainer {
       })).onFalse(Commands.run(() -> {
         superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
       }));
-    } 
+    }
   }
 
   public void setupTestBindings() {
