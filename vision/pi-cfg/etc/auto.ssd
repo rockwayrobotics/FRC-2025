@@ -1,0 +1,1 @@
+ssd -fstype=exfat,rw,umask=000,uid=1000,gid=1000 :/dev/disk/by-label/TEAM8089
