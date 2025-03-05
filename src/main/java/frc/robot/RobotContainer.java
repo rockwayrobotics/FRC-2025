@@ -317,6 +317,11 @@ public class RobotContainer {
       new JoystickButton(operator1Controller, 9).onTrue(Commands.runOnce(() -> {
         superstructure.home();
       }, superstructure));
+
+      new JoystickButton(operator1Controller, 14).onTrue(Commands.runOnce(() ->{
+        superstructure.foldForClimp();
+      }));
+      
     }
   }
 
