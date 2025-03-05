@@ -210,15 +210,17 @@ public class RobotContainer {
     boolean stubBindings = true;
     if (stubBindings) {
       new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 10);
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 60);
       }, superstructure)).onFalse(Commands.runOnce(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
+        // superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters()
+        // + 3);
       }, superstructure));
 
       new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 10);
+        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 60);
       }, superstructure)).onFalse(Commands.runOnce(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
+        // superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters()
+        // - 3);
       }, superstructure));
 
       // FIXME: get instead of goal
@@ -291,7 +293,8 @@ public class RobotContainer {
     // FIXME FIXME FIXME: Disable potentially unsafe commands
     boolean enabled = true;
     if (enabled) {
-      driverController.b(testModelButtonLoop).whileTrue(ScoreCommands.testScore(drive, superstructure, driverController.leftBumper(testModelButtonLoop), driverController.rightBumper(testModelButtonLoop)));
+      driverController.b(testModelButtonLoop).whileTrue(ScoreCommands.testScore(drive, superstructure,
+          driverController.leftBumper(testModelButtonLoop), driverController.rightBumper(testModelButtonLoop)));
 
       driverController.x(testModelButtonLoop)
           .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)

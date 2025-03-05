@@ -113,6 +113,7 @@ public class ElevatorIOReal implements ElevatorIO {
     // No ff term here because we want position control not velocity
     config.closedLoop.pidf(elevatorPID_P.get(), 0, elevatorPID_D.get(), 0);
     config.closedLoop.outputRange(elevatorMinNormalizedSpeed.get(), elevatorMaxNormalizedSpeed.get());
+    config.closedLoopRampRate(1);
     REVUtils.tryUntilOk(() -> motorMain.configure(config, resetMode, PersistMode.kPersistParameters));
   }
 
