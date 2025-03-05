@@ -6,6 +6,8 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -66,6 +68,10 @@ public class RobotContainer {
   private final SendableChooser<Command> autoChooser = new SendableChooser<>();
   private final ShuffleboardTab dashboard = Shuffleboard.getTab("RobotContainer");
   private final GenericEntry driveScale = dashboard.addPersistent("Drivescale", 1).getEntry();
+  private final NetworkTableInstance nt = NetworkTableInstance.getDefault(); 
+
+  // Set up a camera publisher so I can publish value of camera to NetworkTables
+  private final NetworkTableEntry cameraPublisher = nt.getEntry("/CameraPublisher/PiCam/selected");
 
   // Simulation only
   protected WorldSimulation simulation = null;
@@ -283,6 +289,31 @@ public class RobotContainer {
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setGrabberMotor(0);
       }, superstructure));
+      
+      //FIXME maybe; cam buttons untestes 
+      new JoystickButton(operator2Controller, 13).onTrue(Commands.runOnce(() -> {
+        cameraPublisher.setString("fore");
+      }));
+
+      new JoystickButton(operator2Controller, 14).onTrue(Commands.runOnce(() -> {
+        cameraPublisher.setString("fore");
+      }));
+
+      new JoystickButton(operator2Controller, 11).onTrue(Commands.runOnce(() -> {
+        cameraPublisher.setString("aft");
+      }));
+
+      new JoystickButton(operator2Controller, 12).onTrue(Commands.runOnce(() -> {
+        cameraPublisher.setString("aft");
+      }));
+
+      new JoystickButton(operator2Controller, 9).onTrue(Commands.runOnce(() -> {
+        cameraPublisher.setString("auto");
+      }));
+
+      new JoystickButton(operator2Controller, 10).onTrue(Commands.runOnce(() -> {
+        cameraPublisher.setString("auto");
+      }));
 
       new JoystickButton(operator1Controller, 9).onTrue(Commands.runOnce(() -> {
         superstructure.home();
