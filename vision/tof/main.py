@@ -2,6 +2,7 @@
 
 import datetime
 import logging
+import math
 from pathlib import Path
 import sys
 import signal
@@ -184,13 +185,20 @@ class TofMain:
         # sensorModeTopic = nt.getIntegerTopic("/Pi/tof_mode")
         # self.sensorModeSub = sensorModeTopic.subscribe(0,
         #    ntcore.PubSubOptions(keepDuplicates=True))
+        self.modeListener = ntcore.NetworkTableListenerPoller(nt)
+        self.modeListener.addListener(self.sensorModeSub, ntcore.EventFlags.kValueAll)
 
         speedTopic = nt.getDoubleTopic("/Pi/speed")
         self.speedSub = speedTopic.subscribe(0.0)
 
         self.cornerPub = nt.getFloatArrayTopic("/Pi/Corners").publish()
-        self.modeListener = ntcore.NetworkTableListenerPoller(nt)
-        self.modeListener.addListener(self.sensorModeSub, ntcore.EventFlags.kValueAll)
+        self.cornerPub.set([0.0, 0.0])
+
+        self.cornerTsPub = nt.getFloatTopic("/Pi/corner_ts").publish()
+        self.cornerTsPub.set(0.0)
+
+        self.cornerAnglePub = nt.getFloatTopic("/Pi/corner_angle").publish()
+        self.cornerAnglePub.set(0.0)
 
         # for debugging, serve our NT instance
         if self.args.serve:
@@ -231,9 +239,13 @@ class TofMain:
         cd.add_record(ts, dist_mm, self.speed)
         if cd.found_corner():
             self.cornerPub.set([cd.corner_timestamp, cd.corner_angle])
+            self.cornerTsPub.set(cd.corner_timestamp)
+            self.cornerAnglePub.set(cd.corner_angle * 180 / math.pi)
             self.nt.flush()
+
             self.log.info("CORNER: %.3f,%.3f", ts, cd.corner_timestamp)
             cd.log_timing()
+
             cd.reset()
         else:
             self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
