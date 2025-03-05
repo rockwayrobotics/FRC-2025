@@ -283,6 +283,10 @@ public class RobotContainer {
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.grabber.setGrabberMotor(0);
       }, superstructure));
+
+      new JoystickButton(operator1Controller, 9).onTrue(Commands.runOnce(() -> {
+        superstructure.home();
+      }, superstructure));
     }
   }
 
