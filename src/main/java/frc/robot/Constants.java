@@ -47,7 +47,6 @@ public final class Constants {
     public static final int OPERATOR_2 = 2;
     public static final int TEST = 3;
 
-
     // Since the default joystick has negative as forward, this scale is negative
     // when MASTER_ORIENTATION_REVERSED is false; you should probably never have to
     // change this, swap the CAN ids instead.
@@ -182,7 +181,7 @@ public final class Constants {
     public static final boolean RIGHT_GRABBER_INVERTED = true;
     // Wrist speed radians per second must be a positive value
     public static final double WRIST_SPEED_RADIANS_PER_SECOND = 0.5;
-    public static final double WRIST_GEAR_RATIO = 81; // 1: 9 * 9
+    public static final double WRIST_CONVERSION_FACTOR = 0.0836167941;
   }
 
   public static final class ToFSensor {
