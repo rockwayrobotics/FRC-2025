@@ -182,10 +182,10 @@ class AprilTagDetection:
                 field_to_camera_1 = field_to_tag_pose.transformBy(camera_to_tag_1.inverse())
                 field_to_camera_pose_0 = Pose3d(field_to_camera_0.translation(), field_to_camera_0.rotation())
                 field_to_camera_pose_1 = Pose3d(field_to_camera_1.translation(), field_to_camera_1.rotation())
-                print(f'from opencv square: {field_to_camera_pose_0.toPose2d()} {field_to_camera_pose_1.toPose2d()}', end='\r\n')
+                print(f'from opencv square: {field_to_camera_pose_0} {field_to_camera_pose_1}', end='\r\n')
 
             _, rotations, translations, errors = cv2.solvePnPGeneric(
-                np.array(object_corners),
+                np.array([object_corners[1], object_corners[0], object_corners[3], object_corners[2]]),
                 np.array(image_corners),
                 dict_to_opencv_camera_matrix(self.cal),
                 None,
@@ -194,10 +194,10 @@ class AprilTagDetection:
 
             camera_to_field_pose = openCvPoseToWpilib(translations[0], rotations[0])
             field_to_camera_pose = invert_pose(camera_to_field_pose)
-            print(f'from opencv: {field_to_camera_pose.toPose2d()}', end='\r\n')
+            print(f'from opencv: {field_to_camera_pose}', end='\r\n')
             camera_to_field_pose = openCvPoseToWpilib2(translations[0], rotations[0])
             field_to_camera_pose = invert_pose(camera_to_field_pose)
-            print(f'from opencv2: {field_to_camera_pose.toPose2d()}', end='\r\n')
+            print(f'from opencv2: {field_to_camera_pose}', end='\r\n')
             absolutePose = self.tags[tags[0].getId()].absolutePose
             poseEstimate = self.estimator.estimateOrthogonalIteration(tags[0], 50)
             ambiguity = poseEstimate.getAmbiguity()
@@ -253,6 +253,15 @@ def openCvPoseToWpilib2(tvec: np.typing.NDArray[np.float64], rvec: np.typing.NDA
     tagInCameraFrame = Transform3d(translation_edn[0], translation_edn[1], translation_edn[2], Rotation3d(-rotation_edn[0] - math.pi, -rotation_edn[1], rotation_edn[2] - math.pi))
     tagInCameraFrameNWU = CoordinateSystem.convert(tagInCameraFrame, CoordinateSystem.EDN(), CoordinateSystem.NWU())
     return tagInCameraFrameNWU
+
+def openCvPoseToWpilib3(tvec: np.typing.NDArray[np.float64], rvec: np.typing.NDArray[np.float64]) -> Pose3d:
+    translation_edn, rotation_edn = tvec[:, 0], rvec[:, 0]
+    tagInCameraFrame = Transform3d(
+        translation_edn[0], translation_edn[1], translation_edn[2],
+        Rotation3d(rotation_edn)
+    )
+    return CoordinateSystem.convert(tagInCameraFrame, CoordinateSystem.EDN(), CoordinateSystem.NWU())
+
 
 # Converting from North-West-Up (wpilib's coordinates) to East-Down-North (opencv's coordinates)
 def wpilibTranslationToOpenCv(translation: Translation3d) -> list[float]:
