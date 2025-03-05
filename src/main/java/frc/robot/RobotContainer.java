@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.ScoringState.SensorState;
@@ -51,10 +52,13 @@ public class RobotContainer {
   private final Drive drive;
   private final Superstructure superstructure;
   private final Climp climp;
+
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
-  private final CommandXboxController operatorController = new CommandXboxController(Constants.Gamepads.OPERATOR);
+  private final GenericHID operator1Controller = new GenericHID(Constants.Gamepads.OPERATOR_1);
   private final GenericHID operator2Controller = new GenericHID(Constants.Gamepads.OPERATOR_2);
+  // FIXME this should be the same as operator controller probably 
+  private final CommandXboxController testController = new CommandXboxController(Constants.Gamepads.TEST);
 
   // Dashboard inputs
   private final SendableChooser<Command> autoChooser = new SendableChooser<>();
@@ -141,26 +145,26 @@ public class RobotContainer {
     // left bumper -> set drive scale to 0.3 when held
 
     // FIXME FIXME FIXME: Everything is disabled for now
-    boolean enabled = true;
+    boolean enabled = false;
     if (enabled) {
       driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
       driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
       driverController.a().whileTrue(ScoreCommands.score(drive, superstructure));
 
-      operatorController.povUpLeft().onTrue(new InstantCommand(() -> {
+      testController.povUpLeft().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
       }));
-      operatorController.povUpRight().onTrue(new InstantCommand(() -> {
+      testController.povUpRight().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
       }));
-      operatorController.povDownLeft().onTrue(new InstantCommand(() -> {
+      testController.povDownLeft().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
       }));
-      operatorController.povDownRight().onTrue(new InstantCommand(() -> {
+      testController.povDownRight().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
       }));
-      operatorController.povLeft().onTrue(new InstantCommand(() -> {
+      testController.povLeft().onTrue(new InstantCommand(() -> {
         var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
         if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
@@ -169,7 +173,7 @@ public class RobotContainer {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
         }
       }));
-      operatorController.povRight().onTrue(new InstantCommand(() -> {
+      testController.povRight().onTrue(new InstantCommand(() -> {
         var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
         if (sensorState == SensorState.BACK_LEFT || sensorState == SensorState.BACK_RIGHT) {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
@@ -178,7 +182,7 @@ public class RobotContainer {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
         }
       }));
-      operatorController.povDown().onTrue(new InstantCommand(() -> {
+      testController.povDown().onTrue(new InstantCommand(() -> {
         var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
         if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_RIGHT;
@@ -187,7 +191,7 @@ public class RobotContainer {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.BACK_LEFT;
         }
       }));
-      operatorController.povUp().onTrue(new InstantCommand(() -> {
+      testController.povUp().onTrue(new InstantCommand(() -> {
         var sensorState = RobotTracker.getInstance().getScoringState().sensorState;
         if (sensorState == SensorState.FRONT_RIGHT || sensorState == SensorState.BACK_RIGHT) {
           RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_RIGHT;
@@ -203,42 +207,54 @@ public class RobotContainer {
 
     boolean stubBindings = true;
     if (stubBindings) {
-      new JoystickButton(operator2Controller, 5).whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 1);
-      })).onFalse(Commands.runOnce(() -> {
+      })).onFalse(Commands.run(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
       }));
 
-      new JoystickButton(operator2Controller, 7).whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 1);
-      })).onFalse(Commands.runOnce(() -> {
+      })).onFalse(Commands.run(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters());
       }));
 
-      new JoystickButton(operator2Controller, 6).whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.01);
-      })).onFalse(Commands.runOnce(() -> {
+      })).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }));
 
-      new JoystickButton(operator2Controller, 4).whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.01);
-      })).onFalse(Commands.runOnce(() -> {
+      })).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }));
 
-      new JoystickButton(operator2Controller, 1).whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 1).whileTrue(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads() + 0.01);
-      })).onFalse(Commands.runOnce(() -> {
+      })).onFalse(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
       }));
 
-      new JoystickButton(operator2Controller, 2).whileTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator2Controller, 2).whileTrue(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads() - 0.01);
-      })).onFalse(Commands.runOnce(() -> {
+      })).onFalse(Commands.run(() -> {
         climp.setClimpGoalRads(climp.getClimpAngleRads());
       }));
-    }
+
+      new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.01);
+      })).onFalse(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
+      }));
+
+      new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.01);
+      })).onFalse(Commands.run(() -> {
+        superstructure.grabber.setWristGoalRads(superstructure.grabber.getCurrentRads());
+      }));
+    } 
   }
 
   public void setupTestBindings() {

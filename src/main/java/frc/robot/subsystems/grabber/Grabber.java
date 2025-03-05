@@ -42,6 +42,10 @@ public class Grabber {
     }
   }
 
+  public double getCurrentRads() {
+    return inputs.wristAngleRadians;
+  }
+
   public double getWristGoalRads() {
     return wristGoalRads;
   }
