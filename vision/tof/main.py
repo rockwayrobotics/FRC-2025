@@ -191,6 +191,9 @@ class TofMain:
         speedTopic = nt.getDoubleTopic("/Pi/speed")
         self.speedSub = speedTopic.subscribe(0.0)
 
+        self.distPub = nt.getFloatTopic("/Pi/dist_mm").publish()
+        self.distPub.set(0)
+
         self.cornerPub = nt.getFloatArrayTopic("/Pi/Corners").publish()
         self.cornerPub.set([0.0, 0.0])
 
@@ -249,6 +252,7 @@ class TofMain:
             cd.reset()
         else:
             self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
+            self.distPub.set(dist_mm)
     
 
     # Map of modes to GPIO pin indices [5, 14]
@@ -267,7 +271,7 @@ class TofMain:
         self.pins.set_index_high(self.MODE_MAP.get(mode))
 
         def reader():
-            self.mgr.read(self.args.timing, self.args.inter, self.on_reading)
+            self.mgr.read(self.args.timing, self.args.inter, callback=self.on_reading)
         thread = threading.Thread(target=reader).start()
         # self.mgr.shutdown()
 
