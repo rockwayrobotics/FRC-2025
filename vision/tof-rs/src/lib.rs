@@ -20,6 +20,11 @@ mod set_pins;
 /// Valid timing budget values in milliseconds
 const VALID_TIMING_BUDGETS: &[u16] = &[15, 20, 33, 50, 100, 200, 500];
 
+/// Channel for readings and errors. Expected to need only a little space
+/// provided the Python can keep up.  Otherwise needs space for as many
+/// readings as can be retrieved while the Python is busy.
+const CHANNEL_SIZE: usize = 10;
+
 // Define a custom exception for thread errors
 create_exception!(vl53l1x, ThreadError, PyException);
 
@@ -172,7 +177,13 @@ impl TofSensor {
         let actual_period = sensor.get_inter_measurement_period_ms().map_err(|e| {
             PyErr::new::<PyIOError, _>(format!("Failed to get inter-measurement period: {:?}", e))
         })?;
-        println!("actual_inter_measurement_period: {}", actual_period);
+        if actual_period != period_ms {
+            println!("actual_inter_measurement_period: {}", actual_period);
+            return Err(PyErr::new::<PyValueError, _>(format!(
+                "Setting inter-measurement period ({} ms) failed (actual {} ms)",
+                period_ms, actual_period
+            )));
+        }
 
         Ok(())
     }
@@ -234,7 +245,7 @@ impl TofSensor {
 
         // Create a bounded channel with appropriate capacity
         // Adjust capacity based on your needs and memory constraints
-        let (sender, receiver) = bounded(5);
+        let (sender, receiver) = bounded(CHANNEL_SIZE);
         self.reading_sender = Some(sender);
         self.reading_receiver = Some(receiver);
 
@@ -448,12 +459,12 @@ fn reading_loop(
 
                         let delta = Instant::now() - ts;
                         ts += delta;
-                        println!(
-                            "delta {:>2}, dist {:>4}, status {:>2}",
-                            delta.as_millis(),
-                            distance,
-                            status
-                        );
+                        // println!(
+                        //     "delta {:>2}, dist {:>4}, status {:>2}",
+                        //     delta.as_millis(),
+                        //     distance,
+                        //     status
+                        // );
 
                         // Drop the lock before potentially blocking on send
                         // drop(sensor_guard);
