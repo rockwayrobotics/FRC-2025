@@ -70,8 +70,8 @@ public class AutoPaths {
         .addConstraint(new CentripetalAccelerationConstraint(0.5));
     // TODO: Add voltage constraint with feedforward: .addConstraint(null);
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-        new Pose2d(5.389, 2.824, Rotation2d.fromDegrees(180)),
-        List.of(), new Pose2d(3, 4, Rotation2d.fromDegrees(180)), config);
+        new Pose2d(7.464, 4.000, Rotation2d.fromDegrees(180)),
+        List.of(), new Pose2d(5.389, 2.824, Rotation2d.fromDegrees(180)), config);
     // Maybe 4,6 as intermediate?
 
     // LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
