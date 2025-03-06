@@ -182,6 +182,8 @@ public final class Constants {
     // Wrist speed radians per second must be a positive value
     public static final double WRIST_SPEED_RADIANS_PER_SECOND = 0.5;
     public static final double WRIST_CONVERSION_FACTOR = 0.0836167941;
+
+    public static final double ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS = 2.5;
   }
 
   public static final class ToFSensor {
