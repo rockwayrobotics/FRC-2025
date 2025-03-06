@@ -6,9 +6,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.AlgaeLevel;
+import frc.robot.Constants.CoralLevel;
+import frc.robot.Constants.Side;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.grabber.Grabber;
+import frc.robot.util.TunableSetpoints;
 import frc.robot.util.Tuner;
 
 public class Superstructure extends SubsystemBase {
@@ -73,6 +77,18 @@ public class Superstructure extends SubsystemBase {
 
   // FIXME: Add grabber methods too
 
+  public void setWristGoalRads(double wristAngleRads) {
+    grabber.setWristGoalRads(wristAngleRads);
+  }
+
+  public double getGrabberWristAngleRads() {
+    return grabber.getCurrentRads();
+  }
+
+  public void setGrabberMotor(double speed) {
+    grabber.setGrabberMotor(speed);
+  }
+
   /**
    * Schedules the superstructure homing sequence.
    */
@@ -108,5 +124,50 @@ public class Superstructure extends SubsystemBase {
               // elevator.disable();
               // FIXME: Set state as ready for climp?
             })));
+  }
+
+  TunableSetpoints setpoints = new TunableSetpoints();
+
+  public void gotoSetpoint(CoralLevel level, Side side) {
+    int sideMultiplier = (side == Side.LEFT) ? -1 : 1;
+    switch (level) {
+      case L1:
+        setElevatorGoalHeightMillimeters(setpoints.L1_elevator_height_mm());
+        setChutePivotGoalRads(sideMultiplier * setpoints.L1_chute_pivot_angle_rads());
+        break;
+      case L2:
+        setElevatorGoalHeightMillimeters(setpoints.L2_elevator_height_mm());
+        setChutePivotGoalRads(sideMultiplier * setpoints.L2_chute_pivot_angle_rads());
+        break;
+      case L3:
+        setElevatorGoalHeightMillimeters(setpoints.L3_elevator_height_mm());
+        setChutePivotGoalRads(sideMultiplier * setpoints.L3_chute_pivot_angle_rads());
+        break;
+      case Intake:
+        setElevatorGoalHeightMillimeters(setpoints.intake_chute_pivot_angle_rads());
+        setChutePivotGoalRads(sideMultiplier * setpoints.intake_chute_pivot_angle_rads());
+        break;
+    }
+  }
+
+  public void gotoAlgaeSetpoint(AlgaeLevel level) {
+    switch (level) {
+      case Floor:
+        setElevatorGoalHeightMillimeters(setpoints.algae_floor_elevator_height_mm());
+        setWristGoalRads(setpoints.algae_floor_wrist_angle_rads());
+        break;
+      case L2:
+        setElevatorGoalHeightMillimeters(setpoints.algae_L2_elevator_height_mm());
+        setWristGoalRads(setpoints.algae_L2_wrist_angle_rads());
+        break;
+      case L3:
+        setElevatorGoalHeightMillimeters(setpoints.algae_L3_elevator_height_mm());
+        setWristGoalRads(setpoints.algae_L3_wrist_angle_rads());
+        break;
+      case Score:
+        setElevatorGoalHeightMillimeters(setpoints.algae_score_elevator_height_mm());
+        setWristGoalRads(setpoints.algae_score_wrist_angle_rads());
+        break;
+    }
   }
 }

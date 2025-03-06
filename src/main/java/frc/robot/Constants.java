@@ -249,4 +249,16 @@ public final class Constants {
       whiteDotLines,
     }
   }
+
+  public static enum CoralLevel {
+    L1, L2, L3, Intake
+  }
+
+  public static enum AlgaeLevel {
+    Floor, Score, L2, L3
+  }
+
+  public static enum Side {
+    LEFT, RIGHT
+  }
 }

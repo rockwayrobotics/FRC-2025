@@ -125,7 +125,7 @@ public class ChuteIOReal implements ChuteIO {
         () -> pivotMotor.configure(pivotConfig, resetMode, PersistMode.kPersistParameters));
 
     SparkMaxConfig shooterConfig = new SparkMaxConfig();
-    shooterConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0);
+    shooterConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0).inverted(true);
     REVUtils.tryUntilOk(
         () -> shooterMotor.configure(shooterConfig, resetMode, PersistMode.kPersistParameters));
   }
