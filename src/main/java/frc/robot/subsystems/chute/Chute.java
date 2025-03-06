@@ -91,4 +91,9 @@ public class Chute {
   public boolean isHomed() {
     return isHomed;
   }
+
+  public void stayStill() {
+    setPivotGoalRads(pivotAngleRads);
+    stopShooting();
+  }
 }

@@ -39,7 +39,7 @@ public class Climp extends SubsystemBase {
 
   /**
    * Set speed of climp motor
-   * 
+   *
    * @param speed in range -1 to 1
    */
   public void setNormalizedSpeed(double speed) {
@@ -57,5 +57,11 @@ public class Climp extends SubsystemBase {
 
   public double getClimpAngleRads() {
     return inputs.angleRadians;
+  }
+
+  public void stayStill() {
+    // could set a setpoint if we used one
+    // since we don't, this won't resist any external force (except with brake mode)
+    setNormalizedSpeed(0);
   }
 }

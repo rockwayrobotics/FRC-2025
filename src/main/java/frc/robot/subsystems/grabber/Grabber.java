@@ -2,6 +2,7 @@ package frc.robot.subsystems.grabber;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.util.Interlock;
 
@@ -60,7 +61,12 @@ public class Grabber {
 
   public void home() {
     io.home();
-    setWristGoalRads(getCurrentRads()); // should always be -PI/2 in theory
+    setWristGoalRads(Units.degreesToRadians(-90));
     isHomed = true;
+  }
+
+  public void stayStill() {
+    setWristGoalRads(inputs.wristAngleRadians);
+    setGrabberMotor(0);
   }
 }

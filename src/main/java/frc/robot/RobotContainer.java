@@ -459,4 +459,10 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
   }
+
+  public void fullRobotStayStill() {
+    drive.stayStill();
+    superstructure.stayStill();
+    climp.stayStill();
+  }
 }

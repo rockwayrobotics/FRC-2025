@@ -76,4 +76,8 @@ public class Elevator {
     // System.err.println("Elevator home beam is NOT broken. It is NOT homed.");
     // }
   }
+
+  public void stayStill() {
+    setGoalHeightMillimeters(heightMillimeters);
+  }
 }
