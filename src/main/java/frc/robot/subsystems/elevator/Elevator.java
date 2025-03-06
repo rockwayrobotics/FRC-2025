@@ -12,6 +12,7 @@ public class Elevator {
   private double goalHeightMillimeters = 0;
   private double heightMillimeters = 0;
   private boolean homeBeamBroken = false;
+  private boolean isHomed = false;
 
   final Interlock unlocked = new Interlock("Elevator");
 
@@ -31,7 +32,7 @@ public class Elevator {
     homeBeamBroken = inputs.homeBeamBroken;
     Logger.recordOutput("Elevator/goal_height_mm", goalHeightMillimeters);
 
-    if (DriverStation.isDisabled() || !unlocked.get()) {
+    if (DriverStation.isDisabled() || !isHomed) {
       io.stop();
     } else {
       io.moveTowardsGoal(goalHeightMillimeters, heightMillimeters);
@@ -66,11 +67,15 @@ public class Elevator {
   }
 
   public void home() {
-    if (!Sensors.getInstance().getElevatorHomeBeambroken()) {
-      io.zeroEncoder();
-      homeBeamBroken = true;
-    } else {
-      System.err.println("Elevator home beam is NOT broken. It is NOT homed.");
-    }
+    io.zeroEncoder();
+    setGoalHeightMillimeters(0);
+    isHomed = true;
+    // if (!Sensors.getInstance().getElevatorHomeBeambroken()) {
+    // io.zeroEncoder();
+    // isHomed = true;
+    // homeBeamBroken = true;
+    // } else {
+    // System.err.println("Elevator home beam is NOT broken. It is NOT homed.");
+    // }
   }
 }

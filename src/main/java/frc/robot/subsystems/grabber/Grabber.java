@@ -32,7 +32,7 @@ public class Grabber {
     Logger.processInputs("Grabber", inputs);
     Logger.recordOutput("Grabber/goal_radian", wristGoalRads);
 
-    if (DriverStation.isDisabled() || !unlocked.get()) { // FIXME: add homed check when we have a homing sequence
+    if (DriverStation.isDisabled() || !isHomed) { // FIXME: add homed check when we have a homing sequence
       io.stopWrist();
     } else {
       // right now negative wrist speed is up, positive is down
@@ -62,5 +62,7 @@ public class Grabber {
 
   public void home() {
     io.home();
+    setWristGoalRads(getCurrentRads()); // should always be -PI/2 in theory
+    isHomed = true;
   }
 }

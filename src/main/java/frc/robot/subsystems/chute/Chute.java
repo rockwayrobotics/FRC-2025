@@ -32,7 +32,7 @@ public class Chute {
     coralReady = inputs.coralReady;
     pivotAngleRads = inputs.pivotAngleRadians;
 
-    if (DriverStation.isDisabled() || !unlocked.get() || !isHomed) {
+    if (DriverStation.isDisabled() || !isHomed) {
       io.stopPivot();
       io.setShooterSpeed(0);
     } else {
