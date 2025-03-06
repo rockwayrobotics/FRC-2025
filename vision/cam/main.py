@@ -88,7 +88,12 @@ def main():
 
     # mjpegServer = CameraServer.startAutomaticCapture(source)
 
-    console = NonBlockingConsole()
+    if os.environ.get('INVOCATION_ID') is not None:
+        class console:
+            @staticmethod
+            def get_key(): pass
+    else:
+        console = NonBlockingConsole()
 
     streams = []
     if args.save:
