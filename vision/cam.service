@@ -1,0 +1,23 @@
+[Unit]
+Description=Camera Service
+After=network.target
+
+[Service]
+User=user
+Group=user
+WorkingDirectory=/home/user/stable/vision
+ExecStart=/home/user/env3.11/bin/python -m cam --cam1flip --save
+# add this option above for testing with local NT server: --serve
+Restart=on-failure
+RestartSec=5s
+
+# Send stdout/stderr to the journal
+StandardOutput=journal
+StandardError=journal
+
+# Add these lines to grant thread priority capabilities
+AmbientCapabilities=CAP_SYS_NICE
+CapabilityBoundingSet=CAP_SYS_NICE
+
+[Install]
+WantedBy=multi-user.target

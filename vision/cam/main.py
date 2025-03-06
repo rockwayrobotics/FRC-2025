@@ -20,10 +20,9 @@ from cscore import CvSource, VideoMode, CameraServer, MjpegServer
 import numpy as np
 
 import cv2
-import robotpy_apriltag as at
 
 from ntcore import NetworkTableInstance, PubSubOptions
-from wpimath.geometry import CoordinateSystem, Transform3d, Translation3d, Rotation3d
+from wpimath.geometry import CoordinateSystem, Transform3d, Translation3d, Rotation3d, Pose3d
 from wpimath import units
 
 try:
@@ -34,117 +33,27 @@ except ImportError:
     PI = False
 
 from . import cam
+from .apriltag import AprilTagDetection
 from .keys import NonBlockingConsole
-
-
-class AprilTagDetection:
-    def __init__(self, args, nt):
-        self.det = at.AprilTagDetector()
-        self.det.addFamily('tag36h11') # default: bitsCorrected=2
-        cfg = self.det.getConfig()
-        cfg.quadDecimate = args.dec
-        cfg.numThreads = args.threads
-        cfg.decodeSharpening = 0.25 # margin jumps a lot with 1.0
-        # cfg.quadSigma = 0.8
-        self.det.setConfig(cfg)
-        # print(f'Apriltags:\n\t{cfg.decodeSharpening=} {cfg.numThreads=} {cfg.quadDecimate=}\n'
-        #     f'\t{cfg.quadSigma=} {cfg.refineEdges=} {cfg.debug=}')
-        # q = det.getQuadThresholdParameters()
-        # print(f'Quad Threshold:\n\t{degrees(q.criticalAngle)=} {q.deglitch=} {q.maxLineFitMSE=}\n'
-        #     f'\t{q.maxNumMaxima=} {q.minClusterPixels=} {q.minWhiteBlackDiff=}')
-
-        self.field = at.AprilTagFieldLayout("2025-reefscape.json")
-        config = at.AprilTagPoseEstimator.Config(
-            tagSize = units.inchesToMeters(6.5), # 16.51cm
-            **CALS.get(args.cals, CALS.get('640x480')).get_dict()
-        )
-
-        self.estimator = at.AprilTagPoseEstimator(config)
-
-        self.tagPose = nt.getFloatArrayTopic(
-            "/Shuffleboard/Drivebase/Field2d/Robot"
-        ).publish(PubSubOptions())  # Uses default options
-        self.tagPose2 = nt.getFloatArrayTopic(
-            "/Shuffleboard/Drivebase/Field2d/Robot2"
-        ).publish(PubSubOptions())  # Uses default options
-        self.ambiguityTopic = nt.getFloatTopic(
-            "/Shuffleboard/Drivebase/Field2d/Ambiguity"
-        ).publish(PubSubOptions())  # Uses default options
-
-    def detect(self, arr):
-        # img = arr[:height,:]
-        img = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
-        tags = self.det.detect(img)
-
-        if bool(tags):
-            tag = sorted(tags, key=lambda x: -x.getDecisionMargin())[0]
-            tid = tag.getId()
-            absolutePose = self.field.getTagPose(tid)
-            # tf = estimator.estimate(tag)
-            poseEstimate = self.estimator.estimateOrthogonalIteration(tag, 50)
-            ambiguity = poseEstimate.getAmbiguity()
-            pose1 = cam2Field(absolutePose, poseEstimate.pose1)
-            pose2 = cam2Field(absolutePose, poseEstimate.pose2)
-            print(f'\rAmbiguity={ambiguity}')
-            # _buf = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-            # print(tag.getCorners(_buf))
-            self.ambiguityTopic.set(ambiguity * 100)
-            if pose1 is not None:
-                print(f'\r{poseEstimate.error1} Pose1={round(pose1.x,2)},{round(pose1.y,2)},{round(pose1.rotation().degrees())}')
-                self.tagPose.set([pose1.x, pose1.y, pose1.rotation().radians()])
-            if pose2 is not None and ambiguity > 0:
-                print(f'\r{poseEstimate.error2} Pose2={round(pose2.x,2)},{round(pose2.y,2)},{round(pose2.rotation().degrees())}')
-                self.tagPose2.set([pose2.x, pose2.y, pose2.rotation().radians()])
-            if pose1 is not None and pose2 is not None:
-                print(f'\rDistance: {pose1.translation().distance(pose2.translation())}')
-            return True
-        return False
-
-
-class CamCal:
-    def __init__(self, fx, fy, cx, cy):
-        self.array = np.array([fx, 0, cx, 0, fy, cy, 0, 0, 1], np.float64)
-        self.value = { "fx":fx, "fy":fy, "cx":cx, "cy": cy }
-    def get_array(self):
-        return self.array
-    def get_dict(self):
-        return self.value
-
-CALS = {
-    # images2 640x480
-    '640x480': CamCal(fx=813.002665, fy=814.367913, cx=340.340811, cy=248.727651),
-
-    # images4 1456x1088
-    '1456x1088': CamCal(fx=1757.669488, fy=1762.782233, cx=736.690867, cy=557.428635),
-}
-
-def cam2Field(fieldPos, camPos):
-    tagInCameraFrame = Transform3d(camPos.x, camPos.y, camPos.z,
-       Rotation3d(-camPos.rotation().x - math.pi,
-                  -camPos.rotation().y, camPos.rotation().z - math.pi))
-    # Convert from East-Down-North to North-West-Up
-    tagInCameraFrameNWU = CoordinateSystem.convert(
-        tagInCameraFrame, CoordinateSystem.EDN(), CoordinateSystem.NWU())
-
-    # Add field-relative tag position to the inverse of the camera-to-tag transform and return it.
-    result = (fieldPos + tagInCameraFrameNWU.inverse()).toPose2d()
-    return result
-
+from .recording import VideoEncoder
 
 def main():
     args = get_args()
-    res = args.res
 
-    cam0 = cam.Camera(0, args.res, args.fps)
-    cam1 = cam.Camera(1, args.res, args.fps)
+    cam0 = cam.get_camera(0, args.res, fps=args.fps, flip=args.cam0flip)
+    cam1 = cam.get_camera(1, args.res, fps=args.fps, flip=args.cam1flip)
 
     driver_cam = cam0
 
     nt = NetworkTableInstance.getDefault()
-    nt.setServerTeam(8089)
-    nt.startClient4("pi cam")
+    if args.serve:
+        print('starting test NT server')
+        nt.startServer()
+    else:
+        nt.setServerTeam(8089)
+        nt.startClient4("pi cam")
 
-    source = CvSource("cam", VideoMode.PixelFormat.kBGR, res[0], res[1], int(args.fps))
+    source = CvSource("cam", VideoMode.PixelFormat.kBGR, args.res[0], args.res[1], int(args.fps))
     mjpegServer = MjpegServer("mjpeg", 8081)
     mjpegServer.setSource(source)
     mjpegTopic = nt.getStringArrayTopic("/CameraPublisher/PiCam/streams").publish(PubSubOptions())
@@ -165,30 +74,48 @@ def main():
     cam0.start()
     cam1.start()
 
-    aprilDetector = AprilTagDetection(args, nt)
+    # pick calibration, falling back on built-in cal for current resolution
+    # TODO: support reading from a JSON file with lookup by camera id
+    # if we can figure out a way of identifying individual cameras, and
+    # possibly account for flip=True separately in case that affects the
+    # values (or can we just "rotate" the centre/focal point values?)
+    try:
+        cal = cam.CALS[args.cals]
+    except KeyError:
+        cal = cam.CALS[args.res]
+
+    aprilDetector = AprilTagDetection(args, nt, cal=cal)
 
     # mjpegServer = CameraServer.startAutomaticCapture(source)
-    # print(mjpegServer.getPort())
 
     console = NonBlockingConsole()
 
+    streams = []
     if args.save:
-        cam0stream = open('cam0stream.mjpeg', 'ab')
-        cam1stream = open('cam1stream.mjpeg', 'ab')
+        for i in [0, 1]:
+            # TODO: different file extension if quality set (i.e. mjpeg)?
+            stream = VideoEncoder(f'logs/cam{i}.mp4', fps=args.fps,
+                width=args.res[0], height=args.res[1], quality=args.quality,
+                debug=args.debug)
+            stream.start()
+            streams.append(stream)
 
     try:
         now = start = time.time()
         reported = start
         count = 0
         fps = 0
-        height = res[1] * 2 // 3
-        print('res', res, 'height', height, end='\r\n')
+        print('res', args.res)
 
-        while now - start < args.time:
+        while True:
             currentCam = selectCameraSub.get()
             if currentCam == 'fore':
+                if driver_cam is not cam0:
+                    print('selecting cam0 (fore)')
                 driver_cam = cam0
             elif currentCam == 'aft':
+                if driver_cam is not cam1:
+                    print('selecting cam1 (aft)')
                 driver_cam = cam1
             elif currentCam == 'auto':
                 leftVelocity = leftVelocitySub.get()
@@ -198,8 +125,12 @@ def main():
 
                 if abs(leftVelocity) > deadbandThreshold and abs(rightVelocity) > deadbandThreshold:
                     if leftVelocity > 0 and rightVelocity > 0:
+                        if driver_cam is not cam0:
+                            print('selecting cam0 (fore)')
                         driver_cam = cam0
                     elif leftVelocity < 0 and rightVelocity < 0:
+                        if driver_cam is not cam1:
+                            print('selecting cam1 (aft)')
                         driver_cam = cam1
 
             count += 1
@@ -207,18 +138,18 @@ def main():
 
             arr0 = cam0.capture_array('main')
             arr1 = cam1.capture_array('main')
-            #dashboard_arr = cam.capture_array('lores')
+            #dashboard_arr = driver_cam.capture_array('lores')
+
             if args.save:
-                result0, encode0 = cv2.imencode('.jpg', arr0)
-                result1, encode1 = cv2.imencode('.jpg', arr1)
+                # result0, encode0 = cv2.imencode('.jpg', arr0)
+                # result1, encode1 = cv2.imencode('.jpg', arr1)
 
-                if result0:
-                    cam0stream.write(encode0)
-                if result1:
-                    cam1stream.write(encode1)
+                # if result0:
+                    # cam0stream.write(encode0)
+                for (i, arr) in enumerate([arr0, arr1]):
+                    streams[i].add_frame(arr)
 
-            dashboard_arr = cv2.resize(arr0 if cam == cam0 else arr1, (320, 240))
-            
+            dashboard_arr = cv2.resize(arr0 if driver_cam is cam0 else arr1, (320, 240))
             source.putFrame(dashboard_arr)
 
             aprilDetector.detect(arr0)
@@ -230,7 +161,7 @@ def main():
                 fps = count / (now - reported)
                 reported = now
                 count = 0
-                print(f'FPS: {fps}', end='\r\n')
+                print(f'FPS: {fps}   ', end='\r')
 
             if key is not None:
                 if key.lower() == 'q':
@@ -245,52 +176,47 @@ def main():
                     print(f'Switched to camera {driver_cam.num}')
 
     finally:
-        del console # this should restore original kb settings
+        del console
         print('exiting')
         cam0.stop()
         cam1.stop()
-        if args.save:
-            print('closing files')
-            cam0stream.close()
-            cam1stream.close()
-
-        # # These are an attempt to speed up shutdown, which currently
-        # # stalls for some reason after we return from this routine.
-        # mjpegTopic.close()
-        # nt.stopServer()
-        # source.setConnected(False)
-        # nt.stopClient()
-
-        # import threading
-        # print(threading.enumerate())
-        # print(dir(nt))
-
-        print('exiting main')
-
+        if streams:
+            print('stop recordings')
+            for stream in streams:
+                stream.close()
 
 def get_args():
     # pylint: disable=import-outside-toplevel
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--debug', action='store_true')
-    parser.add_argument('--port', type=int, default=8000)
-    parser.add_argument('--res', default='640x480')
-    parser.add_argument('--dec', type=int, default=2)
-    parser.add_argument('--threads', type=int, default=4)
-    parser.add_argument('--fps', type=float, default=60.0)
-    parser.add_argument('--time', type=float, default=10000.0)
-    parser.add_argument('--cals')
-    parser.add_argument('--save', action='store_true')
+    parser.add_argument('--res', default='640x480',
+        help="camera resolution (default %(default)s)")
+    parser.add_argument('--dec', type=int, default=2,
+        help="AprilTag decimation (default %(default)s)")
+    parser.add_argument('--threads', type=int, default=4,
+        help="AprilTag threads (default %(default)s)")
+    parser.add_argument('--fps', type=float, default=60.0,
+        help="camera FPS (default %(default)s)")
+    parser.add_argument('--cals',
+        help="camera cal name (default matches resolution)")
+    parser.add_argument('--cam0flip', action='store_true',
+        help="flip camera 0 (180 rotation)")
+    parser.add_argument('--cam1flip', action='store_true',
+        help="flip camera 1 (180 rotation)")
+    parser.add_argument('--save', action='store_true',
+        help="record video (to SSD, defaults to H264 encoding)")
+    parser.add_argument('--quality', type=int, default=None,
+        help="record JPEG quality (50-100) (enables MJPEG encoding)")
+    parser.add_argument('--serve', action='store_true',
+        help="host NT instance for testing")
 
-    # This is a bad way to do this, shoving these into the global
-    # namespace, but it's a temporary hack to avoid having to change some
-    # of the original code which did that as a shortcut.
     args = parser.parse_args()
     if args.cals is None:
         args.cals = args.res
     args.res = tuple(int(x) for x in args.res.split('x'))
     return args
 
-
 if __name__ == '__main__':
     main()
+    
