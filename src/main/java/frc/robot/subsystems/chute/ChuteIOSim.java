@@ -1,5 +1,7 @@
 package frc.robot.subsystems.chute;
 
+import java.util.concurrent.CompletableFuture;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -74,5 +76,11 @@ public class ChuteIOSim implements ChuteIO {
 
   public double getShooterVelocityRadPerSec() {
     return shooterSim.getAngularVelocityRadPerSec();
+  }
+
+  public CompletableFuture<Boolean> home() {
+    var promise = new CompletableFuture<Boolean>();
+    promise.complete(true);
+    return promise;
   }
 }
