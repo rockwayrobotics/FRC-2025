@@ -30,6 +30,7 @@ import frc.robot.Constants.CoralLevel;
 import frc.robot.ScoringState.SensorState;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ScoreCommands;
+import frc.robot.commands.ScoreCommandsOnlyDrive;
 import frc.robot.simulation.WorldSimulation;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chute.ChuteIOReal;
@@ -87,7 +88,7 @@ public class RobotContainer {
       Chute chute = new Chute(new ChuteIOReal());
       Grabber grabber = new Grabber(new GrabberIOReal());
       superstructure = new Superstructure(elevator, chute, grabber);
-      climp = new Climp(new ClimpIOSim());
+      climp = new Climp(new ClimpIOReal());
     } else {
       simulation = new WorldSimulation();
       drive = simulation.getDrive();
@@ -156,12 +157,12 @@ public class RobotContainer {
     // left bumper -> set drive scale to 0.3 when held
 
     // FIXME FIXME FIXME: Everything is disabled for now
-    boolean enabled = false;
+    boolean enabled = true;
     if (enabled) {
       driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
       driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-      driverController.a().whileTrue(ScoreCommands.score(drive, superstructure));
+      driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute));
 
       testController.povUpLeft().onTrue(new InstantCommand(() -> {
         RobotTracker.getInstance().getScoringState().sensorState = SensorState.FRONT_LEFT;
