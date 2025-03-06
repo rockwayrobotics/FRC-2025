@@ -116,8 +116,8 @@ public class RobotContainer {
     autoChooser.addOption("ToReef", DriveCommands.toReef(drive));
     autoChooser.addOption("FromReef", DriveCommands.fromReef(drive));
 
-   // new autos that are UNTESTED 
-   autoChooser.addOption("midFarRightL2", AutoPaths.midFarRightL2(drive, superstructure));
+    // new autos that are UNTESTED
+    autoChooser.addOption("midFarRightL2", AutoPaths.midFarRightL2(drive, superstructure));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
@@ -225,26 +225,24 @@ public class RobotContainer {
     if (stubBindings) {
       new JoystickButton(operator2Controller, 1).whileTrue(Commands.run(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 60);
-      }, superstructure)).onFalse(Commands.runOnce(() -> {
-        // superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters()
-        // + 3);
       }, superstructure));
 
       new JoystickButton(operator2Controller, 2).whileTrue(Commands.run(() -> {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 60);
-      }, superstructure)).onFalse(Commands.runOnce(() -> {
-        // superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters()
-        // - 3);
       }, superstructure));
 
       new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
-        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.4);
+        if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+          superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.4);
+        }
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }, superstructure));
 
       new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
-        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.4);
+        if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+          superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.4);
+        }
       }, superstructure)).onFalse(Commands.run(() -> {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }, superstructure));
