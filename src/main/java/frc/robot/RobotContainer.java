@@ -338,15 +338,27 @@ public class RobotContainer {
 
       new JoystickButton(operator1Controller, 14).onTrue(Commands.runOnce(() -> {
         superstructure.foldForClimp();
-      }));
+      }, superstructure));
 
-      new JoystickButton(operator1Controller, 1).onTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator1Controller, 2).whileTrue(Commands.run(() -> {
+        climp.setNormalizedSpeed(1);
+      }, climp)).onFalse(Commands.run(() -> {
+        climp.setNormalizedSpeed(0);
+      }, climp));
+
+      new JoystickButton(operator1Controller, 1).whileTrue(Commands.run(() -> {
+        climp.setNormalizedSpeed(-1);
+      }, climp)).onFalse(Commands.run(() -> {
+        climp.setNormalizedSpeed(0);
+      }, climp));
+
+      new JoystickButton(operator1Controller, 4).onTrue(Commands.runOnce(() -> {
         superstructure.gotoSetpoint(CoralLevel.L3, Side.LEFT);
       }, superstructure));
       new JoystickButton(operator1Controller, 6).onTrue(Commands.runOnce(() -> {
         superstructure.gotoSetpoint(CoralLevel.L3, Side.RIGHT);
       }, superstructure));
-      new JoystickButton(operator1Controller, 2).onTrue(Commands.runOnce(() -> {
+      new JoystickButton(operator1Controller, 3).onTrue(Commands.runOnce(() -> {
         superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
       }, superstructure));
       new JoystickButton(operator1Controller, 8).onTrue(Commands.runOnce(() -> {
@@ -466,5 +478,9 @@ public class RobotContainer {
     drive.stayStill();
     superstructure.stayStill();
     climp.stayStill();
+  }
+
+  public void home() {
+    superstructure.home();
   }
 }

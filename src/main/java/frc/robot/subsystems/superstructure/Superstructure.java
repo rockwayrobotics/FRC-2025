@@ -116,8 +116,8 @@ public class Superstructure extends SubsystemBase {
    * Returns (but does not schedule) a command to shut down the superstructure
    * carefully. This is intended to be used to get ready for climp.
    */
-  public Command foldForClimp() {
-    return Commands.parallel(
+  public void foldForClimp() {
+    Commands.parallel(
         Commands.runOnce(() -> chute.setPivotGoalRads(Units.degreesToRadians(-90))),
         Commands.runOnce(() -> grabber.setWristGoalRads(Units.degreesToRadians(-90))),
         Commands.sequence(
@@ -131,7 +131,9 @@ public class Superstructure extends SubsystemBase {
               // grabber.disable();
               // elevator.disable();
               // FIXME: Set state as ready for climp?
-            })));
+            })))
+        .schedule();
+    ;
   }
 
   TunableSetpoints setpoints = new TunableSetpoints();
@@ -140,20 +142,20 @@ public class Superstructure extends SubsystemBase {
     int sideMultiplier = (side == Side.LEFT) ? -1 : 1;
     switch (level) {
       case L1:
-        setElevatorGoalHeightMillimeters(setpoints.L1_elevator_height_mm());
         setChutePivotGoalRads(sideMultiplier * setpoints.L1_chute_pivot_angle_rads());
+        setElevatorGoalHeightMillimeters(setpoints.L1_elevator_height_mm());
         break;
       case L2:
-        setElevatorGoalHeightMillimeters(setpoints.L2_elevator_height_mm());
         setChutePivotGoalRads(sideMultiplier * setpoints.L2_chute_pivot_angle_rads());
+        setElevatorGoalHeightMillimeters(setpoints.L2_elevator_height_mm());
         break;
       case L3:
-        setElevatorGoalHeightMillimeters(setpoints.L3_elevator_height_mm());
         setChutePivotGoalRads(sideMultiplier * setpoints.L3_chute_pivot_angle_rads());
+        setElevatorGoalHeightMillimeters(setpoints.L3_elevator_height_mm());
         break;
       case Intake:
-        setElevatorGoalHeightMillimeters(setpoints.intake_elevator_height_mm());
         setChutePivotGoalRads(sideMultiplier * setpoints.intake_chute_pivot_angle_rads());
+        setElevatorGoalHeightMillimeters(setpoints.intake_elevator_height_mm());
         break;
     }
   }
