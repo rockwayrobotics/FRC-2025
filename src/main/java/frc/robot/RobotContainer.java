@@ -239,7 +239,7 @@ public class RobotContainer {
         superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 60);
       }, superstructure));
 
-      new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
+      new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
         if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
           superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.4);
         }
@@ -247,7 +247,7 @@ public class RobotContainer {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }, superstructure));
 
-      new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
+      new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
         if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
           superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.4);
         }
@@ -361,16 +361,16 @@ public class RobotContainer {
       }, climp));
 
       new JoystickButton(operator1Controller, 4).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.L3, Side.LEFT);
-      }, superstructure));
-      new JoystickButton(operator1Controller, 6).onTrue(Commands.runOnce(() -> {
         superstructure.gotoSetpoint(CoralLevel.L3, Side.RIGHT);
       }, superstructure));
+      new JoystickButton(operator1Controller, 6).onTrue(Commands.runOnce(() -> {
+        superstructure.gotoSetpoint(CoralLevel.L3, Side.LEFT);
+      }, superstructure));
       new JoystickButton(operator1Controller, 3).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
+        superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT);
       }, superstructure));
       new JoystickButton(operator1Controller, 8).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT);
+        superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
       }, superstructure));
       new JoystickButton(operator1Controller, 5).onTrue(Commands.runOnce(() -> {
         superstructure.gotoSetpoint(CoralLevel.L1, Side.LEFT);
