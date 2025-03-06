@@ -114,7 +114,7 @@ public final class Constants {
     public static final double CHUTE_CENTER_X_POSITION_METERS = Dimensions.FRAME_X_LENGTH_METERS / 2 - 0.276
         + CHUTE_X_THICKNESS_METERS / 2;
 
-    public static final double CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM = 375;
+    public static final double CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM = 256;
   }
 
   public static final class Climp {
