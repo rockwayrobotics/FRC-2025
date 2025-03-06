@@ -152,7 +152,10 @@ def main():
                 # if result0:
                     # cam0stream.write(encode0)
                 for (i, arr) in enumerate([arr0, arr1]):
-                    streams[i].add_frame(arr)
+                    try:
+                        streams[i].add_frame(arr)
+                    except BrokenPipeError:
+                        pass
 
             dashboard_arr = cv2.resize(arr0 if driver_cam is cam0 else arr1, (320, 240))
             source.putFrame(dashboard_arr)
@@ -187,8 +190,11 @@ def main():
         cam1.stop()
         if streams:
             print('stop recordings')
-            for stream in streams:
-                stream.close()
+            for (i, stream) in enumerate(streams):
+                try:
+                    stream.close()
+                except Exception as ex:
+                    logging.exception(f'cam{i}: closing failed')
 
 def get_args():
     # pylint: disable=import-outside-toplevel

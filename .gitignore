@@ -207,3 +207,4 @@ akit*.toml
 *.mjpeg
 logs
 tof-logs/
+videos
