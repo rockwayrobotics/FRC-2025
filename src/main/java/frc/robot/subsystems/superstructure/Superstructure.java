@@ -110,10 +110,10 @@ public class Superstructure extends SubsystemBase {
    */
   public Command foldForClimp() {
     return Commands.parallel(
-        Commands.runOnce(() -> chute.setPivotGoalRads(0)),
+        Commands.runOnce(() -> chute.setPivotGoalRads(Units.degreesToRadians(-90))),
         Commands.runOnce(() -> grabber.setWristGoalRads(Units.degreesToRadians(-90))),
         Commands.sequence(
-            Commands.waitUntil(() -> chute.getPivotAngleRads() < Units.degreesToRadians(3)),
+            Commands.waitUntil(() -> chute.getPivotAngleRads() < Units.degreesToRadians(-87)),
             Commands.runOnce(() -> elevator.setGoalHeightMillimeters(0))),
         Commands.sequence(
             Commands.waitUntil(() -> elevator.getHeightMillimeters() < 10),
