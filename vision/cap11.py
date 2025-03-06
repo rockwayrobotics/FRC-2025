@@ -153,8 +153,9 @@ class AprilTagDetection:
                 flags=cv2.SOLVEPNP_SQPNP
             )
 
-            camera_to_field_pose = openCvPoseToWpilib3(translations[0], rotations[0])
-            field_to_camera_pose = invert_pose(camera_to_field_pose)
+            camera_to_field_transform = openCvPoseToWpilib(translations[0], rotations[0])
+            field_to_camera_transform = camera_to_field_transform.inverse()
+            field_to_camera_pose = Pose3d(field_to_camera_transform.translation(), field_to_camera_transform.rotation())
             print(f'from opencv: {field_to_camera_pose}', end='\r\n')
             pose1 = field_to_camera_pose.toPose2d()
             self.cameraPose.set([pose1.x, pose1.y, pose1.rotation().radians()])
@@ -171,11 +172,6 @@ def compute_apriltag_corners(tag_pose: Pose3d) -> list[Pose3d]:
         tag_pose.transformBy(Transform3d(0, -half_side_length, half_side_length, Rotation3d())),
         tag_pose.transformBy(Transform3d(0, half_side_length, half_side_length, Rotation3d())),
     ]
-
-def invert_pose(pose: Pose3d) -> Pose3d:
-    transform = Transform3d(pose.translation(), pose.rotation())
-    inverted = transform.inverse()
-    return Pose3d(inverted.translation(), inverted.rotation())
 
 # Coordinate conversions inspired by
 # https://github.com/Mechanical-Advantage/RobotCode2025Public/blob/8cd2135a6d7ee105b9f7596bb6261e5d611f4c91/northstar/pipeline/coordinate_systems.py
