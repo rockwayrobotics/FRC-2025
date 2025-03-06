@@ -76,15 +76,12 @@ public class AutoPaths {
       Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
           new Pose2d(7.464, 4.000, Rotation2d.fromDegrees(180)),
           List.of(), new Pose2d(5.389, 2.824, Rotation2d.fromDegrees(180)), config);
-      // Maybe 4,6 as intermediate?
-  
-      // LTVUnicycleController ltvController = new LTVUnicycleController(0.02);
-      // LTVUnicycleController ltvController = new
-      // LTVUnicycleController(VecBuilder.fill(0.0625, 0.125, 2.0),
-      // VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
+
       LTVUnicycleController ltvController = new LTVUnicycleController(VecBuilder.fill(0.125, 0.25, 4.0),
           VecBuilder.fill(1.0, 2.0), 0.02, config.getMaxVelocity());
   
+
+      // FIXME drivebase needs tuning, these are old values before robot had stuff on it
       double kP = 1.7;
       double kI = 0.0;
       double kD = 0.0;
