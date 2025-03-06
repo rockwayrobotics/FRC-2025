@@ -28,6 +28,7 @@ import frc.robot.Constants.Side;
 import frc.robot.Constants.AlgaeLevel;
 import frc.robot.Constants.CoralLevel;
 import frc.robot.ScoringState.SensorState;
+import frc.robot.commands.AutoPaths;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ScoreCommands;
 import frc.robot.commands.ScoreCommandsOnlyDrive;
@@ -114,6 +115,9 @@ public class RobotContainer {
     autoChooser.addOption("Auto4", DriveCommands.auto4(drive));
     autoChooser.addOption("ToReef", DriveCommands.toReef(drive));
     autoChooser.addOption("FromReef", DriveCommands.fromReef(drive));
+
+   // new autos that are UNTESTED 
+   autoChooser.addOption("midFarRightL2", AutoPaths.midFarRightL2(drive, superstructure));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
