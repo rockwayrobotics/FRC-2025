@@ -6,7 +6,10 @@ After=network.target
 User=user
 Group=user
 WorkingDirectory=/home/user/FRC-2025/vision
-ExecStart=/home/user/env3.11/bin/python -m tof --stdout --serve
+# RUST_LOG probably does nothing for us currently
+Environment=RUST_LOG=debug
+ExecStart=/home/user/env3.11/bin/python -m tof --stdout -d
+# add this option above for testing with local NT server: --serve
 Restart=on-failure
 RestartSec=5s
 

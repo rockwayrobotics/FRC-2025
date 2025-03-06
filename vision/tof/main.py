@@ -323,7 +323,7 @@ def main():
     level = logging.DEBUG if args.debug else logging.INFO
     logging.basicConfig(level=level,
         format="%(asctime)s.%(msecs)03d:%(levelname)5s:%(name)s: %(message)s",
-        datefmt="%m-%dT%H:%M:%S",
+        datefmt="%H:%M:%S",
         handlers=handlers
     )
 
