@@ -33,7 +33,11 @@ public class Superstructure extends SubsystemBase {
     } else if ((Math.abs(chute.getPivotAngleRads()) - Units.degreesToRadians(90)) < 0.1) {
       elevator.periodic();
     }
-    chute.periodic();
+
+    if (elevator.getHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM - 50) {
+      // FIXME: make this more robust
+      chute.periodic();
+    }
 
     grabber.periodic();
   }
@@ -148,7 +152,7 @@ public class Superstructure extends SubsystemBase {
         setChutePivotGoalRads(sideMultiplier * setpoints.L3_chute_pivot_angle_rads());
         break;
       case Intake:
-        setElevatorGoalHeightMillimeters(setpoints.intake_chute_pivot_angle_rads());
+        setElevatorGoalHeightMillimeters(setpoints.intake_elevator_height_mm());
         setChutePivotGoalRads(sideMultiplier * setpoints.intake_chute_pivot_angle_rads());
         break;
     }
