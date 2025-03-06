@@ -19,9 +19,9 @@ public class ClimpIOReal implements ClimpIO {
 
   final Tuner pid_p = new Tuner("Climp/Kp", 0, true);
   final Tuner pid_d = new Tuner("Climp/Kd", 0, true);
-  final Tuner currentLimit = new Tuner("Climp/current_limit", 5.0, true);
-  final Tuner maxNormalizedSpeed = new Tuner("Climp/normalized_speed_max", 0.1, true);
-  final Tuner minNormalizedSpeed = new Tuner("Climp/normalized_speed_min", -0.1, true);
+  final Tuner currentLimit = new Tuner("Climp/current_limit", 60.0, true);
+  final Tuner maxNormalizedSpeed = new Tuner("Climp/normalized_speed_max", 1, true);
+  final Tuner minNormalizedSpeed = new Tuner("Climp/normalized_speed_min", -1, true);
 
   protected final RelativeEncoder encoder = climpMotor.getEncoder();
 

@@ -244,16 +244,28 @@ public class RobotContainer {
         superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
       }, superstructure));
 
+      // new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
+      // climp.setClimpGoalRads(climp.getClimpAngleRads() + 0.01);
+      // }, climp)).onFalse(Commands.run(() -> {
+      // climp.setClimpGoalRads(climp.getClimpAngleRads());
+      // }, climp));
+
+      // new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
+      // climp.setClimpGoalRads(climp.getClimpAngleRads() - 0.01);
+      // }, climp)).onFalse(Commands.run(() -> {
+      // climp.setClimpGoalRads(climp.getClimpAngleRads());
+      // }, climp));
+
       new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
-        climp.setClimpGoalRads(climp.getClimpAngleRads() + 0.01);
+        climp.setNormalizedSpeed(1);
       }, climp)).onFalse(Commands.run(() -> {
-        climp.setClimpGoalRads(climp.getClimpAngleRads());
+        climp.setNormalizedSpeed(0);
       }, climp));
 
       new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
-        climp.setClimpGoalRads(climp.getClimpAngleRads() - 0.01);
+        climp.setNormalizedSpeed(-1);
       }, climp)).onFalse(Commands.run(() -> {
-        climp.setClimpGoalRads(climp.getClimpAngleRads());
+        climp.setNormalizedSpeed(0);
       }, climp));
 
       new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
@@ -265,8 +277,7 @@ public class RobotContainer {
       new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
         superstructure.chute.setShooterMotor(-0.1); // intake
       }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.stopShooting()
-        ;
+        superstructure.stopShooting();
       }, superstructure));
 
       new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {

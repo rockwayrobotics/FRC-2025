@@ -27,11 +27,14 @@ public class Climp extends SubsystemBase {
      * FIXME: Should the climp be fully disabled until something happens
      * when it's close to the end of the match?
      */
-    if (DriverStation.isDisabled() || !unlocked.get()) {
+    // FIXME: INTERLOCK NOT CHECKED
+    if (DriverStation.isDisabled()) {
       io.stop();
-    } else {
-      io.moveTowardsGoal(climpGoalRads, inputs.angleRadians);
     }
+    // else {
+    // io.moveTowardsGoal(climpGoalRads, inputs.angleRadians);
+    // }
+    // FIXME FIXME FIXME FIXME THIS DOESNT HAVE A PID OR ANY LIMITS
   }
 
   /**
@@ -58,5 +61,5 @@ public class Climp extends SubsystemBase {
 
   public double getClimpAngleRads() {
     return inputs.angleRadians;
-  } 
+  }
 }
