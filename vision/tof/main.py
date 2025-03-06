@@ -206,14 +206,15 @@ class TofMain:
         # for debugging, serve our NT instance
         if self.args.serve:
             nt.startServer()
-            self.sensorModePub = sensorModeTopic.publish()
-            self.sensorModePub.set('none')
             # self.sensorModePub = sensorModeTopic.publish()
             # self.sensorModePub.set(0)
             self.speedPub = speedTopic.publish()
             self.speedPub.set(0.0)
         else:
             nt.startClient4("tof")
+
+        self.sensorModePub = sensorModeTopic.publish()
+        self.sensorModePub.set('none')
 
     def run(self):
         self.log.info('-' * 40)
@@ -226,6 +227,7 @@ class TofMain:
 
         self.nt_init()
 
+        self.speed = 0
         self.cd = CornerDetector(400)
         self.running = True
 
