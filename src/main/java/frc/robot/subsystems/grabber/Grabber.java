@@ -43,9 +43,7 @@ public class Grabber {
 
   public void setWristGoalRads(double wristAngleRads) {
     // right now negative wrist speed is up, positive is down
-    if (unlocked.get()) {
-      wristGoalRads = wristAngleRads;
-    }
+    wristGoalRads = wristAngleRads;
   }
 
   public double getCurrentRads() {

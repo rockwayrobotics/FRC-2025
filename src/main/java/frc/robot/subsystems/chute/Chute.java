@@ -41,9 +41,7 @@ public class Chute {
   }
 
   public void setPivotGoalRads(double pivotAngleRads) {
-    if (unlocked.get()) {
-      pivotGoalRads = pivotAngleRads;
-    }
+    pivotGoalRads = pivotAngleRads;
   }
 
   public double getPivotGoalRads() {

@@ -43,9 +43,7 @@ public class Climp extends SubsystemBase {
    * @param speed in range -1 to 1
    */
   public void setNormalizedSpeed(double speed) {
-    if (unlocked.get()) {
-      io.setNormalizedSpeed(speed);
-    }
+    io.setNormalizedSpeed(speed);
   }
 
   /**
@@ -54,9 +52,7 @@ public class Climp extends SubsystemBase {
    * @param climpGoalRads
    */
   public void setClimpGoalRads(double climpGoalRads) {
-    if (unlocked.get()) {
-      this.climpGoalRads = climpGoalRads;
-    }
+    this.climpGoalRads = climpGoalRads;
   }
 
   public double getClimpAngleRads() {

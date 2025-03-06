@@ -40,9 +40,7 @@ public class Elevator {
   }
 
   public void setGoalHeightMillimeters(double heightMillimeters) {
-    if (unlocked.get()) {
-      goalHeightMillimeters = heightMillimeters;
-    }
+    goalHeightMillimeters = heightMillimeters;
   }
 
   public double getHeightMillimeters() {
