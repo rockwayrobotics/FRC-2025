@@ -7,13 +7,14 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 
 public class TrajectoryUtils {
-  public static final double FIELD_MIRRORING_WIDTH_METERS = 17.548;
+  public static final double FIELD_X_DIMENSION_METERS = 17.548;
+  public static final double FIELD_Y_DIMENSION_METERS = 8.05;
 
   public static Trajectory flipTrajectory(Trajectory trajectory) {
     var states = trajectory.getStates();
     var firstState = states.get(0);
     var firstPose = firstState.poseMeters;
-    var newFirstPose = new Pose2d(FIELD_MIRRORING_WIDTH_METERS - firstPose.getX(), firstPose.getY(),
+    var newFirstPose = new Pose2d(FIELD_X_DIMENSION_METERS - firstPose.getX(), firstPose.getY(),
         Rotation2d.k180deg.minus(firstPose.getRotation()));
     var newStates = new ArrayList<Trajectory.State>();
     newStates.add(
@@ -27,7 +28,7 @@ public class TrajectoryUtils {
     for (int i = 1; i < states.size(); i++) {
       var state = states.get(i);
       var pose = state.poseMeters;
-      var newPose = new Pose2d(FIELD_MIRRORING_WIDTH_METERS - pose.getX(), pose.getY(), Rotation2d.k180deg.minus(pose.getRotation()));
+      var newPose = new Pose2d(FIELD_X_DIMENSION_METERS - pose.getX(), pose.getY(), Rotation2d.k180deg.minus(pose.getRotation()));
       newStates.add(
           new Trajectory.State(
               state.timeSeconds,
