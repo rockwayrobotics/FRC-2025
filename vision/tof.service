@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=user
 Group=user
-WorkingDirectory=/home/user/FRC-2025/vision
+WorkingDirectory=/home/user/stable/vision
 # RUST_LOG probably does nothing for us currently
 Environment=RUST_LOG=debug
 ExecStart=/home/user/env3.11/bin/python -m tof --stdout -d
