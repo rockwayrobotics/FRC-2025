@@ -177,4 +177,10 @@ public class Superstructure extends SubsystemBase {
         break;
     }
   }
+
+  public void stayStill() {
+    elevator.stayStill();
+    chute.stayStill();
+    grabber.stayStill();
+  }
 }

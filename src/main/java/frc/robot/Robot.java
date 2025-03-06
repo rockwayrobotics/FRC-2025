@@ -124,13 +124,18 @@ public class Robot extends LoggedRobot {
   public void disabledPeriodic() {
   }
 
+  @Override
+  public void disabledExit() {
+    enterBrakeMode();
+    m_robotContainer.fullRobotStayStill();
+  }
+
   /**
    * This autonomous runs the autonomous command selected by your
    * {@link RobotContainer} class.
    */
   @Override
   public void autonomousInit() {
-    enterBrakeMode();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
@@ -150,7 +155,6 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
-    enterBrakeMode();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -174,7 +178,6 @@ public class Robot extends LoggedRobot {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
     m_robotContainer.setupTestBindings();
-    enterBrakeMode();
   }
 
   /** This function is called periodically during test mode. */

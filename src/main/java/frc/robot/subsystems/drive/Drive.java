@@ -392,4 +392,8 @@ public class Drive extends SubsystemBase {
           Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
         });
   }
+
+  public void stayStill() {
+    runOpenLoop(0, 0);
+  }
 }
