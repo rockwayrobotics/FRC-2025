@@ -95,17 +95,19 @@ public class ScoreCommandsOnlyDrive {
         }),
 
         Commands.sequence(
-            Commands.waitUntil(() -> {
-              double speed = drive.getLeftVelocityMetersPerSec();
-              if (Math.abs(speed) < 0.1) {
-                return false;
-              }
-              commandState.speeds.addLast(speed);
-              if (commandState.speeds.size() < 3) {
-                return false;
-              }
-              return Math.abs(commandState.speeds.getFirst() - commandState.speeds.getLast()) < 0.01;
-            }),
+            // Commands.waitUntil(() -> {
+            // double speed = drive.getLeftVelocityMetersPerSec();
+            // if (Math.abs(speed) < 0.1) {
+            // return false;
+            // }
+            // commandState.speeds.addLast(speed);
+            // if (commandState.speeds.size() < 3) {
+            // return false;
+            // }
+            // return Math.abs(commandState.speeds.getFirst() -
+            // commandState.speeds.getLast()) < 0.01;
+            // }),
+            Commands.waitSeconds(1),
             Commands.runOnce(() -> {
               piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
                   commandState.speeds.getLast() });
@@ -131,7 +133,7 @@ public class ScoreCommandsOnlyDrive {
             Commands.runOnce(() -> {
               chute.stopShooting();
             })));
-        command.addRequirements(drive);
+    command.addRequirements(drive);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
       piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
@@ -142,7 +144,8 @@ public class ScoreCommandsOnlyDrive {
     });
   }
 
-  public static Command testScoreOnlyDrive(Drive drive, Chute chute, BooleanSupplier fakeCornerTrigger, BooleanSupplier shootNowTrigger) {
+  public static Command testScoreOnlyDrive(Drive drive, Chute chute, BooleanSupplier fakeCornerTrigger,
+      BooleanSupplier shootNowTrigger) {
     double driveSpeed = ScoreCommandsOnlyDrive.testScoreDriveSpeedMetersPerSec.get();
     double wallDistanceMeters = ScoreCommandsOnlyDrive.testScoreWallDistanceMeters.get();
     double shootSpinDuration = ScoreCommandsOnlyDrive.testScoreShootSpinDuration.get();
@@ -168,73 +171,71 @@ public class ScoreCommandsOnlyDrive {
     });
 
     Command command = Commands.sequence(
-      Commands.runOnce(() -> {
-        System.out.println("TestScore: drive.stop");
-        drive.stop();
-      }),
-      Commands.waitUntil(() -> {
-        double speed = drive.getLeftVelocityMetersPerSec();
-        System.out.println("TestScore: ready to drive");
-        return (Math.abs(speed) < 0.05);
-      }),
-      Commands.race(
-        Commands.run(() -> {
-          drive.setTankDrive(new ChassisSpeeds(driveSpeed, 0, 0));
+        Commands.runOnce(() -> {
+          System.out.println("TestScore: drive.stop");
+          drive.stop();
         }),
-        Commands.sequence(
-          Commands.waitUntil(() -> {
-            double speed = drive.getLeftVelocityMetersPerSec();
-            return (Math.abs(driveSpeed - speed) < 0.1);
-          }),
-          Commands.runOnce(() -> {
-            System.out.println("TestScore: Setting PiState");
-            piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
-                commandState.speeds.getLast() });
-          }),
-          Commands.waitUntil(() -> {
-            commandState.fakeCornerTriggered = fakeCornerTrigger.getAsBoolean();
-            commandState.scoreNowTriggered = shootNowTrigger.getAsBoolean();
-            return commandState.isValid || commandState.fakeCornerTriggered || commandState.scoreNowTriggered;
-          }),
-          Commands.runOnce(() -> {
-            System.out.println("TestScore: Finished waiting for Pi");
-            if (commandState.scoreNowTriggered) {
-                System.out.println("TestScore: Score now processing");
-              // do nothing
-            } else {
-              if (commandState.fakeCornerTriggered) {
-                System.out.println("TestScore: Fake corner processing");
-                commandState.cornerTimestamp = (float) Timer.getFPGATimestamp();
-                commandState.angle = 0;
-              }
-              Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp);
-              leftEncoderDistance.ifPresentOrElse(distance -> {
-                commandState.cornerDistance = distance;
-                commandState.targetLeftEncoder = distance
-                    + wallDistanceMeters * Math.cos(commandState.angle);
-              }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
-                System.err.println("Failed to find scoring encoder distance because we have no position data");
-              })));
-            }
-          }),
-          Commands.waitUntil(() -> {
-            return commandState.scoreNowTriggered || Math.abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
-          }),
-          Commands.run(() -> {
-            System.out.println("TestScore: Starting to shoot");
-            chute.startShooting();
-          }).withTimeout(shootSpinDuration),
-          Commands.runOnce(() -> {
-            System.out.println("TestScore: Stopping shooting");
-            chute.stopShooting();
-          })
-        )
-      ),
-      Commands.runOnce(() -> {
-        System.out.println("TestScore: Stopping normally");
-        drive.stop();
-      })
-    );
+        Commands.waitUntil(() -> {
+          double speed = drive.getLeftVelocityMetersPerSec();
+          System.out.println("TestScore: ready to drive");
+          return (Math.abs(speed) < 0.05);
+        }),
+        Commands.race(
+            Commands.run(() -> {
+              drive.setTankDrive(new ChassisSpeeds(driveSpeed, 0, 0));
+            }),
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  double speed = drive.getLeftVelocityMetersPerSec();
+                  return (Math.abs(driveSpeed - speed) < 0.1);
+                }),
+                Commands.runOnce(() -> {
+                  System.out.println("TestScore: Setting PiState");
+                  piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
+                      commandState.speeds.getLast() });
+                }),
+                Commands.waitUntil(() -> {
+                  commandState.fakeCornerTriggered = fakeCornerTrigger.getAsBoolean();
+                  commandState.scoreNowTriggered = shootNowTrigger.getAsBoolean();
+                  return commandState.isValid || commandState.fakeCornerTriggered || commandState.scoreNowTriggered;
+                }),
+                Commands.runOnce(() -> {
+                  System.out.println("TestScore: Finished waiting for Pi");
+                  if (commandState.scoreNowTriggered) {
+                    System.out.println("TestScore: Score now processing");
+                    // do nothing
+                  } else {
+                    if (commandState.fakeCornerTriggered) {
+                      System.out.println("TestScore: Fake corner processing");
+                      commandState.cornerTimestamp = (float) Timer.getFPGATimestamp();
+                      commandState.angle = 0;
+                    }
+                    Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp);
+                    leftEncoderDistance.ifPresentOrElse(distance -> {
+                      commandState.cornerDistance = distance;
+                      commandState.targetLeftEncoder = distance
+                          + wallDistanceMeters * Math.cos(commandState.angle);
+                    }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
+                      System.err.println("Failed to find scoring encoder distance because we have no position data");
+                    })));
+                  }
+                }),
+                Commands.waitUntil(() -> {
+                  return commandState.scoreNowTriggered || Math
+                      .abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
+                }),
+                Commands.run(() -> {
+                  System.out.println("TestScore: Starting to shoot");
+                  chute.startShooting();
+                }).withTimeout(shootSpinDuration),
+                Commands.runOnce(() -> {
+                  System.out.println("TestScore: Stopping shooting");
+                  chute.stopShooting();
+                }))),
+        Commands.runOnce(() -> {
+          System.out.println("TestScore: Stopping normally");
+          drive.stop();
+        }));
     command.addRequirements(drive);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {

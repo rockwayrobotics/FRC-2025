@@ -9,14 +9,17 @@ public class TunableSetpoints {
   // L1:
   private final Tuner L1_elevator_height_mm = new Tuner("Scoring/L1/elevator_height_mm", 500, true);
   private final Tuner L1_chute_pivot_angle_rads = new Tuner("Scoring/L1/chute_pivot_angle_rads", 1, true);
+  private final Tuner L1_shoot_speed_normalized = new Tuner("Scoring/L1/shoot_speed_normalized", 0.5, true);
 
   // L2:
   private final Tuner L2_elevator_height_mm = new Tuner("Scoring/L2/elevator_height_mm", 750, true);
   private final Tuner L2_chute_pivot_angle_rads = new Tuner("Scoring/L2/chute_pivot_angle_rads", 0.8, true);
+  private final Tuner L2_shoot_speed_normalized = new Tuner("Scoring/L2/shoot_speed_normalized", 0.5, true);
 
   // L3:
   private final Tuner L3_elevator_height_mm = new Tuner("Scoring/L3/elevator_height_mm", 1000, true);
   private final Tuner L3_chute_pivot_angle_rads = new Tuner("Scoring/L3/chute_pivot_angle_rads", 0.8, true);
+  private final Tuner L3_shoot_speed_normalized = new Tuner("Scoring/L3/shoot_speed_normalized", 0.5, true);
 
   // L2 Algae:
   private final Tuner algae_L2_elevator_height_mm = new Tuner("Scoring/Algae/L2/elevator_height_mm", 750, true);
@@ -52,6 +55,10 @@ public class TunableSetpoints {
     return L1_chute_pivot_angle_rads.get();
   }
 
+  public double L1_shoot_speed_normalized() {
+    return L1_shoot_speed_normalized.get();
+  }
+
   public double L2_elevator_height_mm() {
     return L2_elevator_height_mm.get();
   }
@@ -60,12 +67,20 @@ public class TunableSetpoints {
     return L2_chute_pivot_angle_rads.get();
   }
 
+  public double L2_shoot_speed_normalized() {
+    return L2_shoot_speed_normalized.get();
+  }
+
   public double L3_elevator_height_mm() {
     return L3_elevator_height_mm.get();
   }
 
   public double L3_chute_pivot_angle_rads() {
     return L3_chute_pivot_angle_rads.get();
+  }
+
+  public double L3_shoot_speed_normalized() {
+    return L3_shoot_speed_normalized.get();
   }
 
   // Algae getters:
