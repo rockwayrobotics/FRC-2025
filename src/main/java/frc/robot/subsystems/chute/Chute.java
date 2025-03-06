@@ -28,6 +28,7 @@ public class Chute {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Chute", inputs);
+    Logger.recordOutput("Chute/isHomed", isHomed);
     coralLoading = inputs.coralLoading;
     coralReady = inputs.coralReady;
     pivotAngleRads = inputs.pivotAngleRadians;
@@ -78,13 +79,8 @@ public class Chute {
 
   public void home() {
     var promise = io.home();
-    System.out.println("home starting");
-    Logger.recordOutput("Chute/Homing", true);
     Commands.waitUntil(() -> promise.isDone()).finallyDo(() -> {
       this.isHomed = promise.getNow(false);
-      Logger.recordOutput("Chute/Homing", false);
-      Logger.recordOutput("Chute/Homed_real", this.isHomed);
-      System.out.println("home finished");
     }).schedule();
   }
 

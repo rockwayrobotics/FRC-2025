@@ -32,6 +32,7 @@ public class Grabber {
     io.updateInputs(inputs);
     Logger.processInputs("Grabber", inputs);
     Logger.recordOutput("Grabber/goal_radian", wristGoalRads);
+    Logger.recordOutput("Grabber/isHomed", isHomed);
 
     if (DriverStation.isDisabled() || !isHomed) { // FIXME: add homed check when we have a homing sequence
       io.stopWrist();
