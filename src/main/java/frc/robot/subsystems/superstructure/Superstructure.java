@@ -31,10 +31,13 @@ public class Superstructure extends SubsystemBase {
     if (elevator.getGoalHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
       elevator.periodic();
     } else if ((Math.abs(chute.getPivotAngleRads()) - Units.degreesToRadians(90)) < 0.1) {
-      System.out.println("passed check");
       elevator.periodic();
     }
-    chute.periodic();
+
+    if (elevator.getGoalHeightMillimeters() >= Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+      chute.periodic();
+    }
+
     grabber.periodic();
   }
 
