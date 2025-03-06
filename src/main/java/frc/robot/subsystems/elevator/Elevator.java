@@ -31,6 +31,7 @@ public class Elevator {
     heightMillimeters = inputs.positionMillimeters;
     homeBeamBroken = inputs.homeBeamBroken;
     Logger.recordOutput("Elevator/goal_height_mm", goalHeightMillimeters);
+    Logger.recordOutput("Elevator/isHomed", isHomed);
 
     if (DriverStation.isDisabled() || !isHomed) {
       io.stop();
