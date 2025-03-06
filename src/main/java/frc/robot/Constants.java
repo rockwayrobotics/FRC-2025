@@ -183,6 +183,7 @@ public final class Constants {
     public static final double WRIST_SPEED_RADIANS_PER_SECOND = 0.5;
     public static final double WRIST_CONVERSION_FACTOR = 0.0836167941;
 
+    /** Algae acquired if getVolts is over this value */
     public static final double ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS = 2.5;
   }
 

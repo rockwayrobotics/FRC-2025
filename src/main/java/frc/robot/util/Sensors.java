@@ -36,6 +36,8 @@ public class Sensors {
 
   public void updateNT() {
     Logger.recordOutput("Grabber/distance_mm", getGrabberAcquiredDistance());
+    Logger.recordOutput("Grabber/acquired_bool",
+        getGrabberAcquiredDistance() > Constants.Grabber.ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS);
     Logger.recordOutput("Grabber/home_sw", getGrabberHomeSwitch());
     Logger.recordOutput("Chute/home_sw", getChuteHomeSwitch());
     Logger.recordOutput("Chute/loaded_sw", getChuteCoralLoadedBeambreak());
