@@ -38,8 +38,8 @@ public class AutoPaths {
   private static final Vector<N2> LTV_relems = VecBuilder.fill(1.0, 2.0);
   private static final double LTV_dt = 0.02;
 
-  private static final double trajectoryMaxVelocity = Constants.Drive.MAX_SPEED_MPS / 1;
-  private static final double trajectoryMaxAcceleration = Constants.Drive.MAX_ACCEL_MPSS / 10;
+  private static final double trajectoryMaxVelocity = Constants.Drive.MAX_SPEED_MPS;
+  private static final double trajectoryMaxAcceleration = Constants.Drive.MAX_ACCEL_MPSS / 5;
 
   private static final double trajectoryMaxCentripetalAcceleration = 0.5;
 
