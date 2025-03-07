@@ -121,16 +121,19 @@ public class Superstructure extends SubsystemBase {
 
     // command.addRequirements(this);
     // command.schedule();
-    Commands.parallel(
+    var command = Commands.parallel(
         Commands.runOnce(() -> {
           elevator.home();
-        }, this),
+        }),
         Commands.runOnce(() -> {
           chute.home();
-        }, this),
+        }),
         Commands.runOnce(() -> {
           grabber.home();
-        }, this)).schedule();
+        }));
+
+    command.addRequirements(this);
+    command.schedule();
   }
 
   /**
