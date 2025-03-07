@@ -35,10 +35,8 @@ public class Superstructure extends SubsystemBase {
       elevator.periodic();
     }
 
-    if (elevator.getHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM - 50) {
-      // FIXME: make this more robust
-      chute.periodic();
-    }
+    // FIXME: make this more robust
+    chute.periodic(elevator.getHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM - 50);
 
     grabber.periodic();
   }

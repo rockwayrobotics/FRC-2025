@@ -26,7 +26,7 @@ public class Chute {
     this.io = io;
   }
 
-  public void periodic() {
+  public void periodic(boolean safeHeight) {
     io.updateInputs(inputs);
     Logger.processInputs("Chute", inputs);
     Logger.recordOutput("Chute/isHomed", isHomed);
@@ -37,7 +37,7 @@ public class Chute {
     if (DriverStation.isDisabled() || !isHomed) {
       io.stopPivot();
       io.setShooterSpeed(0);
-    } else {
+    } else if (safeHeight) {
       io.moveTowardsPivotGoal(pivotGoalRads, inputs.pivotAngleRadians);
     }
   }
