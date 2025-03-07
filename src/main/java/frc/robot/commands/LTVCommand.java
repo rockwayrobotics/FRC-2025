@@ -6,6 +6,8 @@ import edu.wpi.first.math.controller.LTVUnicycleController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
@@ -50,7 +52,7 @@ public class LTVCommand extends Command {
   private final Timer m_timer = new Timer();
   private final boolean m_usePID;
   private Trajectory m_trajectory;
-  private boolean m_trajectoryFlipped = false;
+  private boolean m_trajectoryRotated = false;
   private final Supplier<Pose2d> m_pose;
   private final LTVUnicycleController m_follower;
   private final SimpleMotorFeedforward m_feedforward;
@@ -175,14 +177,16 @@ public class LTVCommand extends Command {
     m_prevTime = -1;
     DriverStation.getAlliance().ifPresent((alliance) -> {
       if (alliance.equals(DriverStation.Alliance.Red)) {
-        if (!m_trajectoryFlipped) {
-          m_trajectory = TrajectoryUtils.flipTrajectory(m_trajectory);
-          m_trajectoryFlipped = true;
+        if (!m_trajectoryRotated) {
+          // FIXME: Figure out why we can't move this into TrajectoryUtils.
+          // The problem is currently that the transformation is not its own inverse.
+          m_trajectory = TrajectoryUtils.rotateTrajectory180(m_trajectory);
+          m_trajectoryRotated = true;
         }
       } else if (alliance.equals(DriverStation.Alliance.Blue)) {
-        if (m_trajectoryFlipped) {
-          m_trajectory = TrajectoryUtils.flipTrajectory(m_trajectory);
-          m_trajectoryFlipped = false;
+        if (m_trajectoryRotated) {
+          m_trajectory = TrajectoryUtils.rotateTrajectory180(m_trajectory);
+          m_trajectoryRotated = false;
         }
       }
     });
