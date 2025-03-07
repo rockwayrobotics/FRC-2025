@@ -179,17 +179,22 @@ class TofMain:
         nt = self.nt = ntcore.NetworkTableInstance.getDefault()
         nt.setServerTeam(8089)
 
-        sensorModeTopic = nt.getStringTopic("/Pi/tof_mode")
-        self.sensorModeSub = sensorModeTopic.subscribe('none',
-           ntcore.PubSubOptions(keepDuplicates=True))
-        # sensorModeTopic = nt.getIntegerTopic("/Pi/tof_mode")
-        # self.sensorModeSub = sensorModeTopic.subscribe(0,
-        #    ntcore.PubSubOptions(keepDuplicates=True))
-        self.modeListener = ntcore.NetworkTableListenerPoller(nt)
-        self.modeListener.addListener(self.sensorModeSub, ntcore.EventFlags.kValueAll)
+        if self.args.serve:
+            tofModeTopic = nt.getStringTopic("/Pi/tof_mode")
+            self.tofModeSub = tofModeTopic.subscribe('none',
+               ntcore.PubSubOptions(keepDuplicates=True))
 
-        speedTopic = nt.getDoubleTopic("/Pi/speed")
-        self.speedSub = speedTopic.subscribe(0.0)
+            self.modeListener = ntcore.NetworkTableListenerPoller(nt)
+            self.modeListener.addListener(self.tofModeSub, ntcore.EventFlags.kValueAll)
+
+            speedTopic = nt.getDoubleTopic("/Pi/speed")
+            self.speedSub = speedTopic.subscribe(0.0)
+        else:
+            sensorModeTopic = nt.getDoubleArrayTopic("/Pi/SensorMode")
+            self.sensorModeSub = sensorModeTopic.subscribe([0, 0],
+               ntcore.PubSubOptions(keepDuplicates=True))
+            self.modeListener = ntcore.NetworkTableListenerPoller(nt)
+            self.modeListener.addListener(self.sensorModeSub, ntcore.EventFlags.kValueAll)
 
         self.distPub = nt.getFloatTopic("/Pi/dist_mm").publish()
         self.distPub.set(0)
@@ -210,11 +215,12 @@ class TofMain:
             # self.sensorModePub.set(0)
             self.speedPub = speedTopic.publish()
             self.speedPub.set(0.0)
+
+            self.tofModePub = tofModeTopic.publish()
+            self.tofModePub.set('none')
         else:
             nt.startClient4("tof")
 
-        self.sensorModePub = sensorModeTopic.publish()
-        self.sensorModePub.set('none')
 
     def run(self):
         self.log.info('-' * 40)
@@ -266,6 +272,13 @@ class TofMain:
         'front-right': 0,
         'rear-left': 1,
         'rear-right': 0,
+        0: None,
+
+        # unverified:
+        1: 1, # front left
+        2: 0, # front right
+        3: 1, # back left
+        4: 0, # back right
     }
 
     def loop(self):
@@ -284,9 +297,16 @@ class TofMain:
                 self.log.debug('event: %s', event)
             # keep only the last one
             if event is not None:
-                mode = event.data.value.value()
+                if self.args.serve:
+                    mode = event.data.value.value()
+                    self.speed = self.speedSub.get()
+                else:
+                    try:
+                        xmode, self.speed = event.data.value.value()
+                        mode = int(xmode)
+                    except Exception as ex:
+                        self.log.error('SensorMode error: %s', ex)
 
-                self.speed = self.speedSub.get()
                 self.log.info('mode %s, speed %s', mode, self.speed)
 
                 # handle mode changes
