@@ -9,6 +9,8 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkClosedLoopController;
@@ -84,7 +86,14 @@ public class DriveIOSparkMax implements DriveIO {
     REVUtils.tryUntilOk(() -> leftEncoder.setPosition(0.0));
     REVUtils.tryUntilOk(() -> rightEncoder.setPosition(0.0));
 
-    differentialDrive = new DifferentialDrive(leftDriveMotorF, rightDriveMotorF);
+    // differentialDrive = new DifferentialDrive(leftDriveMotorF, rightDriveMotorF);
+    differentialDrive = new DifferentialDrive((double output) -> {
+      Logger.recordOutput("Drive/open_loop_left_normalized", output);
+      leftDriveMotorF.set(output);
+    }, (double output) -> {
+      Logger.recordOutput("Drive/open_loop_right_normalized", output);
+      rightDriveMotorF.set(output);
+    });
 
     DrivebasePID_P.addListener((_e) -> updateParams());
     DrivebasePID_I.addListener((_e) -> updateParams());
