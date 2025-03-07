@@ -76,6 +76,8 @@ public class ScoreCommandsOnlyDrive {
   static final Tuner testScoreWallDistanceMeters = new Tuner("TestScore/distance_along_wall_meters", 0.4, true);
   static final Tuner testScoreShootSpinDuration = new Tuner("TestScore/shoot_spin_duration_seconds", 3, true);
 
+  static final Tuner chuteTofDistanceMeters = new Tuner("Score/chute_tof_distance_meters", 0.26, true);
+
   public static final double SCORING_EPSILON_METERS = 0.25;
 
   /**
@@ -88,11 +90,9 @@ public class ScoreCommandsOnlyDrive {
   public static double farDistance(Constants.ToFSensorLocation location) {
     switch (location) {
       case FRONT_LEFT:
-        return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX()
-            - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+        return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + chuteTofDistanceMeters.get();
       case FRONT_RIGHT:
-        return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX()
-            - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+        return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + chuteTofDistanceMeters.get();
       // case BACK_LEFT:
       // return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS -
       // Constants.ToFSensor.BACK_LEFT.getX()
@@ -109,11 +109,9 @@ public class ScoreCommandsOnlyDrive {
   public static double nearDistance(Constants.ToFSensorLocation location) {
     switch (location) {
       case FRONT_LEFT:
-        return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX()
-            - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+        return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + chuteTofDistanceMeters.get();
       case FRONT_RIGHT:
-        return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX()
-            - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+        return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + chuteTofDistanceMeters.get();
       // case BACK_LEFT:
       // return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS -
       // Constants.ToFSensor.BACK_LEFT.getX()
@@ -158,6 +156,7 @@ public class ScoreCommandsOnlyDrive {
       commandState.cornerTimestamp = results[0];
       // Angle is in radians
       commandState.angle = results[1];
+      System.out.println("Received results from Pi: " + results[0] + ", " + results[1]);
       commandState.isValid = true;
     });
 
@@ -168,7 +167,13 @@ public class ScoreCommandsOnlyDrive {
 
         Commands.sequence(
             Commands.runOnce(() -> {
-              speedTopic.set(drive.getLeftVelocityMetersPerSec());
+              System.out.println("Speed before wait: " + drive.getLeftVelocityMetersPerSec());
+            }),
+            Commands.waitSeconds(0.2),
+            Commands.runOnce(() -> {
+              var speed = drive.getLeftVelocityMetersPerSec();
+              System.out.println("Sending start to Pi with speed: " + speed);
+              speedTopic.set(speed);
               if (chute.getPivotGoalRads() > 0) {
                 tofTopic.set("left");
                 sensorLocation.set(Constants.ToFSensorLocation.FRONT_LEFT);
@@ -185,6 +190,7 @@ public class ScoreCommandsOnlyDrive {
                 commandState.cornerDistance = distance;
                 commandState.targetLeftEncoder = distance
                     + getTargetWallDistance(reefBar, sensorLocation.get()) * Math.cos(commandState.angle);
+                System.out.println("Setting targets: " + commandState.cornerDistance + ", " + commandState.targetLeftEncoder);
               }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
                 System.err.println("Failed to find scoring encoder distance because we have no position data");
               })));
@@ -193,14 +199,17 @@ public class ScoreCommandsOnlyDrive {
               return Math.abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
             }),
             Commands.run(() -> {
+              System.out.println("Trying to shoot");
               chute.startShooting();
             }).withTimeout(2.0),
             Commands.runOnce(() -> {
+              System.out.println("Stopping shooting");
               chute.stopShooting();
             })));
     command.addRequirements(drive);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
+      System.out.println("Command completed: interrupted? " + interrupted);
       tofTopic.set("none");
       speedTopic.set(Constants.Drive.SCORING_SPEED);
       //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });

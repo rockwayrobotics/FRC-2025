@@ -188,6 +188,7 @@ public final class Constants {
 
   public static final class ToFSensor {
     // FIXME: Simulated locations of sensors are not measured
+    // DO NOT USE THESE ARE WRONG
     public static final Transform2d FRONT_LEFT = new Transform2d(new Translation2d(0.5, 0.5),
         Rotation2d.fromDegrees(90));
     public static final Transform2d BACK_LEFT = new Transform2d(new Translation2d(-0.5, 0.5),
