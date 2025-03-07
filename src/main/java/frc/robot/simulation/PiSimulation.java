@@ -6,10 +6,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.DoubleArraySubscriber;
+import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.FloatArrayPublisher;
 import edu.wpi.first.networktables.FloatPublisher;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.util.CircularBuffer;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
@@ -18,11 +20,12 @@ import frc.robot.ScoringState.SensorState;
 import frc.robot.simulation.WorldSimulation.FieldObstacles;
 
 public class PiSimulation {
-  public static final double[] DEFAULT_STATE = new double[] { SensorState.NONE.piValue(), 0 };
-  private final DoubleArraySubscriber piStateSubscriber;
+  public static final String DEFAULT_STATE = "none";
+  private final StringSubscriber modeSubscriber;
+  private final DoubleSubscriber speedSubscriber;
   private final FloatArrayPublisher cornerPublisher;
   private final FieldObstacles fieldObstacles;
-  private double[] piState = DEFAULT_STATE;
+  private String piMode = DEFAULT_STATE;
 
   public record TimeDistance(float time, float distance) {
   }
@@ -34,7 +37,8 @@ public class PiSimulation {
 
   public PiSimulation(FieldObstacles fieldObstacles) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
-    piStateSubscriber = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).subscribe(DEFAULT_STATE);
+    modeSubscriber = nt.getStringTopic(Constants.NT.TOF_MODE).subscribe("none");
+    speedSubscriber = nt.getDoubleTopic(Constants.NT.SPEED).subscribe(0);
     cornerPublisher = nt.getFloatArrayTopic(Constants.NT.CORNERS).publish();
     this.fieldObstacles = fieldObstacles;
   }
@@ -88,23 +92,24 @@ public class PiSimulation {
   }
 
   public void periodic(Pose2d robotPose) {
-    double[][] piStateValues = piStateSubscriber.readQueueValues();
-    if (piStateValues.length > 0) {
-      piState = piStateValues[piStateValues.length - 1];
+    String[] modes = modeSubscriber.readQueueValues();
+    if (modes.length > 0) {
+      piMode = modes[modes.length - 1];
     }
+    var speed = speedSubscriber.get(0);
 
-    if (piState[0] == ScoringState.SensorState.NONE.piValue()) {
+    if (piMode.equals("none")) {
       return;
     }
 
     Transform2d sensorTransform = null;
-    if (piState[0] == ScoringState.SensorState.FRONT_LEFT.piValue()) {
+    if (piMode.equals("left") || piMode.equals("front-left")) {
       sensorTransform = Constants.ToFSensor.FRONT_LEFT;
-    } else if (piState[0] == ScoringState.SensorState.FRONT_RIGHT.piValue()) {
+    } else if (piMode.equals("right") || piMode.equals("front-right")) {
       sensorTransform = Constants.ToFSensor.FRONT_RIGHT;
-    } else if (piState[0] == ScoringState.SensorState.BACK_LEFT.piValue()) {
+    } else if (piMode.equals("back-left")) {
       sensorTransform = Constants.ToFSensor.BACK_LEFT;
-    } else if (piState[0] == ScoringState.SensorState.BACK_RIGHT.piValue()) {
+    } else if (piMode.equals("back-right")) {
       sensorTransform = Constants.ToFSensor.BACK_RIGHT;
     }
 
@@ -119,7 +124,7 @@ public class PiSimulation {
         + sensorTransform.getRotation().getRadians();
     double distanceMm = ToFSimUtils.simulateSensor(sensorPose, angle, fieldObstacles);
     if (distanceMm < Double.POSITIVE_INFINITY) {
-      var maybeCornerInfo = this.addRecord((float) distanceMm, piState[1]);
+      var maybeCornerInfo = this.addRecord((float) distanceMm, speed);
       maybeCornerInfo.ifPresent(cornerInfo -> {
         cornerPublisher.set(new float[] { (float) cornerInfo.cornerTimestamp, (float) cornerInfo.angle });
         data.clear();

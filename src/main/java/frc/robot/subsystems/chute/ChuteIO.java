@@ -30,6 +30,9 @@ public interface ChuteIO {
   public default void setBrakeMode(boolean mode) {
   }
 
+  public default void setEncoder(double position) {
+  }
+
   public default CompletableFuture<Boolean> home() {
     return null;
   }

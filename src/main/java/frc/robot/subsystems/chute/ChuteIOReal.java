@@ -173,4 +173,8 @@ public class ChuteIOReal implements ChuteIO {
     }
     return promise;
   }
+
+  public void setEncoder(double position) {
+    REVUtils.tryUntilOk(() -> pivotEncoder.setPosition(position));
+  }
 }

@@ -167,14 +167,18 @@ public class RobotContainer {
       driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
       driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-      driverController.leftTrigger().whileTrue(new RepeatCommand(new InstantCommand(() -> 
-      drive.set(0.175, driverController.getRightX()))));
-      driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.set(0, 0)));
+      driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(0.7)));
+      driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(1)));
+
+      driverController.rightTrigger()
+          .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175, driverController.getRightX()))));
+      driverController.rightBumper().onFalse(new InstantCommand(() -> drive.set(0, 0)));
 
       driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR));
       driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR));
 
-      driverController.rightBumper().whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure));
+      driverController.rightBumper()
+          .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure));
       driverController.rightBumper().onFalse(Commands.runOnce(() -> superstructure.chute.stopShooting()));
 
       testController.povUpLeft().onTrue(new InstantCommand(() -> {
@@ -343,6 +347,13 @@ public class RobotContainer {
 
       new JoystickButton(operator1Controller, 9).onTrue(Commands.runOnce(() -> {
         superstructure.home();
+      }, superstructure));
+
+      new JoystickButton(operator1Controller, 10).onTrue(Commands.runOnce(() -> {
+        System.out.println("Overriding homing Chute");
+        superstructure.chute.setEncoder(Units.degreesToRadians(-90));
+        superstructure.chute.setIsHomed(true);
+        superstructure.chute.stayStill();
       }, superstructure));
 
       new JoystickButton(operator1Controller, 14).onTrue(Commands.runOnce(() -> {

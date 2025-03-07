@@ -84,8 +84,16 @@ public class Chute {
     }).schedule();
   }
 
+  public void setEncoder(double position) {
+    io.setEncoder(position);
+  }
+
   public boolean isHomed() {
     return isHomed;
+  }
+
+  public void setIsHomed(boolean v) {
+    this.isHomed = v;
   }
 
   public void stayStill() {

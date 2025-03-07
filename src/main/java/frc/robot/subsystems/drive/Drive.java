@@ -74,6 +74,7 @@ public class Drive extends SubsystemBase {
   private double lastLeftPositionMeters = 0.0;
   private double lastRightPositionMeters = 0.0;
   private double scale = 1.0;
+  private double rotationScale = 1.0;
 
   private double leftPositionShootTarget = Double.NaN;
   private double rightPositionShootTarget = Double.NaN;
@@ -100,7 +101,6 @@ public class Drive extends SubsystemBase {
 
   TimeInterpolatableBuffer<Double> leftPositionBuffer;
   TimeInterpolatableBuffer<Double> rightPositionBuffer;
-
 
   public Drive(DriveIO io, GyroIO gyroIO) {
     this.io = io;
@@ -248,6 +248,10 @@ public class Drive extends SubsystemBase {
     this.scale = scale;
   }
 
+  public void setRotationScale(double scale) {
+    this.rotationScale = scale; 
+  }
+
   public DifferentialDriveWheelSpeeds getWheelSpeeds() {
     return new DifferentialDriveWheelSpeeds(
         getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec());
@@ -262,7 +266,7 @@ public class Drive extends SubsystemBase {
    * This method is only used for defaultDrive.
    */
   public void set(double speed, double rotation) {
-    differentialDrive.curvatureDrive(speed * scale, rotation * scale, true);
+    differentialDrive.curvatureDrive(speed * scale, rotation * scale * rotationScale, true);
   }
 
   /**
