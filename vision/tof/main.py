@@ -194,7 +194,7 @@ class TofMain:
         self.distPub = nt.getFloatTopic("/Pi/dist_mm").publish()
         self.distPub.set(0)
 
-        self.cornerPub = nt.getDoubleArrayTopic("/Pi/Corners").publish()
+        self.cornerPub = nt.getFloatArrayTopic("/Pi/Corners").publish()
         self.cornerPub.set([0.0, 0.0])
 
         self.cornerTsPub = nt.getFloatTopic("/Pi/corner_ts").publish()
