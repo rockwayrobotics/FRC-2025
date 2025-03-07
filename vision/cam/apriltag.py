@@ -19,17 +19,12 @@ from cscore import CvSource, VideoMode, CameraServer, MjpegServer
 import numpy as np
 import numpy.typing
 
-from keys import NonBlockingConsole
-
 import cv2
 import robotpy_apriltag as at
 
 from ntcore import NetworkTableInstance, PubSubOptions
 from wpimath.geometry import CoordinateSystem, Transform3d, Translation3d, Rotation3d, Pose3d
 from wpimath import units
-
-from libcamera import Transform
-import picamera2
 
 TAG_SIZE_METERS = 0.1651
 

@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
 
-# pylint: disable=unused-import,invalid-name,trailing-whitespace,missing-module-docstring
+# pylint: disable=invalid-name,trailing-whitespace,missing-module-docstring
 # pylint: disable=missing-function-docstring,missing-class-docstring,no-member
 # pylint: disable=consider-using-with,too-few-public-methods
 
 import datetime as dt
 import io
 import logging
-import socketserver
-from http import server
 import threading
 import math
 import os
-import platform
 import time
 import traceback
 from cscore import CvSource, VideoMode, CameraServer, MjpegServer
-
-import numpy as np
 
 import cv2
 
@@ -99,7 +94,7 @@ def main():
     if args.save:
         for i in [0, 1]:
             # TODO: different file extension if quality set (i.e. mjpeg)?
-            stream = VideoEncoder(f'logs/cam{i}.mp4', fps=args.fps,
+            stream = VideoEncoder(f'videos/cam{i}.mp4', fps=args.fps,
                 width=args.res[0], height=args.res[1], quality=args.quality,
                 debug=args.debug)
             stream.start()
@@ -157,7 +152,7 @@ def main():
                     except BrokenPipeError:
                         pass
 
-            dashboard_arr = cv2.resize(arr0 if driver_cam is cam0 else arr1, (320, 240))
+            dashboard_arr = cv2.resize(arr0 if driver_cam is cam0 else arr1, (640, 480))
             source.putFrame(dashboard_arr)
 
             aprilDetector.detect(arr0)
