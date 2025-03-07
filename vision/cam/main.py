@@ -143,7 +143,7 @@ def main():
                 for (i, arr) in enumerate([arr0, arr1]):
                     streams[i].add_frame(arr)
 
-            dashboard_arr = cv2.resize(arr0 if driver_cam is cam0 else arr1, (640, 480))
+            dashboard_arr = cv2.resize(arr0 if driver_cam is cam0 else arr1, (320, 240))
             source.putFrame(dashboard_arr)
 
             aprilDetector.detect(arr0)
