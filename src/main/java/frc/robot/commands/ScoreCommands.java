@@ -77,10 +77,10 @@ public class ScoreCommands {
   static final Tuner testScoreShootSpinDuration = new Tuner("TestScore/shoot_spin_duration_seconds", 3, true);
 
   public static final double SCORING_EPSILON_METERS = 0.25;
-
+  // FIXME commented out piState stuff because it doesnt work rn 
   public static Command score(Drive drive, Superstructure superstructure) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
-    DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
+   // DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
     FloatArrayTopic cornerTopic = nt.getFloatArrayTopic(Constants.NT.CORNERS);
     ParallelRaceGroup cancellableGroup = new ParallelRaceGroup();
     ScoreCommandState commandState = new ScoreCommandState();
@@ -117,8 +117,8 @@ public class ScoreCommands {
               return Math.abs(commandState.speeds.getFirst() - commandState.speeds.getLast()) < 0.01;
             }),
             Commands.runOnce(() -> {
-              piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
-                  commandState.speeds.getLast() });
+              // piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
+              //     commandState.speeds.getLast() });
             }),
             Commands.waitUntil(() -> commandState.isValid),
             Commands.runOnce(() -> {
@@ -144,7 +144,7 @@ public class ScoreCommands {
     command.addRequirements(drive, superstructure);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
-      piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
+      // piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
       superstructure.stopShooting();
@@ -176,7 +176,7 @@ public class ScoreCommands {
     double chuteAngleRads = Units.degreesToRadians(chuteAngleDegrees);
 
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
-    DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
+    //DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
     FloatArrayTopic cornerTopic = nt.getFloatArrayTopic(Constants.NT.CORNERS);
     ParallelRaceGroup cancellableGroup = new ParallelRaceGroup();
     TestScoreCommandState commandState = new TestScoreCommandState();
@@ -227,8 +227,8 @@ public class ScoreCommands {
           }),
           Commands.runOnce(() -> {
             System.out.println("TestScore: Setting PiState");
-            piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
-                commandState.speeds.getLast() });
+           // piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
+            //    commandState.speeds.getLast() });
           }),
           Commands.waitUntil(() -> {
             commandState.fakeCornerTriggered = fakeCornerTrigger.getAsBoolean();
@@ -282,7 +282,7 @@ public class ScoreCommands {
         drive.stop();
       }
       System.out.println("TestScore: Resetting");
-      piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
+      //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
       superstructure.stopShooting();
