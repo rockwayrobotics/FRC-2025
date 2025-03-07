@@ -45,7 +45,7 @@ public class GrabberIOReal implements GrabberIO {
     SparkMaxConfig grabberConfig = new SparkMaxConfig();
 
     // NEO 550's have a recommended current limit range of 20-40A.
-    grabberConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(60).voltageCompensation(12.0);
+    grabberConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(80).voltageCompensation(12.0);
 
     grabberConfig.inverted(Constants.Grabber.LEFT_GRABBER_INVERTED);
     REVUtils.tryUntilOk(() -> leftGrabberMotor.configure(grabberConfig, ResetMode.kResetSafeParameters,

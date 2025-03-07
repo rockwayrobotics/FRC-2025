@@ -167,14 +167,15 @@ public class RobotContainer {
       driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
       driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-      driverController.leftTrigger().whileTrue(new RepeatCommand(new InstantCommand(() -> 
-      drive.set(0.175, driverController.getRightX()))));
+      driverController.leftTrigger()
+          .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175, driverController.getRightX()))));
       driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.set(0, 0)));
 
       driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR));
       driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR));
 
-      driverController.rightBumper().whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure));
+      driverController.rightBumper()
+          .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure));
       driverController.rightBumper().onFalse(Commands.runOnce(() -> superstructure.chute.stopShooting()));
 
       testController.povUpLeft().onTrue(new InstantCommand(() -> {

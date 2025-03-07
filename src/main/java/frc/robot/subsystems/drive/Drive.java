@@ -101,7 +101,6 @@ public class Drive extends SubsystemBase {
   TimeInterpolatableBuffer<Double> leftPositionBuffer;
   TimeInterpolatableBuffer<Double> rightPositionBuffer;
 
-
   public Drive(DriveIO io, GyroIO gyroIO) {
     this.io = io;
     this.gyroIO = gyroIO;

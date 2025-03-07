@@ -51,7 +51,7 @@ public final class Constants {
     // change this, swap the CAN ids instead.
     public static final double JOY_SPEED_SCALE = -1;
     // to be tested
-    public static final double JOY_ROTATE_SCALE = -0.3;
+    public static final double JOY_ROTATE_SCALE = -1;
   }
 
   public static final class Dimensions {
@@ -136,8 +136,8 @@ public final class Constants {
     public final static double WHEEL_ENCODER_SCALING = WHEEL_CIRCUM_CM / WHEEL_GEAR_RATIO;
 
     // Measured with the feedForwardCharacterization drive command
-    public static final double REAL_KS = 0.18389;
-    public static final double REAL_KV = 2.26057;
+    public static final double REAL_KS = 0.23357;
+    public static final double REAL_KV = 2.22866;
     public static final double SIM_KS = 0.08776;
     public static final double SIM_KV = 2.27678;
 
