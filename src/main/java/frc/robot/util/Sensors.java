@@ -21,6 +21,8 @@ public class Sensors {
   private DigitalInput elevatorHomeBeambreak = new DigitalInput(
       Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
 
+  public boolean overrideChuteHomeSwitch = false;
+
   private static Sensors instance = null;
 
   private Sensors() {
@@ -62,6 +64,9 @@ public class Sensors {
 
   /** @return true if the chute home limit switch is pressed. */
   public boolean getChuteHomeSwitch() {
+    if (overrideChuteHomeSwitch) {
+      return true;
+    }
     return !chuteHomeSwitch.get();
   }
 

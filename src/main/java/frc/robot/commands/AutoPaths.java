@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import static edu.wpi.first.units.Units.Seconds;
+
 import java.util.List;
 import edu.wpi.first.math.Vector;
 
@@ -9,12 +11,14 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.trajectory.constraint.CentripetalAccelerationConstraint;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
@@ -42,30 +46,39 @@ public class AutoPaths {
   // adjustable auto wait time
   private final static Tuner autoWaitTime = new Tuner("AutoWaitTime", 0.0, false);
 
+  // The single trajectory config that applies to all autos
+  private static final TrajectoryConfig config = new TrajectoryConfig(trajectoryMaxVelocity, trajectoryMaxAcceleration)
+        .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+        .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration));
+
+
   private AutoPaths() {
   }
 
   // TODO: Add voltage constraint with feedforward: .addConstraint(null);
 
-  public static Command midFarRightL2(Drive drive, Superstructure superstructure) {
-    double start_pose_x = 7.464;
-    double start_pose_y = 4.000;
-    double start_pose_heading_deg = 180;
-    double end_pose_x = 5.389;
-    double end_pose_y = 2.824;
-    double end_pose_heading_deg = 180;
+  /**
+   * Moves forward half a meter and stops at 0.5m/s. Takes 1 second.
+   */
+  public static Command justMove(Drive drive, Superstructure superstructure) {
+    return Commands.run(() -> {
+      drive.setTankDrive(new ChassisSpeeds(0.5, 0, 0));
+    }).withTimeout(Seconds.of(1)).finallyDo(() -> {
+      drive.stop();
+    });
+  }
 
-    List<Translation2d> interior_waypoints = List.of();
-
-    TrajectoryConfig config = new TrajectoryConfig(trajectoryMaxVelocity, trajectoryMaxAcceleration)
-        .setKinematics(RobotTracker.getInstance().getDriveKinematics())
-        .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration));
-
-    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
-        new Pose2d(start_pose_x, start_pose_y,
-            Rotation2d.fromDegrees(start_pose_heading_deg)),
-        interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-
+  /**
+   * Generates a trajectory
+   * @param startPose
+   * @param endPose
+   * @param level
+   * @param side
+   * @param drive
+   * @param superstructure
+   * @return
+   */
+  private static Command runTrajectory(Trajectory trajectory, CoralLevel level, Side side, Drive drive, Superstructure superstructure) {
     LTVUnicycleController ltvController = new LTVUnicycleController(LTV_qelems, LTV_relems, LTV_dt,
         config.getMaxVelocity());
     PIDController leftController = new PIDController(kP, kI, kD);
@@ -85,8 +98,73 @@ public class AutoPaths {
         }, drive);
 
     return Commands.sequence(Commands.waitSeconds(autoWaitTime.get()), path1,
-        Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT)),
-        Commands.waitSeconds(1),
-        Commands.runOnce(() -> superstructure.startShooting()));
+        Commands.runOnce(() -> {
+          drive.stop();
+          superstructure.gotoSetpoint(level, side);
+        }),
+        Commands.waitUntil(() -> {
+          return superstructure.isElevatorAtGoal() && superstructure.isPivotAtGoal();
+        }),
+        Commands.runOnce(() -> {
+          superstructure.startShooting();
+        }),
+        Commands.waitSeconds(0.5)
+    ).finallyDo(() -> {
+      superstructure.stopShooting();
+      superstructure.setChutePivotGoalRads(superstructure.getPivotAngleRads() > 0 ? Units.degreesToRadians(90) : Units.degreesToRadians(-90));
+      superstructure.setElevatorGoalHeightMillimeters(0);
+      drive.stop();
+    });
+  }
+
+  public static Command midFarRightL2(Drive drive, Superstructure superstructure) {
+    double start_pose_x = 7.464;
+    double start_pose_y = 4.000;
+    double start_pose_heading_deg = 210;
+    double end_pose_x = 5.389;
+    double end_pose_y = 2.824;
+    double end_pose_heading_deg = 210;
+
+    List<Translation2d> interior_waypoints = List.of();
+
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
+    return runTrajectory(trajectory, CoralLevel.L2, Side.RIGHT, drive, superstructure);
+  }
+  
+  public static Command rightNearCenterL2(Drive drive, Superstructure superstructure) {
+    double start_pose_x = 7.464;
+    double start_pose_y = 1.000;
+    double start_pose_heading_deg = 180;
+    double end_pose_x = 3.05;
+    double end_pose_y = 3.8;
+    double end_pose_heading_deg = 90;
+
+    List<Translation2d> interior_waypoints = List.of();
+
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
+    return runTrajectory(trajectory, CoralLevel.L2, Side.RIGHT, drive, superstructure);
+  }
+  
+  public static Command leftNearCenterL2(Drive drive, Superstructure superstructure) {
+    double start_pose_x = 7.464;
+    double start_pose_y = 7.050; // 1 m from wall
+    double start_pose_heading_deg = 180;
+    double end_pose_x = 3.05;
+    double end_pose_y = 4.25;
+    double end_pose_heading_deg = -90;
+
+    List<Translation2d> interior_waypoints = List.of();
+
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
+    return runTrajectory(trajectory, CoralLevel.L2, Side.LEFT, drive, superstructure);
   }
 }
