@@ -8,6 +8,7 @@ import edu.wpi.first.math.controller.LTVUnicycleController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.Trajectory;
@@ -47,21 +48,31 @@ public class AutoPaths {
   // TODO: Add voltage constraint with feedforward: .addConstraint(null);
 
   public static Command midFarRightL2(Drive drive, Superstructure superstructure) {
+    double start_pose_x = 7.464;
+    double start_pose_y = 4.000;
+    double start_pose_heading_deg = 180;
+    double end_pose_x = 5.389;
+    double end_pose_y = 2.824;
+    double end_pose_heading_deg = 180;
+
+    List<Translation2d> interior_waypoints = List.of();
+
     TrajectoryConfig config = new TrajectoryConfig(trajectoryMaxVelocity, trajectoryMaxAcceleration)
         .setKinematics(RobotTracker.getInstance().getDriveKinematics())
         .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration));
 
-    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-        new Pose2d(7.464, 4.000, Rotation2d.fromDegrees(180)),
-        List.of(), new Pose2d(5.389, 2.824, Rotation2d.fromDegrees(180)), config);
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
 
     LTVUnicycleController ltvController = new LTVUnicycleController(LTV_qelems, LTV_relems, LTV_dt,
         config.getMaxVelocity());
     PIDController leftController = new PIDController(kP, kI, kD);
     PIDController rightController = new PIDController(kP, kI, kD);
 
-    drive.setPose(exampleTrajectory.getInitialPose());
-    LTVCommand path1 = new LTVCommand(exampleTrajectory, () -> RobotTracker.getInstance().getEstimatedPose(),
+    drive.setPose(trajectory.getInitialPose());
+    LTVCommand path1 = new LTVCommand(trajectory, () -> RobotTracker.getInstance().getEstimatedPose(),
         ltvController,
         drive.getFeedForward(), RobotTracker.getInstance().getDriveKinematics(),
         () -> drive.getWheelSpeeds(),
