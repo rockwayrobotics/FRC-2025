@@ -56,6 +56,7 @@ import frc.robot.subsystems.grabber.GrabberIOReal;
 import frc.robot.subsystems.grabber.GrabberIOSim;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.util.Sensors;
+import frc.robot.util.Tuner;
 
 public class RobotContainer {
   // Subsystems are listed here
@@ -75,6 +76,7 @@ public class RobotContainer {
   private final ShuffleboardTab dashboard = Shuffleboard.getTab("RobotContainer");
   private final GenericEntry driveScale = dashboard.addPersistent("Drivescale", 1).getEntry();
   private final NetworkTableInstance nt = NetworkTableInstance.getDefault();
+  private final Tuner rotationTuner = new Tuner("rotationTuner", 0.7, true);
 
   // Set up a camera publisher so I can publish value of camera to NetworkTables
   private final NetworkTableEntry cameraPublisher = nt.getEntry("/CameraPublisher/PiCam/selected");
@@ -170,7 +172,7 @@ public class RobotContainer {
       driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
       driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-      driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(0.7)));
+      driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(rotationTuner.get())));
       driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(1)));
 
       driverController.rightTrigger()
