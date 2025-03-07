@@ -4,10 +4,8 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Pounds;
-import static edu.wpi.first.units.Units.Radians;
 
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
@@ -32,8 +30,9 @@ import edu.wpi.first.math.util.Units;
  */
 public final class Constants {
   public static final class NT {
-    public static final String SENSOR_MODE = "/Pi/SensorMode";
+    public static final String TOF_MODE = "/Pi/tof_mode";
     public static final String CORNERS = "/Pi/Corners";
+    public static final String SPEED = "/Pi/speed";
   }
 
   public static final class Field {
@@ -197,6 +196,15 @@ public final class Constants {
         Rotation2d.fromDegrees(-90));
     public static final Transform2d BACK_RIGHT = new Transform2d(new Translation2d(-0.5, -0.5),
         Rotation2d.fromDegrees(-90));
+  }
+
+  public static enum ToFSensorLocation {
+    NONE_SELECTED, FRONT_LEFT, BACK_LEFT, FRONT_RIGHT, BACK_RIGHT
+  }
+
+  public static enum ReefBar {
+    NEAR,
+    FAR
   }
 
   public static final class Digital {

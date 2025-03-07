@@ -10,6 +10,8 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.FloatArrayEntry;
 import edu.wpi.first.networktables.FloatArrayPublisher;
 import edu.wpi.first.networktables.FloatArrayTopic;
@@ -18,6 +20,8 @@ import edu.wpi.first.networktables.FloatTopic;
 import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.PubSubOption;
+import edu.wpi.first.networktables.StringPublisher;
+import edu.wpi.first.networktables.StringTopic;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.util.CircularBuffer;
@@ -74,12 +78,80 @@ public class ScoreCommandsOnlyDrive {
 
   public static final double SCORING_EPSILON_METERS = 0.25;
 
-  public static Command score(Drive drive, Chute chute) {
+  /**
+   * Distance in meters between selected ToF sensor and center of far reef bar,
+   * assuming front sensors are used for going forwards and back sensors for
+   * scoring while reversing.
+   * 
+   * @return distance in meters
+   */
+  public static double farDistance(Constants.ToFSensorLocation location) {
+    switch (location) {
+      case FRONT_LEFT:
+        return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX()
+            - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+      case FRONT_RIGHT:
+        return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX()
+            - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+      // case BACK_LEFT:
+      // return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS -
+      // Constants.ToFSensor.BACK_LEFT.getX()
+      // + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+      // case BACK_RIGHT:
+      // return Constants.Field.REEF_CORNER_TO_FAR_POST_METERS -
+      // Constants.ToFSensor.BACK_RIGHT.getX()
+      // + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+      default:
+        return 0;
+    }
+  }
+
+  public static double nearDistance(Constants.ToFSensorLocation location) {
+    switch (location) {
+      case FRONT_LEFT:
+        return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_LEFT.getX()
+            - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+      case FRONT_RIGHT:
+        return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS + Constants.ToFSensor.FRONT_RIGHT.getX()
+            - Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+      // case BACK_LEFT:
+      // return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS -
+      // Constants.ToFSensor.BACK_LEFT.getX()
+      // + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+      // case BACK_RIGHT:
+      // return Constants.Field.REEF_CORNER_TO_NEAR_POST_METERS -
+      // Constants.ToFSensor.BACK_RIGHT.getX()
+      // + Constants.Chute.CHUTE_CENTER_X_POSITION_METERS;
+      default:
+        return 0;
+    }
+  }
+
+  public static double getTargetWallDistance(Constants.ReefBar reefBar, Constants.ToFSensorLocation sensorState) {
+    int backOrForwards = 1;
+    // if (sensorState == SensorState.BACK_LEFT || sensorState ==
+    // SensorState.BACK_RIGHT) {
+    // backOrForwards = -1;
+    // }
+
+    switch (reefBar) {
+      case FAR:
+        return backOrForwards * farDistance(sensorState);
+      default:
+        return backOrForwards * nearDistance(sensorState);
+    }
+  }
+
+  public static Command score(Drive drive, Chute chute, Constants.ReefBar reefBar) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
-    DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
+    DoublePublisher speedTopic = nt.getDoubleTopic(Constants.NT.SPEED).publish();
+    StringPublisher tofTopic = nt.getStringTopic(Constants.NT.TOF_MODE).publish();
     FloatArrayTopic cornerTopic = nt.getFloatArrayTopic(Constants.NT.CORNERS);
     ParallelRaceGroup cancellableGroup = new ParallelRaceGroup();
     ScoreCommandState commandState = new ScoreCommandState();
+    // FIXME make this not atomic and cringe
+    final AtomicReference<Constants.ToFSensorLocation> sensorLocation = new AtomicReference<>(Constants.ToFSensorLocation.NONE_SELECTED);
+
     // We never stop listening to this
     nt.addListener(cornerTopic, EnumSet.of(Kind.kValueAll), networkTableEvent -> {
       float[] results = networkTableEvent.valueData.value.getFloatArray();
@@ -95,31 +167,25 @@ public class ScoreCommandsOnlyDrive {
         }),
 
         Commands.sequence(
-            // Commands.waitUntil(() -> {
-            // double speed = drive.getLeftVelocityMetersPerSec();
-            // if (Math.abs(speed) < 0.1) {
-            // return false;
-            // }
-            // commandState.speeds.addLast(speed);
-            // if (commandState.speeds.size() < 3) {
-            // return false;
-            // }
-            // return Math.abs(commandState.speeds.getFirst() -
-            // commandState.speeds.getLast()) < 0.01;
-            // }),
             Commands.waitSeconds(1),
             Commands.runOnce(() -> {
-              piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
-                  commandState.speeds.getLast() });
+              speedTopic.set(drive.getLeftVelocityMetersPerSec());
+              if (chute.getPivotGoalRads() < 0) {
+                tofTopic.set("left");
+                sensorLocation.set(Constants.ToFSensorLocation.FRONT_LEFT);
+              } else {
+                tofTopic.set("right");
+                sensorLocation.set(Constants.ToFSensorLocation.FRONT_RIGHT);
+              }
             }),
             Commands.waitUntil(() -> commandState.isValid),
             Commands.runOnce(() -> {
               Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp);
               leftEncoderDistance.ifPresentOrElse(distance -> {
-                var scoringState = RobotTracker.getInstance().getScoringState();
+                //var scoringState = RobotTracker.getInstance().getScoringState();
                 commandState.cornerDistance = distance;
                 commandState.targetLeftEncoder = distance
-                    + scoringState.getTargetWallDistance() * Math.cos(commandState.angle);
+                    + getTargetWallDistance(reefBar, sensorLocation.get()) * Math.cos(commandState.angle);
               }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
                 System.err.println("Failed to find scoring encoder distance because we have no position data");
               })));
@@ -136,7 +202,9 @@ public class ScoreCommandsOnlyDrive {
     command.addRequirements(drive);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
-      piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
+      tofTopic.set("none");
+      speedTopic.set(Constants.Drive.SCORING_SPEED);
+      //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
       chute.stopShooting();
@@ -157,7 +225,7 @@ public class ScoreCommandsOnlyDrive {
     }
 
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
-    DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
+    //DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
     FloatArrayTopic cornerTopic = nt.getFloatArrayTopic(Constants.NT.CORNERS);
     ParallelRaceGroup cancellableGroup = new ParallelRaceGroup();
     TestScoreCommandState commandState = new TestScoreCommandState();
@@ -191,8 +259,8 @@ public class ScoreCommandsOnlyDrive {
                 }),
                 Commands.runOnce(() -> {
                   System.out.println("TestScore: Setting PiState");
-                  piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
-                      commandState.speeds.getLast() });
+                  // piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
+                  //     commandState.speeds.getLast() });
                 }),
                 Commands.waitUntil(() -> {
                   commandState.fakeCornerTriggered = fakeCornerTrigger.getAsBoolean();
@@ -244,7 +312,7 @@ public class ScoreCommandsOnlyDrive {
         drive.stop();
       }
       System.out.println("TestScore: Resetting");
-      piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
+      // piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
       chute.stopShooting();
