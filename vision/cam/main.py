@@ -10,6 +10,7 @@ import logging
 import threading
 import math
 import os
+from pathlib import Path
 import time
 import traceback
 from cscore import CvSource, VideoMode, CameraServer, MjpegServer
@@ -31,6 +32,9 @@ from . import cam
 from .apriltag import AprilTagDetection
 from .keys import NonBlockingConsole
 from .recording import VideoEncoder
+
+
+VIDEO_DIR = Path('videos')
 
 def main():
     args = get_args()
@@ -94,7 +98,8 @@ def main():
     if args.save:
         for i in [0, 1]:
             # TODO: different file extension if quality set (i.e. mjpeg)?
-            stream = VideoEncoder(f'videos/cam{i}.mp4', fps=args.fps,
+            path = VIDEO_DIR / f"cam{i}-{dt.datetime.now().strftime('%Y%m%d-%H%M%S.mp4')}"
+            stream = VideoEncoder(str(path), fps=args.fps,
                 width=args.res[0], height=args.res[1], quality=args.quality,
                 debug=args.debug)
             stream.start()
