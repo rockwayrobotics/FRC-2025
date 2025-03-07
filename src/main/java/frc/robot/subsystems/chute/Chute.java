@@ -83,10 +83,12 @@ public class Chute {
   }
 
   public void home() {
-    var promise = io.home();
-    Commands.waitUntil(() -> promise.isDone()).finallyDo(() -> {
-      this.isHomed = promise.getNow(false);
-    }).schedule();
+    // var promise = io.home();
+    // Commands.waitUntil(() -> promise.isDone()).finallyDo(() -> {
+    // this.isHomed = promise.getNow(false);
+    // }).schedule();
+    io.setEncoder(Units.degreesToRadians(-90));
+    this.isHomed = true;
   }
 
   public void setEncoder(double position) {

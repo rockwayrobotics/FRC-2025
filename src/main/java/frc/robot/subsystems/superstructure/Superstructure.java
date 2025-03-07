@@ -106,20 +106,31 @@ public class Superstructure extends SubsystemBase {
    * Schedules the superstructure homing sequence.
    */
   public void home() {
-    var command = Commands.parallel(
-        Commands.runOnce(() -> grabber.home()),
+    // var command = Commands.parallel(
+    // Commands.runOnce(() -> grabber.home()),
+    // Commands.runOnce(() -> {
+    // elevator.home();
+    // elevator.setGoalHeightMillimeters(400);
+    // }),
+    // Commands.sequence(
+    // Commands
+    // .waitUntil(() -> elevator.getHeightMillimeters() >
+    // Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM),
+    // Commands.runOnce(() -> chute.home())))
+    // .finallyDo(() -> elevator.setGoalHeightMillimeters(0));
+
+    // command.addRequirements(this);
+    // command.schedule();
+    Commands.parallel(
         Commands.runOnce(() -> {
           elevator.home();
-          elevator.setGoalHeightMillimeters(400);
-        }),
-        Commands.sequence(
-            Commands
-                .waitUntil(() -> elevator.getHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM),
-            Commands.runOnce(() -> chute.home())))
-        .finallyDo(() -> elevator.setGoalHeightMillimeters(0));
-
-    command.addRequirements(this);
-    command.schedule();
+        }, this),
+        Commands.runOnce(() -> {
+          chute.home();
+        }, this),
+        Commands.runOnce(() -> {
+          grabber.home();
+        }, this)).schedule();
   }
 
   /**
