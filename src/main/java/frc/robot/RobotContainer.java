@@ -351,9 +351,7 @@ public class RobotContainer {
 
       new JoystickButton(operator1Controller, 10).onTrue(Commands.runOnce(() -> {
         System.out.println("Overriding homing Chute");
-        superstructure.chute.setEncoder(Units.degreesToRadians(-90));
-        superstructure.chute.setIsHomed(true);
-        superstructure.chute.stayStill();
+        Sensors.getInstance().overrideChuteHomeSwitch = true;
       }, superstructure));
 
       new JoystickButton(operator1Controller, 14).onTrue(Commands.runOnce(() -> {

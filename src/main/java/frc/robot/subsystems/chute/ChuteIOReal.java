@@ -11,6 +11,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.AsynchronousInterrupt;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
@@ -48,6 +49,8 @@ public class ChuteIOReal implements ChuteIO {
       Units.degreesToRadians(-90), true);
   final Tuner pivotSoftLimitMaxAngleRads = new Tuner("Chute/pivot_soft_limit_max_angle_rads",
       Units.degreesToRadians(90), true);
+
+  protected AsynchronousInterrupt inte = null;
 
   protected ArmFeedforward pivotFeedforward;
   protected double shooterSpeed = 0;
@@ -155,9 +158,10 @@ public class ChuteIOReal implements ChuteIO {
       finishHoming.run();
       System.out.println("home switch was pressed. No action");
     } else {
-      Commands.run(() -> pivotMotor.set(-0.1)).onlyWhile(() -> !Sensors.getInstance().getChuteHomeSwitch()).schedule();
+      Commands.run(() -> pivotMotor.set(-0.1)).onlyWhile(() -> !Sensors.getInstance().getChuteHomeSwitch())
+          .finallyDo(() -> this.inte.close()).schedule();
 
-      Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
+      this.inte = Sensors.getInstance().registerChuteHomeInterrupt((interrupt, rising, falling) -> {
         if (falling) {
           System.out.println("home switch started not pressed, it is now unpressed, falling. start");
           finishHoming.run();
