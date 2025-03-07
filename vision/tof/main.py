@@ -248,7 +248,7 @@ class TofMain:
             self.cornerAnglePub.set(cd.corner_angle * 180 / math.pi)
             self.nt.flush()
 
-            self.log.info("CORNER: %.3f,%.3f", ts, cd.corner_timestamp)
+            self.log.info("CORNER: %.3f,%.3f,%.3fs", ts, cd.corner_timestamp, self.speed)
             cd.log_timing()
 
             cd.reset()
