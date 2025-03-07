@@ -74,7 +74,7 @@ public class Drive extends SubsystemBase {
   private double lastLeftPositionMeters = 0.0;
   private double lastRightPositionMeters = 0.0;
   private double scale = 1.0;
-  private double rotationScale = 1.0;
+  private double rotationScale = 0.76;
 
   private double leftPositionShootTarget = Double.NaN;
   private double rightPositionShootTarget = Double.NaN;

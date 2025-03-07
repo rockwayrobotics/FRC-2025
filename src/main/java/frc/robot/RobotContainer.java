@@ -173,7 +173,7 @@ public class RobotContainer {
       driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
       driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(rotationTuner.get())));
-      driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(1)));
+      driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
 
       driverController.rightTrigger()
           .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175, driverController.getRightX()))));
