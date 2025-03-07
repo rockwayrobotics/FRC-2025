@@ -33,8 +33,8 @@ public class ElevatorIOSim implements ElevatorIO {
   }
 
   @Override
-  public void moveTowardsGoal(double goalHeightMeters, double currentHeightMeters) {
-    controller.setSetpoint(goalHeightMeters);
+  public void moveTowardsGoal(double goalHeightMillimeters, double currentHeightMillimeters) {
+    controller.setSetpoint(Meters.convertFrom(goalHeightMillimeters, Millimeters));
   }
 
   @Override

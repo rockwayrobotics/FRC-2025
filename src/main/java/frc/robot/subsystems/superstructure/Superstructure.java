@@ -62,6 +62,14 @@ public class Superstructure extends SubsystemBase {
     return elevator.getHeightMillimeters();
   }
 
+  public boolean isElevatorAtGoal() {
+    return elevator.atGoal();
+  }
+
+  public boolean isPivotAtGoal() {
+    return chute.isPivotAtGoal();
+  }
+
   public void setChutePivotGoalRads(double pivotAngleRads) {
     // FIXME: Check if chute is homed. If not... do nothing?
     // FIXME: Check elevator height, if not safe, move it first? Or do nothing?

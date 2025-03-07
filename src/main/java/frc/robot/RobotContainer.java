@@ -118,7 +118,10 @@ public class RobotContainer {
     autoChooser.addOption("FromReef", DriveCommands.fromReef(drive));
 
     // new autos that are UNTESTED
+    autoChooser.addOption("justDrive", AutoPaths.justMove(drive, superstructure));
     autoChooser.addOption("midFarRightL2", AutoPaths.midFarRightL2(drive, superstructure));
+    autoChooser.addOption("rightNearCenterL2", AutoPaths.rightNearCenterL2(drive, superstructure));
+    autoChooser.addOption("leftNearCenterL2", AutoPaths.leftNearCenterL2(drive, superstructure));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 

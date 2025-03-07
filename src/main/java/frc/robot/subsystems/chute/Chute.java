@@ -2,6 +2,7 @@ package frc.robot.subsystems.chute;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
@@ -51,6 +52,10 @@ public class Chute {
 
   public double getPivotAngleRads() {
     return pivotAngleRads;
+  }
+
+  public boolean isPivotAtGoal() {
+    return Math.abs(pivotAngleRads - pivotGoalRads) < Units.degreesToRadians(3);
   }
 
   public void startShooting() {
