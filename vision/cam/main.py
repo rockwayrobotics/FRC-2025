@@ -10,7 +10,6 @@ import logging
 import threading
 import math
 import os
-from pathlib import Path
 import time
 import traceback
 from cscore import CvSource, VideoMode, CameraServer, MjpegServer
@@ -33,8 +32,6 @@ from .apriltag import AprilTagDetection
 from .keys import NonBlockingConsole
 from .recording import VideoEncoder
 
-
-VIDEO_DIR = Path('videos')
 
 def main():
     args = get_args()
@@ -97,12 +94,9 @@ def main():
     streams = []
     if args.save:
         for i in [0, 1]:
-            # TODO: different file extension if quality set (i.e. mjpeg)?
-            path = VIDEO_DIR / f"cam{i}-{dt.datetime.now().strftime('%Y%m%d-%H%M%S.mp4')}"
-            stream = VideoEncoder(str(path), fps=args.fps,
+            stream = VideoEncoder(i, fps=args.fps,
                 width=args.res[0], height=args.res[1], quality=args.quality,
                 debug=args.debug)
-            stream.start()
             streams.append(stream)
 
     try:
@@ -146,16 +140,8 @@ def main():
             #dashboard_arr = driver_cam.capture_array('lores')
 
             if args.save:
-                # result0, encode0 = cv2.imencode('.jpg', arr0)
-                # result1, encode1 = cv2.imencode('.jpg', arr1)
-
-                # if result0:
-                    # cam0stream.write(encode0)
                 for (i, arr) in enumerate([arr0, arr1]):
-                    try:
-                        streams[i].add_frame(arr)
-                    except BrokenPipeError:
-                        pass
+                    streams[i].add_frame(arr)
 
             dashboard_arr = cv2.resize(arr0 if driver_cam is cam0 else arr1, (640, 480))
             source.putFrame(dashboard_arr)
@@ -190,11 +176,8 @@ def main():
         cam1.stop()
         if streams:
             print('stop recordings')
-            for (i, stream) in enumerate(streams):
-                try:
-                    stream.close()
-                except Exception as ex:
-                    logging.exception(f'cam{i}: closing failed')
+            for stream in streams:
+                stream.close()
 
 def get_args():
     # pylint: disable=import-outside-toplevel

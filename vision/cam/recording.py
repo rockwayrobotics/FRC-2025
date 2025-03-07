@@ -1,20 +1,37 @@
 
-import socketserver
-from http import server
-import threading
+import datetime as dt
+import logging
+from pathlib import Path
+import time
 import subprocess
 
+VIDEO_DIR = Path('videos')
+
 class VideoEncoder:
-    def __init__(self, path, fps=30, width=1456, height=1088, quality=None, debug=False):
+    # How soon to retry after a failure
+    RETRY_INTERVAL = 5.0
+    
+    def __init__(self, num, fps=30, width=1456, height=1088, quality=None, debug=False):
         self.width = width
         self.height = height
         self.fps = fps
-        self.path = path
+        self.num = num
         self.quality = quality # used with MJPEG encoder
         self.process = None
         self.debug = debug
+
+        self.log = logging.getLogger(f"rec{num}")
+        self.path = None
+        self.process = None
+        self.retry_time = time.monotonic()
+        self.warned = False
         
+
     def start(self):
+        # TODO: different file extension if quality set (i.e. mjpeg)?
+        ts = dt.datetime.now().strftime('%Y%m%d-%H%M%S.mp4')
+        self.path = VIDEO_DIR / f"cam{self.num}-{ts}"
+
         cmd = [
             'ffmpeg',
             '-y',  # Overwrite output file
@@ -69,13 +86,27 @@ class VideoEncoder:
         
     def add_frame(self, frame):
         if self.process is None:
-            self.width = frame.shape[1]
-            self.height = frame.shape[0]
-            self.start()
-            
-        self.process.stdin.write(frame.tobytes())
+            if time.monotonic() > self.retry_time:
+                self.width = frame.shape[1]
+                self.height = frame.shape[0]
+                self.start()
+
+        if self.process is not None:
+            try:
+                self.process.stdin.write(frame.tobytes())
+                self.warned = False # clear the flag so future warnings will appear
+            except BrokenPipeError:
+                if not self.warned:
+                    self.warned = True
+                    self.log.warn("recording failed, will retry")
+                self.close()
+                self.retry_time = time.monotonic() + self.RETRY_INTERVAL
         
     def close(self):
         if self.process:
-            self.process.stdin.close()
-            self.process.wait()
+            try:
+                self.process.stdin.close()
+                self.process.wait()
+            except Exception as ex:
+                self.log.exception("closing failed")
+            self.process = None
