@@ -75,6 +75,5 @@ public class ClimpIOReal implements ClimpIO {
     config.closedLoop.outputRange(minNormalizedSpeed.get(), maxNormalizedSpeed.get());
 
     REVUtils.tryUntilOk(() -> climpMotor.configure(config, resetMode, PersistMode.kPersistParameters));
-
   }
 }

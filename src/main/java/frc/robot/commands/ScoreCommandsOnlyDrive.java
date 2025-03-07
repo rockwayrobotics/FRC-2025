@@ -167,10 +167,9 @@ public class ScoreCommandsOnlyDrive {
         }),
 
         Commands.sequence(
-            Commands.waitSeconds(1),
             Commands.runOnce(() -> {
               speedTopic.set(drive.getLeftVelocityMetersPerSec());
-              if (chute.getPivotGoalRads() < 0) {
+              if (chute.getPivotGoalRads() > 0) {
                 tofTopic.set("left");
                 sensorLocation.set(Constants.ToFSensorLocation.FRONT_LEFT);
               } else {
