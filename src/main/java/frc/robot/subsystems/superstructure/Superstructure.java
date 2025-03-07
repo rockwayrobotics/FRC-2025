@@ -140,22 +140,24 @@ public class Superstructure extends SubsystemBase {
    */
   public void foldForClimp() {
     Commands.parallel(
-        Commands.runOnce(() -> chute.setPivotGoalRads(Units.degreesToRadians(-90))),
         Commands.runOnce(() -> grabber.setWristGoalRads(Units.degreesToRadians(-90))),
+        Commands.runOnce(
+            () -> {
+              if (chute.getPivotAngleRads() <= 0) {
+                chute.setPivotGoalRads(Units.degreesToRadians(-90));
+              } else {
+                chute.setPivotGoalRads(Units.degreesToRadians(90));
+              }
+            }),
+        Commands.runOnce(() -> {
+          if (elevator.getGoalHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM + 1) {
+            elevator.setGoalHeightMillimeters(Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM + 1);
+          }
+        }),
         Commands.sequence(
-            Commands.waitUntil(() -> chute.getPivotAngleRads() < Units.degreesToRadians(-87)),
-            Commands.runOnce(() -> elevator.setGoalHeightMillimeters(0))),
-        Commands.sequence(
-            Commands.waitUntil(() -> elevator.getHeightMillimeters() < 10),
-            Commands.runOnce(() -> {
-              // FIXME: Unclear what disable means. Stop?
-              // chute.disable();
-              // grabber.disable();
-              // elevator.disable();
-              // FIXME: Set state as ready for climp?
-            })))
+            Commands.waitUntil(() -> Math.abs(chute.getPivotAngleRads()) > Units.degreesToRadians(87)),
+            Commands.runOnce(() -> elevator.setGoalHeightMillimeters(0))))
         .schedule();
-    ;
   }
 
   TunableSetpoints setpoints = new TunableSetpoints();
