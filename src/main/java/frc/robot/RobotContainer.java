@@ -346,6 +346,12 @@ public class RobotContainer {
         superstructure.home();
       }, superstructure));
 
+      new JoystickButton(operator1Controller, 10).onTrue(Commands.runOnce(() -> {
+        superstructure.chute.setEncoder(Units.degreesToRadians(-90));
+        superstructure.chute.setIsHomed(true);
+        superstructure.chute.setPivotGoalRads(Units.degreesToRadians(-90));
+      }, superstructure));
+
       new JoystickButton(operator1Controller, 14).onTrue(Commands.runOnce(() -> {
         superstructure.foldForClimp();
       }, superstructure));
