@@ -77,7 +77,9 @@ def main():
     mjpegUrls = [f"mjpg:http://10.80.89.11:{port}/?action=stream"]
     try:
         for address in ip4_addresses():
-            mjpegUrls += [f"mjpg:http://{address}:{port}/?action=stream"]
+            mjpegUrl = f"mjpg:http://{address}:{port}/?action=stream"
+            if mjpegUrl not in mjpegUrls:
+                mjpegUrls += [mjpegUrl]
     except:
         pass
     mjpegTopic.set(mjpegUrls)
