@@ -186,7 +186,7 @@ public class Superstructure extends SubsystemBase {
 
   public void gotoAlgaeSetpoint(AlgaeLevel level) {
     Runnable suck = () -> {
-      Commands.run(() -> grabber.setGrabberMotor(-0.5), this).onlyWhile(() -> Sensors.getInstance()
+      Commands.run(() -> grabber.setGrabberMotor(-0.75), this).onlyWhile(() -> Sensors.getInstance()
           .getGrabberAcquiredDistance() < Constants.Grabber.ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS)
           .finallyDo(() -> grabber.setGrabberMotor(0)).schedule();
     };
