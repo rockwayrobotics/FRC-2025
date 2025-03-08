@@ -121,10 +121,14 @@ public class RobotContainer {
 
     // new autos that are UNTESTED
     autoChooser.addOption("justDrive", AutoPaths.justMove(drive, superstructure));
-    autoChooser.addOption("pushRookies", AutoPaths.pushRookies(drive, superstructure));
+    autoChooser.addOption("pushRookiesV2", AutoPaths.pushRookies(drive, superstructure));
     autoChooser.addOption("midFarRightL2", AutoPaths.midFarRightL2(drive, superstructure));
     autoChooser.addOption("rightNearCenterL2", AutoPaths.rightNearCenterL2(drive, superstructure));
     autoChooser.addOption("leftNearCenterL2", AutoPaths.leftNearCenterL2(drive, superstructure));
+    autoChooser.addOption("rightNearCenterTrough", AutoPaths.rightNearCenterTrough(drive, superstructure));
+    autoChooser.addOption("leftNearCenterTrough", AutoPaths.leftNearCenterTrough(drive, superstructure));
+    autoChooser.addOption("rightTestTrough", AutoPaths.rightTestTrough(drive, superstructure));
+    autoChooser.addOption("leftTestTrough", AutoPaths.leftTestTrough(drive, superstructure));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 

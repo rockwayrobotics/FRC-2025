@@ -82,6 +82,10 @@ public class Superstructure extends SubsystemBase {
     chute.startShooting();
   }
 
+  public void setShooterMotor(double speed) {
+    chute.setShooterMotor(speed);
+  }
+
   public void stopShooting() {
     chute.stopShooting();
   }

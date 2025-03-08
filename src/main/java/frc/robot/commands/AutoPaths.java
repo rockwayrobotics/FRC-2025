@@ -43,6 +43,8 @@ public class AutoPaths {
 
   private static final double trajectoryMaxCentripetalAcceleration = 0.5;
 
+  static final Tuner troughSpeedTuner = new Tuner("TroughSpeed", 0.1, true);
+
   // adjustable auto wait time
   private final static Tuner autoWaitTime = new Tuner("AutoWaitTime", 0.0, false);
 
@@ -53,7 +55,6 @@ public class AutoPaths {
 
   private AutoPaths() {
   }
-
 
   // TODO: Add voltage constraint with feedforward: .addConstraint(null);
 
@@ -70,7 +71,7 @@ public class AutoPaths {
 
   public static Command pushRookies(Drive drive, Superstructure superstructure) {
     return Commands.run(() -> {
-      drive.setTankDrive(new ChassisSpeeds(1,0,0));
+      drive.setTankDrive(new ChassisSpeeds(4, 0, 0));
     }, drive).withTimeout(Seconds.of(15)).finallyDo(() -> {
       drive.stop();
     });
@@ -115,6 +116,7 @@ public class AutoPaths {
         Commands.waitUntil(() -> {
           return superstructure.isElevatorAtGoal() && superstructure.isPivotAtGoal();
         }),
+        Commands.waitSeconds(1), // Arbitrary delay to let elevator stabilize
         Commands.runOnce(() -> {
           superstructure.startShooting();
         }),
@@ -176,5 +178,96 @@ public class AutoPaths {
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
     return runTrajectory(trajectory, CoralLevel.L2, Side.RIGHT, drive, superstructure);
+  }
+
+  public static Command rightNearCenterTrough(Drive drive, Superstructure superstructure) {
+    double start_pose_x = 7.464;
+    double start_pose_y = 1.000;
+    double start_pose_heading_deg = 180;
+    // 820mm robot width
+    // 410mm from halfway
+    double end_pose_x = 3.6576 - 0.41 - 0.03;
+    double end_pose_y = 3.8;
+    double end_pose_heading_deg = 90;
+
+    List<Translation2d> interior_waypoints = List.of();
+
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
+    return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure);
+  }
+
+  public static Command leftNearCenterTrough(Drive drive, Superstructure superstructure) {
+    double start_pose_x = 7.464;
+    double start_pose_y = 7.050; // 1 m from wall
+    double start_pose_heading_deg = 180;
+    double end_pose_x = 3.6576 - 0.41 - 0.03;
+    double end_pose_y = 4.25;
+    double end_pose_heading_deg = -90;
+
+    List<Translation2d> interior_waypoints = List.of();
+
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
+    return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure);
+  }
+
+  public static Command rightTestTrough(Drive drive, Superstructure superstructure) {
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(0, 0, new Rotation2d()), List.of(),
+        new Pose2d(0.5, 0, new Rotation2d()), config);
+    return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure);
+  }
+
+  public static Command leftTestTrough(Drive drive, Superstructure superstructure) {
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(0, 0, new Rotation2d()), List.of(),
+        new Pose2d(0.5, 0, new Rotation2d()), config);
+    return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure);
+  }
+
+  private static Command runTroughTrajectory(Trajectory trajectory, Side side, Drive drive,
+      Superstructure superstructure) {
+    LTVUnicycleController ltvController = new LTVUnicycleController(LTV_qelems, LTV_relems, LTV_dt,
+        config.getMaxVelocity());
+    PIDController leftController = new PIDController(kP, kI, kD);
+    PIDController rightController = new PIDController(kP, kI, kD);
+
+    drive.setPose(trajectory.getInitialPose());
+    LTVCommand path1 = new LTVCommand(trajectory, () -> RobotTracker.getInstance().getEstimatedPose(),
+        ltvController,
+        drive.getFeedForward(), RobotTracker.getInstance().getDriveKinematics(),
+        () -> drive.getWheelSpeeds(),
+        leftController,
+        rightController,
+        (Double leftVoltage, Double rightVoltage) -> {
+          drive.runOpenLoop(leftVoltage, rightVoltage);
+        }, (pose) -> {
+          drive.setPose(pose);
+        }, drive);
+
+    return Commands.sequence(Commands.waitSeconds(autoWaitTime.get()), path1,
+        Commands.runOnce(() -> {
+          drive.stop();
+          superstructure.gotoSetpoint(CoralLevel.L1, side);
+        }),
+        Commands.waitUntil(() -> {
+          return superstructure.isElevatorAtGoal() && superstructure.isPivotAtGoal();
+        }),
+        Commands.parallel(
+            Commands.runOnce(() -> {
+              superstructure.setShooterMotor(troughSpeedTuner.get());
+            }),
+            Commands.run(() -> {
+              drive.setTankDrive(new ChassisSpeeds(0.2, 0, 0));
+            }).withTimeout(2)).finallyDo(() -> {
+              superstructure.stopShooting();
+              superstructure.setChutePivotGoalRads(
+                  superstructure.getPivotAngleRads() > 0 ? Units.degreesToRadians(90) : Units.degreesToRadians(-90));
+              superstructure.setElevatorGoalHeightMillimeters(0);
+              drive.stop();
+            }));
   }
 }
