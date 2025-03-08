@@ -10,7 +10,7 @@ Requires=mnt-auto-ssd.mount
 User=user
 Group=user
 WorkingDirectory=/home/user/stable/vision
-ExecStart=/home/user/env3.11/bin/python -m cam --cam0flip --save
+ExecStart=/home/user/env3.11/bin/python -m cam --cam0flip --cam1flip --save
 # add this option above for testing with local NT server: --serve
 Restart=on-failure
 RestartSec=5s
