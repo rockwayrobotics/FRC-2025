@@ -9,6 +9,7 @@ import io
 import logging
 import threading
 import math
+from netifaces import interfaces, ifaddresses, AF_INET
 import os
 import time
 import traceback
@@ -33,6 +34,13 @@ from .keys import NonBlockingConsole
 from .recording import VideoEncoder
 
 
+def ip4_addresses():
+    ip_list = []
+    for interface in interfaces():
+        for link in ifaddresses(interface).get(AF_INET, ()):
+            ip_list.append(link['addr'])
+    return ip_list
+
 def main():
     args = get_args()
 
@@ -53,6 +61,7 @@ def main():
     mjpegServer = MjpegServer("mjpeg", 8081)
     mjpegServer.setSource(source)
     mjpegTopic = nt.getStringArrayTopic("/CameraPublisher/PiCam/streams").publish(PubSubOptions())
+    ipAddTopic = nt.getStringArrayTopic("/Pi/PiCam/ip_addresses").publish(PubSubOptions())
 
     selectCameraTopic = nt.getStringTopic("/CameraPublisher/PiCam/selected")
     selectCameraPub = selectCameraTopic.publish(PubSubOptions())
@@ -65,7 +74,10 @@ def main():
     rightVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/RightVelocityMetersPerSec").subscribe(0)
     leftVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/LeftVelocityMetersPerSec").subscribe(0)
 
-    mjpegTopic.set(["mjpg:http://10.80.89.11:8081/?action=stream"])
+    mjpegUrls = ["mjpg:http://10.80.89.11:8081/?action=stream"]
+    for address in ip4_addresses():
+        mjpegUrls += [f"mjpg:http://{address}:8081/?action=stream"]
+    mjpegTopic.set(mjpegUrls)
 
     cam0.start()
     cam1.start()
