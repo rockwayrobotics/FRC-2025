@@ -58,10 +58,10 @@ def main():
         nt.startClient4("pi cam")
 
     source = CvSource("cam", VideoMode.PixelFormat.kBGR, args.res[0], args.res[1], int(args.fps))
-    mjpegServer = MjpegServer("mjpeg", 8081)
+    port = 5801
+    mjpegServer = MjpegServer("mjpeg", port)
     mjpegServer.setSource(source)
     mjpegTopic = nt.getStringArrayTopic("/CameraPublisher/PiCam/streams").publish(PubSubOptions())
-    ipAddTopic = nt.getStringArrayTopic("/Pi/PiCam/ip_addresses").publish(PubSubOptions())
 
     selectCameraTopic = nt.getStringTopic("/CameraPublisher/PiCam/selected")
     selectCameraPub = selectCameraTopic.publish(PubSubOptions())
@@ -74,9 +74,12 @@ def main():
     rightVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/RightVelocityMetersPerSec").subscribe(0)
     leftVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/LeftVelocityMetersPerSec").subscribe(0)
 
-    mjpegUrls = ["mjpg:http://10.80.89.11:8081/?action=stream"]
-    for address in ip4_addresses():
-        mjpegUrls += [f"mjpg:http://{address}:8081/?action=stream"]
+    mjpegUrls = [f"mjpg:http://10.80.89.11:{port}/?action=stream"]
+    try:
+        for address in ip4_addresses():
+            mjpegUrls += [f"mjpg:http://{address}:{port}/?action=stream"]
+    except:
+        pass
     mjpegTopic.set(mjpegUrls)
 
     cam0.start()
