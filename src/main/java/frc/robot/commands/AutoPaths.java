@@ -63,8 +63,8 @@ public class AutoPaths {
    */
   public static Command justMove(Drive drive, Superstructure superstructure) {
     return Commands.run(() -> {
-      drive.setTankDrive(new ChassisSpeeds(0.5, 0, 0));
-    }).withTimeout(Seconds.of(1)).finallyDo(() -> {
+      drive.setTankDrive(new ChassisSpeeds(1, 0, 0));
+    }, drive).withTimeout(Seconds.of(2)).finallyDo(() -> {
       drive.stop();
     });
   }
