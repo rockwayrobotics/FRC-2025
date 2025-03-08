@@ -44,10 +44,10 @@ def ip4_addresses():
 def main():
     args = get_args()
 
-    cam0 = cam.get_camera(0, args.res, fps=args.fps, flip=args.cam0flip)
-    cam1 = cam.get_camera(1, args.res, fps=args.fps, flip=args.cam1flip)
+    fore_cam = cam.get_camera(cam.CAM1, args.res, fps=args.fps, flip=args.fore_flip)
+    aft_cam = cam.get_camera(cam.CAM0, args.res, fps=args.fps, flip=args.aft_flip)
 
-    driver_cam = cam0
+    driver_cam = fore_cam
 
     nt = NetworkTableInstance.getDefault()
     if args.serve:
@@ -84,8 +84,8 @@ def main():
         pass
     mjpegTopic.set(mjpegUrls)
 
-    cam0.start()
-    cam1.start()
+    fore_cam.start()
+    aft_cam.start()
 
     # pick calibration, falling back on built-in cal for current resolution
     # TODO: support reading from a JSON file with lookup by camera id
@@ -126,13 +126,13 @@ def main():
         while True:
             currentCam = selectCameraSub.get()
             if currentCam == 'fore':
-                if driver_cam is not cam0:
-                    print('selecting cam0 (fore)')
-                driver_cam = cam0
+                if driver_cam is not fore_cam:
+                    print('selecting fore cam')
+                driver_cam = fore_cam
             elif currentCam == 'aft':
-                if driver_cam is not cam1:
-                    print('selecting cam1 (aft)')
-                driver_cam = cam1
+                if driver_cam is not aft_cam:
+                    print('selecting aft cam')
+                driver_cam = aft_cam
             elif currentCam == 'auto':
                 leftVelocity = leftVelocitySub.get()
                 rightVelocity = rightVelocitySub.get()
@@ -141,26 +141,26 @@ def main():
 
                 if abs(leftVelocity) > deadbandThreshold and abs(rightVelocity) > deadbandThreshold:
                     if leftVelocity > 0 and rightVelocity > 0:
-                        if driver_cam is not cam0:
-                            print('selecting cam0 (fore)')
-                        driver_cam = cam0
+                        if driver_cam is not fore_cam:
+                            print('selecting fore cam')
+                        driver_cam = fore_cam
                     elif leftVelocity < 0 and rightVelocity < 0:
-                        if driver_cam is not cam1:
-                            print('selecting cam1 (aft)')
-                        driver_cam = cam1
+                        if driver_cam is not aft_cam:
+                            print('selecting aft cam')
+                        driver_cam = aft_cam
 
             count += 1
             now = time.time()
 
-            arr0 = cam0.capture_array('main')
-            arr1 = cam1.capture_array('main')
+            arr0 = fore_cam.capture_array('main')
+            arr1 = aft_cam.capture_array('main')
             #dashboard_arr = driver_cam.capture_array('lores')
 
             if args.save:
                 for (i, arr) in enumerate([arr0, arr1]):
                     streams[i].add_frame(arr)
 
-            dashboard_arr = cv2.resize(arr0 if driver_cam is cam0 else arr1, (320, 240))
+            dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
             source.putFrame(dashboard_arr)
 
             aprilDetector.detect(arr0)
@@ -178,19 +178,19 @@ def main():
                 if key.lower() == 'q':
                     break
                 elif key.lower() == 'c':
-                    if driver_cam == cam0:
-                        driver_cam = cam1
+                    if driver_cam == fore_cam:
+                        driver_cam = aft_cam
                         selectCameraPub.set("aft")
                     else:
-                        driver_cam = cam0
+                        driver_cam = fore_cam
                         selectCameraPub.set("fore")
                     print(f'Switched to camera {driver_cam.num}')
 
     finally:
         del console
         print('exiting')
-        cam0.stop()
-        cam1.stop()
+        fore_cam.stop()
+        aft_cam.stop()
         if streams:
             print('stop recordings')
             for stream in streams:
@@ -211,10 +211,10 @@ def get_args():
         help="camera FPS (default %(default)s)")
     parser.add_argument('--cals',
         help="camera cal name (default matches resolution)")
-    parser.add_argument('--cam0flip', action='store_true',
-        help="flip camera 0 (180 rotation)")
-    parser.add_argument('--cam1flip', action='store_true',
-        help="flip camera 1 (180 rotation)")
+    parser.add_argument('--aft-flip', action='store_true',
+        help="flip aft camera (180 rotation)")
+    parser.add_argument('--fore-flip', action='store_true',
+        help="flip fore camera (180 rotation)")
     parser.add_argument('--save', action='store_true',
         help="record video (to SSD, defaults to H264 encoding)")
     parser.add_argument('--quality', type=int, default=None,

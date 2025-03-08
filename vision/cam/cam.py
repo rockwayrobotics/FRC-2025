@@ -25,7 +25,6 @@ def degrees(rad):
     '''Convert radians to degrees.'''
     return rad * 180 / math.pi
 
-
 class CamCal:
     def __init__(self, fx, fy, cx, cy):
         self._array = np.array([fx, 0, cx, 0, fy, cy, 0, 0, 1], np.float64).reshape((3, 3))
@@ -43,11 +42,30 @@ CALS = {
     '1456x1088': CamCal(fx=1757.669488, fy=1762.782233, cx=736.690867, cy=557.428635),
 }
 
+# found in Id values in entries in global_camera_info list
+CAM0 = 0x88000
+CAM1 = 0x80000
+CAM_NUMS = {
+    CAM0: 0,
+    CAM1: 1,
+}
+CAMERAS = picamera2.Picamera2.global_camera_info()
+
+def get_cam_number(cam_id):
+    id_text = f'{cam_id:05x}/imx296'
+    for cam in CAMERAS:
+        if id_text in cam['Id']:
+            return cam['Num']
+    raise IndexError(f'{id_text} not found')
+    
+
 class PiCam:
     '''Raspberry Pi camera (use MockCam if not on a Pi)'''
-    def __init__(self, num, res, fps=30, flip=False):
-        self.cam = picamera2.Picamera2(num)
-        self.num = num
+    def __init__(self, cam_id, res, fps=30, flip=False):
+        self.num = get_cam_number(cam_id)
+        self.cam_id = cam_id # keep for debugging
+        self.cam = picamera2.Picamera2(self.num)
+        logging.info('opened cam %05x (cam port %s)', cam_id, CAM_NUMS.get(cam_id, '?'))
 
         # Default exposure time is 22162 us
         # To get fast fps, need Exposure time lower, buffer_count > 1 (4 is
@@ -83,7 +101,7 @@ class PiCam:
 class MockCam:
     # pylint: disable=unused-argument
     def __init__(self, num, res, fps=30, flip=False):
-        self.num = num
+        self.num = CAM_NUMS.get(num, 99)
 
         imgpath = Path(__file__).parent.absolute() / f'cam{self.num}.jpg'
         image = cv2.imread(imgpath)
@@ -114,7 +132,7 @@ def get_camera(num, res=(640, 480), fps=30, flip=False):
     try:
         cam = PiCam(num, res, fps=fps, flip=flip)
     except Exception as ex:
-        logging.error("unable to open PiCam %s", num)
+        logging.error("unable to open PiCam %05x", num)
         cam = MockCam(num, res, fps=fps, flip=flip)
     return cam
                     
