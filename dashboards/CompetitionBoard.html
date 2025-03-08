@@ -11,11 +11,13 @@
         background-color="black"
         wait-image="./no-camera-stream.jpg"
         crosshair-color="white"
+        source-key="/CameraPublisher/PiCam"
     ></frc-camera-wrapper><frc-radio-group
         options="[&quot;fore&quot;,&quot;aft&quot;,&quot;auto&quot;]"
         source-provider="NetworkTables"
         style="transform: translate(151.4px, 169px);"
-        selected="fore"
+        selected="auto"
+        source-key="/CameraPublisher/PiCam/selected"
     >
     </frc-radio-group><frc-sendable-chooser
         source-provider="NetworkTables"
@@ -30,12 +32,12 @@
     ></frc-boolean-box><frc-boolean-box
         source-provider="NetworkTables"
         style="transform: translate(827.8px, 634.806px);"
-        source-key="/AdvantageKit/Grabber/Home"
+        source-key="/AdvantageKit/RealOutputs/Grabber/isHomed"
         label="Grabber Homed"
     ></frc-boolean-box><frc-boolean-box
         source-provider="NetworkTables"
         style="transform: translate(726.2px, 634.806px);"
-        source-key="chute"
+        source-key="/AdvantageKit/RealOutputs/Chute/isHomed"
         label="Chute Homed"
     ></frc-boolean-box><frc-boolean-box
         source-provider="NetworkTables"
@@ -60,23 +62,23 @@
         source-provider="NetworkTables"
         style="transform: translate(929.394px, 635.412px); width: 81.5938px; height: 79.3813px;"
         source-key="/AdvantageKit/RealOutputs/Grabber/distance_mm"
-        placeholder=""
         min="NaN"
         max="NaN"
+        placeholder=""
     ><input
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-297"
+            id="vaadin-number-field-2"
             aria-labelledby="label-vaadin-number-field-301"
             aria-describedby=""
-            min="undefined"
-            max="undefined"
+            min="NaN"
+            max="NaN"
             step="any"
         ><label
             slot="label"
             id="label-vaadin-number-field-301"
-            for="vaadin-number-field-297"
+            for="vaadin-number-field-2"
         >GrabberL</label>
         <div
             slot="error-message"
@@ -92,13 +94,46 @@
         source-provider="NetworkTables"
         style="transform: translate(630.8px, 633px);"
         label="Elevator Homed"
+        source-key="/AdvantageKit/RealOutputs/Elevator/isHomed"
     ></frc-boolean-box><vaadin-number-field
         label="Auto Delay"
-        value="0"
+        value="3"
         has-value=""
         has-label=""
         source-provider="NetworkTables"
         style="transform: translate(20.4px, 374px);"
+        min="NaN"
+        max="NaN"
+        source-key="/Tuning/AutoWaitTime"
+        placeholder=""
+    ><input
+            slot="input"
+            value="0"
+            type="number"
+            id="vaadin-number-field-3"
+            aria-labelledby="label-vaadin-number-field-630"
+            aria-describedby=""
+            min="NaN"
+            max="NaN"
+            step="any"
+        ><label
+            slot="label"
+            id="label-vaadin-number-field-630"
+            for="vaadin-number-field-3"
+        >Auto Delay</label>
+        <div
+            slot="error-message"
+            id="error-message-vaadin-number-field-485"
+            hidden=""
+        ></div>
+    </vaadin-number-field><vaadin-number-field
+        label="Rotation Scale "
+        value="0"
+        has-value=""
+        has-label=""
+        source-provider="NetworkTables"
+        style="transform: translate(35px, 472px);"
+        source-key="/Tuning/rotationTuner"
         placeholder=""
         min="NaN"
         max="NaN"
@@ -106,20 +141,20 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-626"
-            aria-labelledby="label-vaadin-number-field-630"
+            id="vaadin-number-field-301"
+            aria-labelledby="label-vaadin-number-field-302"
             aria-describedby=""
             min="undefined"
             max="undefined"
             step="any"
         ><label
             slot="label"
-            id="label-vaadin-number-field-630"
-            for="vaadin-number-field-626"
-        >Auto Delay</label>
+            id="label-vaadin-number-field-302"
+            for="vaadin-number-field-301"
+        >Rotation Scale </label>
         <div
             slot="error-message"
-            id="error-message-vaadin-number-field-485"
+            id="error-message-vaadin-number-field-216"
             hidden=""
         ></div>
     </vaadin-number-field></dashboard-tab><dashboard-tab
@@ -146,7 +181,7 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-2"
+            id="vaadin-number-field-4"
             aria-labelledby="label-vaadin-number-field-186"
             aria-describedby=""
             min="NaN"
@@ -155,7 +190,7 @@
         ><label
             slot="label"
             id="label-vaadin-number-field-186"
-            for="vaadin-number-field-2"
+            for="vaadin-number-field-4"
         >Elevator FF kG</label>
         <div
             slot="error-message"
@@ -176,7 +211,7 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-3"
+            id="vaadin-number-field-5"
             aria-labelledby="label-vaadin-number-field-230"
             aria-describedby=""
             min="NaN"
@@ -185,7 +220,7 @@
         ><label
             slot="label"
             id="label-vaadin-number-field-230"
-            for="vaadin-number-field-3"
+            for="vaadin-number-field-5"
         >Elevator FF kS</label>
         <div
             slot="error-message"
@@ -207,7 +242,7 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-4"
+            id="vaadin-number-field-6"
             aria-labelledby="label-vaadin-number-field-268"
             aria-describedby=""
             min="NaN"
@@ -216,7 +251,7 @@
         ><label
             slot="label"
             id="label-vaadin-number-field-268"
-            for="vaadin-number-field-4"
+            for="vaadin-number-field-6"
         >Elevator PID kP</label>
         <div
             slot="error-message"
@@ -238,7 +273,7 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-5"
+            id="vaadin-number-field-7"
             aria-labelledby="label-vaadin-number-field-290"
             aria-describedby=""
             min="NaN"
@@ -247,7 +282,7 @@
         ><label
             slot="label"
             id="label-vaadin-number-field-290"
-            for="vaadin-number-field-5"
+            for="vaadin-number-field-7"
         >Elevator PID kD</label>
         <div
             slot="error-message"
@@ -269,7 +304,7 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-6"
+            id="vaadin-number-field-8"
             aria-labelledby="label-vaadin-number-field-401"
             aria-describedby=""
             min="NaN"
@@ -278,7 +313,7 @@
         ><label
             slot="label"
             id="label-vaadin-number-field-401"
-            for="vaadin-number-field-6"
+            for="vaadin-number-field-8"
         >Camera Auto deadband</label>
         <div
             slot="error-message"
@@ -300,7 +335,7 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-7"
+            id="vaadin-number-field-9"
             aria-labelledby="label-vaadin-number-field-560"
             aria-describedby=""
             min="NaN"
@@ -309,7 +344,7 @@
         ><label
             slot="label"
             id="label-vaadin-number-field-560"
-            for="vaadin-number-field-7"
+            for="vaadin-number-field-9"
         >Ele Min Speed</label>
         <div
             slot="error-message"
@@ -331,7 +366,7 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-8"
+            id="vaadin-number-field-10"
             aria-labelledby="label-vaadin-number-field-591"
             aria-describedby=""
             min="NaN"
@@ -340,7 +375,7 @@
         ><label
             slot="label"
             id="label-vaadin-number-field-591"
-            for="vaadin-number-field-8"
+            for="vaadin-number-field-10"
         >Ele Max Speed</label>
         <div
             slot="error-message"
@@ -362,7 +397,7 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-9"
+            id="vaadin-number-field-11"
             aria-labelledby="label-vaadin-number-field-602"
             aria-describedby=""
             min="NaN"
@@ -372,7 +407,7 @@
         ><label
             slot="label"
             id="label-vaadin-number-field-602"
-            for="vaadin-number-field-9"
+            for="vaadin-number-field-11"
         >Ele soft min mm</label>
         <div
             slot="error-message"
@@ -394,7 +429,7 @@
             slot="input"
             value="0"
             type="number"
-            id="vaadin-number-field-10"
+            id="vaadin-number-field-12"
             aria-labelledby="label-vaadin-number-field-732"
             aria-describedby=""
             min="NaN"
@@ -403,7 +438,7 @@
         ><label
             slot="label"
             id="label-vaadin-number-field-732"
-            for="vaadin-number-field-10"
+            for="vaadin-number-field-12"
         >Ele soft max mm</label>
         <div
             slot="error-message"
