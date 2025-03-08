@@ -71,7 +71,7 @@ public class AutoPaths {
 
   public static Command pushRookies(Drive drive, Superstructure superstructure) {
     return Commands.run(() -> {
-      drive.setTankDrive(new ChassisSpeeds(4, 0, 0));
+      drive.setTankDrive(new ChassisSpeeds(2.5, 0, 0));
     }, drive).withTimeout(Seconds.of(15)).finallyDo(() -> {
       drive.stop();
     });
