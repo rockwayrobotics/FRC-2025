@@ -17,6 +17,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.security.Timestamp;
+import java.util.EnumSet;
 import java.util.Optional;
 
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -39,7 +40,9 @@ import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.networktables.FloatArraySubscriber;
 import edu.wpi.first.networktables.FloatArrayTopic;
+import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableListener;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
@@ -90,8 +93,12 @@ public class Drive extends SubsystemBase {
   FloatArraySubscriber cornerSubscriber = NetworkTableInstance.getDefault()
       .getFloatArrayTopic("/AdvantageKit/RealOutputs/Pi/tof/corners")
       .subscribe(new float[] {});
+  FloatArraySubscriber cameraPoseSubcriber = NetworkTableInstance.getDefault()
+      .getFloatArrayTopic("/Pi/Vision/cameraPose")
+      .subscribe(new float[] {});
   double tofLastChangeTime = 0;
   double cornerLastChangeTime = 0;
+  double cameraLastChangeTime = 0;
   int noDataCounter = 0;
   TimestampSynchronizer timestampSynchronizer = new TimestampSynchronizer();
 
@@ -185,6 +192,20 @@ public class Drive extends SubsystemBase {
     }
   }
 
+  private void visionPeriodic() {
+    try {
+      float[] cameraPoseFloats = cameraPoseSubcriber.get();
+      double lastChangeTime = cameraPoseSubcriber.getLastChange() / 1000000.0;
+      if (lastChangeTime > cameraLastChangeTime) {
+        cameraLastChangeTime = lastChangeTime;
+        Logger.recordOutput("Camera/Pose",
+            new Pose2d(cameraPoseFloats[0], cameraPoseFloats[1], Rotation2d.fromRadians(cameraPoseFloats[2])));
+      }
+    } catch (Exception e) {
+
+    }
+  }
+
   @Override
   public void periodic() {
     io.updateInputs(inputs);
@@ -193,8 +214,9 @@ public class Drive extends SubsystemBase {
     Logger.processInputs("Drive/Gyro", gyroInputs);
 
     double now = Timer.getFPGATimestamp();
-    tofDistancePeriodic(now);
-    tofCornerPeriodic();
+    // tofDistancePeriodic(now);
+    // tofCornerPeriodic();
+    visionPeriodic();
 
     if (gyroInputs.connected) {
       // Use the real gyro angle
@@ -216,17 +238,21 @@ public class Drive extends SubsystemBase {
     double leftPositionMeters = getLeftPositionMeters();
     double rightPositionMeters = getRightPositionMeters();
     // FIXME: Figure out backwards
-    if (!Double.isNaN(leftPositionShootTarget) && leftPositionMeters > leftPositionShootTarget) {
-      System.out.println("Shooting now:" + now);
-      shootCounter++;
-      leftPositionShootTarget = Double.NaN;
-    }
-    if (!Double.isNaN(rightPositionShootTarget) && rightPositionMeters > rightPositionShootTarget) {
-      System.out.println("Shooting nowR:" + now);
-      shootCounter++;
-      rightPositionShootTarget = Double.NaN;
-    }
-    Logger.recordOutput("ToF/ShootCounter", shootCounter);
+    /*
+     * if (!Double.isNaN(leftPositionShootTarget) && leftPositionMeters >
+     * leftPositionShootTarget) {
+     * System.out.println("Shooting now:" + now);
+     * shootCounter++;
+     * leftPositionShootTarget = Double.NaN;
+     * }
+     * if (!Double.isNaN(rightPositionShootTarget) && rightPositionMeters >
+     * rightPositionShootTarget) {
+     * System.out.println("Shooting nowR:" + now);
+     * shootCounter++;
+     * rightPositionShootTarget = Double.NaN;
+     * }
+     * Logger.recordOutput("ToF/ShootCounter", shootCounter);
+     */
     leftPositionBuffer.addSample(now, leftPositionMeters);
     rightPositionBuffer.addSample(now, rightPositionMeters);
 
@@ -249,7 +275,7 @@ public class Drive extends SubsystemBase {
   }
 
   public void setRotationScale(double scale) {
-    this.rotationScale = scale; 
+    this.rotationScale = scale;
   }
 
   public DifferentialDriveWheelSpeeds getWheelSpeeds() {

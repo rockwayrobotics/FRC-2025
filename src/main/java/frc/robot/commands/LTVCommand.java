@@ -218,7 +218,7 @@ public class LTVCommand extends Command {
       return;
     }
 
-    Logger.recordOutput("Trajectory/Sample", m_trajectory.sample(curTime));
+    Logger.recordOutput("Trajectory/Sample", m_trajectory.sample(curTime).poseMeters);
     var targetWheelSpeeds = m_kinematics.toWheelSpeeds(
         m_follower.calculate(m_pose.get(), m_trajectory.sample(curTime)));
     Logger.recordOutput("Trajectory/TargetWheelSpeeds", targetWheelSpeeds);
