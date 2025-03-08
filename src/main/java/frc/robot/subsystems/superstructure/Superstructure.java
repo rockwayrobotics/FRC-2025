@@ -185,26 +185,26 @@ public class Superstructure extends SubsystemBase {
   }
 
   public void gotoAlgaeSetpoint(AlgaeLevel level) {
-    Runnable suck = () -> {
-      Commands.run(() -> grabber.setGrabberMotor(-0.75), this).onlyWhile(() -> Sensors.getInstance()
-          .getGrabberAcquiredDistance() < Constants.Grabber.ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS)
-          .finallyDo(() -> grabber.setGrabberMotor(0)).schedule();
-    };
+    // Runnable suck = () -> {
+    //   Commands.run(() -> grabber.setGrabberMotor(-0.75), this).onlyWhile(() -> Sensors.getInstance()
+    //       .getGrabberAcquiredDistance() < Constants.Grabber.ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS)
+    //       .finallyDo(() -> grabber.setGrabberMotor(0)).schedule();
+    // };
     switch (level) {
       case Floor:
         setElevatorGoalHeightMillimeters(setpoints.algae_floor_elevator_height_mm());
         setWristGoalRads(setpoints.algae_floor_wrist_angle_rads());
-        suck.run();
+        // suck.run();
         break;
       case L2:
         setElevatorGoalHeightMillimeters(setpoints.algae_L2_elevator_height_mm());
         setWristGoalRads(setpoints.algae_L2_wrist_angle_rads());
-        suck.run();
+        // suck.run();
         break;
       case L3:
         setElevatorGoalHeightMillimeters(setpoints.algae_L3_elevator_height_mm());
         setWristGoalRads(setpoints.algae_L3_wrist_angle_rads());
-        suck.run();
+        // suck.run();
         break;
       case Score:
         setElevatorGoalHeightMillimeters(setpoints.algae_score_elevator_height_mm());
