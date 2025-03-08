@@ -121,6 +121,7 @@ public class RobotContainer {
 
     // new autos that are UNTESTED
     autoChooser.addOption("justDrive", AutoPaths.justMove(drive, superstructure));
+    autoChooser.addOption("pushRookies", AutoPaths.pushRookies(drive, superstructure));
     autoChooser.addOption("midFarRightL2", AutoPaths.midFarRightL2(drive, superstructure));
     autoChooser.addOption("rightNearCenterL2", AutoPaths.rightNearCenterL2(drive, superstructure));
     autoChooser.addOption("leftNearCenterL2", AutoPaths.leftNearCenterL2(drive, superstructure));

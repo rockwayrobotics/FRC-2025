@@ -54,6 +54,7 @@ public class AutoPaths {
   private AutoPaths() {
   }
 
+
   // TODO: Add voltage constraint with feedforward: .addConstraint(null);
 
   /**
@@ -63,6 +64,14 @@ public class AutoPaths {
     return Commands.run(() -> {
       drive.setTankDrive(new ChassisSpeeds(0.5, 0, 0));
     }).withTimeout(Seconds.of(1)).finallyDo(() -> {
+      drive.stop();
+    });
+  }
+
+  public static Command pushRookies(Drive drive, Superstructure superstructure) {
+    return Commands.run(() -> {
+      drive.setTankDrive(new ChassisSpeeds(1,0,0));
+    }, drive).withTimeout(Seconds.of(15)).finallyDo(() -> {
       drive.stop();
     });
   }
