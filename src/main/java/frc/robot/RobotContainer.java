@@ -125,6 +125,8 @@ public class RobotContainer {
     autoChooser.addOption("midFarRightL2", AutoPaths.midFarRightL2(drive, superstructure));
     autoChooser.addOption("rightNearCenterL2", AutoPaths.rightNearCenterL2(drive, superstructure));
     autoChooser.addOption("leftNearCenterL2", AutoPaths.leftNearCenterL2(drive, superstructure));
+    autoChooser.addOption("rightNearRightTrough", AutoPaths.rightNearRightTrough(drive, superstructure));
+    autoChooser.addOption("leftNearLeftTrough", AutoPaths.leftNearLeftTrough(drive, superstructure));
     autoChooser.addOption("rightNearCenterTrough", AutoPaths.rightNearCenterTrough(drive, superstructure));
     autoChooser.addOption("leftNearCenterTrough", AutoPaths.leftNearCenterTrough(drive, superstructure));
     autoChooser.addOption("rightTestTrough", AutoPaths.rightTestTrough(drive, superstructure));

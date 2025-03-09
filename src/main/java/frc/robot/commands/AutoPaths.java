@@ -39,11 +39,14 @@ public class AutoPaths {
   private static final double LTV_dt = 0.02;
 
   private static final double trajectoryMaxVelocity = Constants.Drive.MAX_SPEED_MPS;
-  private static final double trajectoryMaxAcceleration = Constants.Drive.MAX_ACCEL_MPSS / 5;
+  private static final double trajectoryMaxAcceleration = Constants.Drive.MAX_ACCEL_MPSS / 4;
 
   private static final double trajectoryMaxCentripetalAcceleration = 0.5;
 
-  static final Tuner troughSpeedTuner = new Tuner("TroughSpeed", 0.1, true);
+  static final Tuner stabilizeDelayTuner = new Tuner("TroughStabilizeWaitSeconds", 0.3, true);
+  static final Tuner troughShooterSpeedTuner = new Tuner("TroughShootSpeed", 0.1, true);
+  static final Tuner troughDriveSpeedTuner = new Tuner("TroughDriveSpeedMetersPerSec", 0.2, true);
+  static final Tuner troughTimeTuner = new Tuner("TroughDurationSeconds", 5, true);
 
   // adjustable auto wait time
   private final static Tuner autoWaitTime = new Tuner("AutoWaitTime", 0.0, false);
@@ -216,6 +219,48 @@ public class AutoPaths {
     return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure);
   }
 
+  public static Command rightNearRightTrough(Drive drive, Superstructure superstructure) {
+    double start_pose_x = 7.464;
+    double start_pose_y = 1.000;
+    double start_pose_heading_deg = 180;
+    // 820mm robot width
+    // 410mm from halfway
+    // Using a 3 cm margin out from the AprilTag gives us (4.051750369519958,
+    // 2.811041322334847).
+    // (4.194038343361741, 2.7288913223348468) is earlier on the wall
+    double end_pose_x = 4.194;
+    double end_pose_y = 2.729;
+    double end_pose_heading_deg = 150;
+
+    List<Translation2d> interior_waypoints = List.of();
+
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
+    return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure);
+  }
+
+  public static Command leftNearLeftTrough(Drive drive, Superstructure superstructure) {
+    double start_pose_x = 7.464;
+    double start_pose_y = 7.050; // 1 m from wall
+    double start_pose_heading_deg = 180;
+    // Using a 3cm margin out from the AprilTag gives us (4.051750369519958,
+    // 5.240758677665153).
+    // (4.194038343361742, 5.322908677665153) is earlier on the wall
+    double end_pose_x = 4.194;
+    double end_pose_y = 5.323;
+    double end_pose_heading_deg = 210;
+
+    List<Translation2d> interior_waypoints = List.of();
+
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
+    return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure);
+  }
+
   public static Command rightTestTrough(Drive drive, Superstructure superstructure) {
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(0, 0, new Rotation2d()), List.of(),
         new Pose2d(0.5, 0, new Rotation2d()), config);
@@ -256,13 +301,14 @@ public class AutoPaths {
         Commands.waitUntil(() -> {
           return superstructure.isElevatorAtGoal() && superstructure.isPivotAtGoal();
         }),
+        Commands.waitSeconds(stabilizeDelayTuner.get()), // Arbitrary delay to let elevator stabilize
         Commands.parallel(
             Commands.runOnce(() -> {
-              superstructure.setShooterMotor(troughSpeedTuner.get());
+              superstructure.setShooterMotor(troughShooterSpeedTuner.get());
             }),
             Commands.run(() -> {
-              drive.setTankDrive(new ChassisSpeeds(0.2, 0, 0));
-            }).withTimeout(2)).finallyDo(() -> {
+              drive.setTankDrive(new ChassisSpeeds(troughDriveSpeedTuner.get(), 0, 0));
+            }).withTimeout(troughTimeTuner.get())).finallyDo(() -> {
               superstructure.stopShooting();
               superstructure.setChutePivotGoalRads(
                   superstructure.getPivotAngleRads() > 0 ? Units.degreesToRadians(90) : Units.degreesToRadians(-90));

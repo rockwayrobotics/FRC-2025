@@ -173,7 +173,8 @@ def main(args):
     # this is a unit vector pointing out from the tag
     normal = Vector(math.cos(z_rot), math.sin(z_rot))
     # this is directly in front of the tag
-    in_front_of_tag = Vector(tag_pos[0] + normal.x * 0.5, tag_pos[1] + normal.y * 0.5)
+    distance_from_wall = 0.41 + (args.d / 1000.0)
+    in_front_of_tag = Vector(tag_pos[0] + normal.x * distance_from_wall, tag_pos[1] + normal.y * distance_from_wall)
 
     waypoints = []
 
@@ -210,11 +211,12 @@ def main(args):
             angle = z_rot - math.pi / 2 if z_rot > math.pi else z_rot + math.pi / 2
             angle_deg = angle * 180.0 / math.pi
             print(f"Approaching wall with angle {angle_deg:.2f} degrees")
-            distance_along_wall = (
-                chute_distance - bar_distance / 2
-                if args.far
-                else chute_distance + bar_distance / 2
-            )
+            if args.far:
+              distance_along_wall = chute_distance - bar_distance / 2
+            elif args.trough:
+              distance_along_wall = chute_distance + bar_distance
+            else:
+              distance_along_wall = chute_distance + bar_distance / 2
             end = in_front_of_tag - distance_along_wall * Vector(
                 math.cos(angle), math.sin(angle)
             )
@@ -225,11 +227,12 @@ def main(args):
             angle = z_rot - math.pi / 2 if z_rot > math.pi else z_rot + math.pi / 2
             angle_deg = angle * 180.0 / math.pi
             print(f"Approaching wall with angle {angle_deg:.2f} degrees")
-            distance_along_wall = (
-                chute_distance - bar_distance / 2
-                if args.far
-                else chute_distance + bar_distance / 2
-            )
+            if args.far:
+              distance_along_wall = chute_distance - bar_distance / 2
+            elif args.trough:
+              distance_along_wall = chute_distance + bar_distance
+            else:
+              distance_along_wall = chute_distance + bar_distance / 2
             end = in_front_of_tag - distance_along_wall * Vector(
                 math.cos(angle), math.sin(angle)
             )
@@ -258,6 +261,10 @@ if __name__ == "__main__":
 
     # AprilTags on blue side are 17-22.
     parser.add_argument("-t", type=int, default=17)
+    # Intended distance from wall in millimeters
+    parser.add_argument("-d", type=float, default=30)
+    # Shoot early for trough
+    parser.add_argument("--trough", action="store_true")
 
     args = parser.parse_args()
     main(args)
