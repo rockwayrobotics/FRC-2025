@@ -285,22 +285,25 @@ class TofMain:
             # keep only the last one
             if event is not None:
                 mode = event.data.value.value()
-
                 self.speed = self.speedSub.get()
                 self.log.info('mode %s, speed %s', mode, self.speed)
 
-                # handle mode changes
-                if mode != lastMode:
-                    # disabling will cause any current reading thread to exit
-                    self.pins.set_index_high(None)
-                    # this gives enough time for the thread to attempt a reading
-                    # and get an i2c error because the sensor will be offline
-                    time.sleep(0.1)
-                    self.pins.set_index_high(self.MODE_MAP.get(mode))
-                    self.log.info('selected tof: %s', mode)
-                    lastMode = mode
+            else:
+                self.speed = 0.45
+                mode = 'right'
 
-                self.cd.reset()
+            # handle mode changes
+            if mode != lastMode:
+                # disabling will cause any current reading thread to exit
+                self.pins.set_index_high(None)
+                # this gives enough time for the thread to attempt a reading
+                # and get an i2c error because the sensor will be offline
+                time.sleep(0.1)
+                self.pins.set_index_high(self.MODE_MAP.get(mode))
+                self.log.info('selected tof: %s', mode)
+                lastMode = mode
+
+            self.cd.reset()
 
             # pause to avoid busy cpu, as we're not yet using full NT listeners
             time.sleep(0.5)
