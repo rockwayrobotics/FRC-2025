@@ -180,8 +180,8 @@ public final class Constants {
     public static final boolean RIGHT_GRABBER_INVERTED = true;
     // Wrist speed radians per second must be a positive value
     public static final double WRIST_SPEED_RADIANS_PER_SECOND = 0.5;
-    public static final double WRIST_CONVERSION_FACTOR = 0.2527834449;
 
+    public static final double WRIST_CONVERSION_FACTOR = 0.0831945515;
     /** Algae acquired if getVolts is over this value */
     public static final double ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS = 2.5;
   }
