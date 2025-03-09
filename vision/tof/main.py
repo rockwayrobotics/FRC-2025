@@ -285,11 +285,12 @@ class TofMain:
             # keep only the last one
             if event is not None:
                 mode = event.data.value.value()
-            else:
-                mode = 'right'
+                self.speed = self.speedSub.get()
+                self.log.info('mode %s, speed %s', mode, self.speed)
 
-            self.speed = self.speedSub.get()
-            self.log.info('mode %s, speed %s', mode, self.speed)
+            else:
+                self.speed = 0.45
+                mode = 'right'
 
             # handle mode changes
             if mode != lastMode:
