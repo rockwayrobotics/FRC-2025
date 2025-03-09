@@ -74,6 +74,10 @@ def main():
     rightVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/RightVelocityMetersPerSec").subscribe(0)
     leftVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/LeftVelocityMetersPerSec").subscribe(0)
 
+    dsFMSAttachedSub = nt.getBooleanTopic("/AdvantageKit/DriverStation/FMSAttached").subscribe(False)
+
+    isRecording = False
+
     mjpegUrls = [f"mjpg:http://10.80.89.11:{port}/?action=stream"]
     try:
         for address in ip4_addresses():
@@ -157,8 +161,18 @@ def main():
             #dashboard_arr = driver_cam.capture_array('lores')
 
             if args.save:
-                for (i, arr) in enumerate([arr0, arr1]):
-                    streams[i].add_frame(arr)
+                fmsAttached = dsFMSAttachedSub.get()
+                if isRecording and not fmsAttached:
+                    # Stop recording since the FMS just got detached
+                    for i in [0, 1]:
+                        stream[i].close()
+                    isRecording = False
+                elif fmsAttached:
+                    isRecording = True
+
+                if isRecording:
+                    for (i, arr) in enumerate([arr0, arr1]):
+                        streams[i].add_frame(arr)
 
             dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
             source.putFrame(dashboard_arr)
