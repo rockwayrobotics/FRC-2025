@@ -61,9 +61,9 @@ public class Elevator {
     io.stop();
   }
 
-  public boolean isHomeBeamBroken() {
-    return homeBeamBroken;
-  }
+  // public boolean isHomeBeamBroken() {
+  //   return homeBeamBroken;
+  // }
 
   public void home() {
     io.zeroEncoder();

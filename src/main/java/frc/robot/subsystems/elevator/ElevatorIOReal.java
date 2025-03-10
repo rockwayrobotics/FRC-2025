@@ -62,10 +62,10 @@ public class ElevatorIOReal implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    inputs.homeBeamBroken = Sensors.getInstance().getElevatorHomeBeambroken();
-    if (inputs.homeBeamBroken) {
-      // REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
-    }
+    // inputs.homeBeamBroken = Sensors.getInstance().getElevatorHomeBeambroken();
+    // if (inputs.homeBeamBroken) {
+    //   // REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
+    // }
 
     // FIXME: Measure CAN bus usage with all these queries?
     REVUtils.ifOk(motorMain, encoder::getPosition, (value) -> inputs.positionMillimeters = value);

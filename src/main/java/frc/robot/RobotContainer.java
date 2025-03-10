@@ -188,9 +188,12 @@ public class RobotContainer {
       driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setScale(0.1)));
       driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(1)));
 
-      driverController.rightTrigger()
-          .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175, driverController.getRightX()))));
-      driverController.rightBumper().onFalse(new InstantCommand(() -> drive.set(0, 0)));
+      driverController.rightTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(1)));
+      driverController.rightTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
+
+      // driverController.rightTrigger()
+      //     .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175, driverController.getRightX()))));
+      // driverController.rightBumper().onFalse(new InstantCommand(() -> drive.set(0, 0)));
 
       // driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR));
       // driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR));

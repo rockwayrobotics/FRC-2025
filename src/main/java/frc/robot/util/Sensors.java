@@ -18,8 +18,8 @@ public class Sensors {
   private DigitalInput chuteCoralLoadedBeambreak = new DigitalInput(
       Constants.Digital.CHUTE_LOAD_CORAL_BEAMBREAK);
   // private DigitalInput ChuteLoadCoralBeambreak = new DigitalInput(3);
-  private DigitalInput elevatorHomeBeambreak = new DigitalInput(
-      Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
+  // private DigitalInput elevatorHomeBeambreak = new DigitalInput(
+  //     Constants.Digital.ELEVATOR_HOME_BEAMBREAK);
 
   public boolean overrideChuteHomeSwitch = false;
 
@@ -44,7 +44,7 @@ public class Sensors {
     Logger.recordOutput("Chute/home_sw", getChuteHomeSwitch());
     Logger.recordOutput("Chute/loaded_sw", getChuteCoralLoadedBeambreak());
     Logger.recordOutput("Chute/ready_sw", getChuteCoralReadyBeambreak());
-    Logger.recordOutput("Elevator/home_sw", getElevatorHomeBeambroken());
+    // Logger.recordOutput("Elevator/home_sw", getElevatorHomeBeambroken());
   }
 
   /**
@@ -80,10 +80,10 @@ public class Sensors {
     return chuteCoralLoadedBeambreak.get();
   }
 
-  /** @return true when elevator beam is broken */
-  public boolean getElevatorHomeBeambroken() {
-    return !elevatorHomeBeambreak.get();
-  }
+  // /** @return true when elevator beam is broken */
+  // public boolean getElevatorHomeBeambroken() {
+  //   return !elevatorHomeBeambreak.get();
+  // }
 
   private AsynchronousInterrupt registerInterrupt(DigitalInput input,
       TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
@@ -97,10 +97,10 @@ public class Sensors {
     return interrupt;
   }
 
-  public AsynchronousInterrupt registerElevatorHomeInterrupt(
-      TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
-    return registerInterrupt(elevatorHomeBeambreak, callback);
-  }
+  // public AsynchronousInterrupt registerElevatorHomeInterrupt(
+  //     TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
+  //   return registerInterrupt(elevatorHomeBeambreak, callback);
+  // }
 
   public AsynchronousInterrupt registerChuteHomeInterrupt(
       TriConsumer<AsynchronousInterrupt, Boolean, Boolean> callback) {
