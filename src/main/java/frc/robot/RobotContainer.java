@@ -195,8 +195,8 @@ public class RobotContainer {
       //     .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175, driverController.getRightX()))));
       // driverController.rightBumper().onFalse(new InstantCommand(() -> drive.set(0, 0)));
 
-      // driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR));
-      // driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR));
+      driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR));
+      driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR));
 
       // driverController.rightBumper()
       //     .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure));
