@@ -277,6 +277,7 @@ class TofMain:
         thread = threading.Thread(target=reader).start()
         # self.mgr.shutdown()
 
+        # loop_ts = time.monotonic()
         while self.running:
             # poll for robot info... would be more efficient to use an NT listener
             event = None
@@ -306,7 +307,7 @@ class TofMain:
             self.cd.reset()
 
             # pause to avoid busy cpu, as we're not yet using full NT listeners
-            time.sleep(0.5)
+            time.sleep(0.05)
             # self.log.debug('loop')
 
     def shutdown(self):

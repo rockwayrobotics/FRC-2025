@@ -75,6 +75,7 @@ def main():
     leftVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/LeftVelocityMetersPerSec").subscribe(0)
 
     dsFMSAttachedSub = nt.getBooleanTopic("/AdvantageKit/DriverStation/FMSAttached").subscribe(False)
+    dsEnabledSub = nt.getBooleanTopic("/AdvantageKit/DriverStation/Enabled").subscribe(False)
 
     isRecording = False
 
@@ -162,12 +163,14 @@ def main():
 
             if args.save:
                 fmsAttached = dsFMSAttachedSub.get()
-                if isRecording and not fmsAttached:
+                enabled = dsEnabledSub.get()
+                shouldRecord = fmsAttached or enabled
+                if isRecording and not shouldRecord:
                     # Stop recording since the FMS just got detached
                     for i in [0, 1]:
                         stream[i].close()
                     isRecording = False
-                elif fmsAttached:
+                elif shouldRecord:
                     isRecording = True
 
                 if isRecording:
@@ -177,8 +180,10 @@ def main():
             dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
             source.putFrame(dashboard_arr)
 
-            aprilDetector.detect(arr0)
-            aprilDetector.detect(arr1)
+            if not fore_cam.fake:
+                aprilDetector.detect(arr0)
+            if not aft_cam.fake:
+                aprilDetector.detect(arr1)
 
             key = console.get_key()
 
