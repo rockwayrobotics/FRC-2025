@@ -75,6 +75,7 @@ def main():
     leftVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/LeftVelocityMetersPerSec").subscribe(0)
 
     dsFMSAttachedSub = nt.getBooleanTopic("/AdvantageKit/DriverStation/FMSAttached").subscribe(False)
+    dsEnabledSub = nt.getBooleanTopic("/AdvantageKit/DriverStation/Enabled").subscribe(False)
 
     isRecording = False
 
@@ -162,12 +163,14 @@ def main():
 
             if args.save:
                 fmsAttached = dsFMSAttachedSub.get()
-                if isRecording and not fmsAttached:
+                enabled = dsEnabledSub.get()
+                shouldRecord = fmsAttached or enabled
+                if isRecording and not shouldRecord:
                     # Stop recording since the FMS just got detached
                     for i in [0, 1]:
                         stream[i].close()
                     isRecording = False
-                elif fmsAttached:
+                elif shouldRecord:
                     isRecording = True
 
                 if isRecording:
