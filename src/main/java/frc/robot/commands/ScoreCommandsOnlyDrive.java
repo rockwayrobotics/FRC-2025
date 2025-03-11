@@ -60,22 +60,6 @@ public class ScoreCommandsOnlyDrive {
     }
   }
 
-  public static class TestScoreCommandState extends ScoreCommandState {
-    public boolean fakeCornerTriggered = false;
-    public boolean scoreNowTriggered = false;
-
-    @Override
-    public void reset() {
-      super.reset();
-      fakeCornerTriggered = false;
-      scoreNowTriggered = false;
-    }
-  }
-
-  static final Tuner testScoreDriveSpeedMetersPerSec = new Tuner("TestScore/drive_speed_meters_per_sec", 0.2, true);
-  static final Tuner testScoreWallDistanceMeters = new Tuner("TestScore/distance_along_wall_meters", 0.4, true);
-  static final Tuner testScoreShootSpinDuration = new Tuner("TestScore/shoot_spin_duration_seconds", 3, true);
-
   static final Tuner chuteTofDistanceMeters = new Tuner("Score/chute_tof_distance_meters", 0.26, true);
 
   public static final double SCORING_EPSILON_METERS = 0.25;
@@ -200,6 +184,7 @@ public class ScoreCommandsOnlyDrive {
             }),
             Commands.run(() -> {
               System.out.println("Trying to shoot");
+              drive.stop();
               chute.startShooting();
             }).withTimeout(2.0),
             Commands.runOnce(() -> {
@@ -213,114 +198,6 @@ public class ScoreCommandsOnlyDrive {
       tofTopic.set("none");
       speedTopic.set(Constants.Drive.SCORING_SPEED);
       //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
-      commandState.reset();
-      RobotTracker.getInstance().getScoringState().reset();
-      chute.stopShooting();
-      // FIXME: Reset? Detect if coral was shot?
-    });
-  }
-
-  public static Command testScoreOnlyDrive(Drive drive, Chute chute, BooleanSupplier fakeCornerTrigger,
-      BooleanSupplier shootNowTrigger) {
-    double driveSpeed = ScoreCommandsOnlyDrive.testScoreDriveSpeedMetersPerSec.get();
-    double wallDistanceMeters = ScoreCommandsOnlyDrive.testScoreWallDistanceMeters.get();
-    double shootSpinDuration = ScoreCommandsOnlyDrive.testScoreShootSpinDuration.get();
-
-    if (Math.abs(driveSpeed) > 0.5) {
-      return Commands.runOnce(() -> {
-        System.err.println("Rejected test score command, drive speed " + driveSpeed + " is too fast");
-      });
-    }
-
-    NetworkTableInstance nt = NetworkTableInstance.getDefault();
-    //DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
-    FloatArrayTopic cornerTopic = nt.getFloatArrayTopic(Constants.NT.CORNERS);
-    ParallelRaceGroup cancellableGroup = new ParallelRaceGroup();
-    TestScoreCommandState commandState = new TestScoreCommandState();
-    // We never stop listening to this
-    nt.addListener(cornerTopic, EnumSet.of(Kind.kValueAll), networkTableEvent -> {
-      float[] results = networkTableEvent.valueData.value.getFloatArray();
-      commandState.cornerTimestamp = results[0];
-      // Angle is in radians
-      commandState.angle = results[1];
-      commandState.isValid = true;
-    });
-
-    Command command = Commands.sequence(
-        Commands.runOnce(() -> {
-          System.out.println("TestScore: drive.stop");
-          drive.stop();
-        }),
-        Commands.waitUntil(() -> {
-          double speed = drive.getLeftVelocityMetersPerSec();
-          System.out.println("TestScore: ready to drive");
-          return (Math.abs(speed) < 0.05);
-        }),
-        Commands.race(
-            Commands.run(() -> {
-              drive.setTankDrive(new ChassisSpeeds(driveSpeed, 0, 0));
-            }),
-            Commands.sequence(
-                Commands.waitUntil(() -> {
-                  double speed = drive.getLeftVelocityMetersPerSec();
-                  return (Math.abs(driveSpeed - speed) < 0.1);
-                }),
-                Commands.runOnce(() -> {
-                  System.out.println("TestScore: Setting PiState");
-                  // piState.set(new double[] { RobotTracker.getInstance().getScoringState().sensorState.piValue(),
-                  //     commandState.speeds.getLast() });
-                }),
-                Commands.waitUntil(() -> {
-                  commandState.fakeCornerTriggered = fakeCornerTrigger.getAsBoolean();
-                  commandState.scoreNowTriggered = shootNowTrigger.getAsBoolean();
-                  return commandState.isValid || commandState.fakeCornerTriggered || commandState.scoreNowTriggered;
-                }),
-                Commands.runOnce(() -> {
-                  System.out.println("TestScore: Finished waiting for Pi");
-                  if (commandState.scoreNowTriggered) {
-                    System.out.println("TestScore: Score now processing");
-                    // do nothing
-                  } else {
-                    if (commandState.fakeCornerTriggered) {
-                      System.out.println("TestScore: Fake corner processing");
-                      commandState.cornerTimestamp = (float) Timer.getFPGATimestamp();
-                      commandState.angle = 0;
-                    }
-                    Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp);
-                    leftEncoderDistance.ifPresentOrElse(distance -> {
-                      commandState.cornerDistance = distance;
-                      commandState.targetLeftEncoder = distance
-                          + wallDistanceMeters * Math.cos(commandState.angle);
-                    }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
-                      System.err.println("Failed to find scoring encoder distance because we have no position data");
-                    })));
-                  }
-                }),
-                Commands.waitUntil(() -> {
-                  return commandState.scoreNowTriggered || Math
-                      .abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
-                }),
-                Commands.run(() -> {
-                  System.out.println("TestScore: Starting to shoot");
-                  chute.startShooting();
-                }).withTimeout(shootSpinDuration),
-                Commands.runOnce(() -> {
-                  System.out.println("TestScore: Stopping shooting");
-                  chute.stopShooting();
-                }))),
-        Commands.runOnce(() -> {
-          System.out.println("TestScore: Stopping normally");
-          drive.stop();
-        }));
-    command.addRequirements(drive);
-    cancellableGroup.addCommands(command);
-    return cancellableGroup.finallyDo(interrupted -> {
-      if (interrupted) {
-        System.out.println("Stopped robot due to cancellation");
-        drive.stop();
-      }
-      System.out.println("TestScore: Resetting");
-      // piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
       chute.stopShooting();
