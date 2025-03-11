@@ -23,7 +23,7 @@ const VALID_TIMING_BUDGETS: &[u16] = &[15, 20, 33, 50, 100, 200, 500];
 /// Channel for readings and errors. Expected to need only a little space
 /// provided the Python can keep up.  Otherwise needs space for as many
 /// readings as can be retrieved while the Python is busy.
-const CHANNEL_SIZE: usize = 10;
+const CHANNEL_SIZE: usize = 15;
 
 // Define a custom exception for thread errors
 create_exception!(vl53l1x, ThreadError, PyException);
