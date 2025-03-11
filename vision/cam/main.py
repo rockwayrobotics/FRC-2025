@@ -180,8 +180,10 @@ def main():
             dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
             source.putFrame(dashboard_arr)
 
-            aprilDetector.detect(arr0)
-            aprilDetector.detect(arr1)
+            if not fore_cam.fake:
+                aprilDetector.detect(arr0)
+            if not aft_cam.fake:
+                aprilDetector.detect(arr1)
 
             key = console.get_key()
 
