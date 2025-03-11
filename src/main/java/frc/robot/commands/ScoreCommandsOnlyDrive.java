@@ -183,7 +183,7 @@ public class ScoreCommandsOnlyDrive {
               return Math.abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
             }),
             Commands.run(() -> {
-              System.out.println("Trying to shoot");
+               System.out.println("Trying to shoot");
               drive.stop();
               chute.startShooting();
             }).withTimeout(2.0),

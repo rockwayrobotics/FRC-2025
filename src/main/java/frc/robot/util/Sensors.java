@@ -70,14 +70,14 @@ public class Sensors {
     return !chuteHomeSwitch.get();
   }
 
-  /** @return false when beam is broken */
+  /** @return true when beam is broken */
   public boolean getChuteCoralReadyBeambreak() {
-    return chuteCoralReadyBeambreak.get();
+    return !chuteCoralReadyBeambreak.get();
   }
 
-  /** @return false when beam is broken */
+  /** @return true when beam is broken */
   public boolean getChuteCoralLoadedBeambreak() {
-    return chuteCoralLoadedBeambreak.get();
+    return !chuteCoralLoadedBeambreak.get();
   }
 
   // /** @return true when elevator beam is broken */
