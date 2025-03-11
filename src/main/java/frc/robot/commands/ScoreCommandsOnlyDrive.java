@@ -153,7 +153,12 @@ public class ScoreCommandsOnlyDrive {
             Commands.runOnce(() -> {
               System.out.println("Speed before wait: " + drive.getLeftVelocityMetersPerSec());
             }),
-            Commands.waitSeconds(0.2),
+            Commands.race(
+              Commands.waitSeconds(2),
+              Commands.waitUntil(() -> {
+                return Math.abs(drive.getLeftVelocityMetersPerSec() - Constants.Drive.SCORING_SPEED) < 0.03;
+              })
+            ),
             Commands.runOnce(() -> {
               var speed = drive.getLeftVelocityMetersPerSec();
               System.out.println("Sending start to Pi with speed: " + speed);
@@ -183,7 +188,7 @@ public class ScoreCommandsOnlyDrive {
               return Math.abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
             }),
             Commands.run(() -> {
-              System.out.println("Trying to shoot");
+               System.out.println("Trying to shoot");
               drive.stop();
               chute.startShooting();
             }).withTimeout(2.0),

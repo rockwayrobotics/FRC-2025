@@ -12,9 +12,7 @@ import frc.robot.Constants.Side;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.grabber.Grabber;
-import frc.robot.util.Sensors;
 import frc.robot.util.TunableSetpoints;
-import frc.robot.util.Tuner;
 
 public class Superstructure extends SubsystemBase {
   public final Elevator elevator;
@@ -184,10 +182,19 @@ public class Superstructure extends SubsystemBase {
       case Intake:
         setChutePivotGoalRads(sideMultiplier * setpoints.intake_chute_pivot_angle_rads());
         setElevatorGoalHeightMillimeters(setpoints.intake_elevator_height_mm());
+        loadCoralChute().schedule();
         break;
     }
   }
 
+  public Command loadCoralChute() {
+    return Commands.sequence(
+        Commands.waitUntil(() -> chute.isCoralLoading()),
+        Commands.run(() -> chute.setShooterMotor(0.1), this),
+        Commands.waitUntil(() -> chute.isCoralReady())
+    ).finallyDo(() -> chute.setShooterMotor(0));
+  }
+  
   public void gotoAlgaeSetpoint(AlgaeLevel level) {
     // Runnable suck = () -> {
     //   Commands.run(() -> grabber.setGrabberMotor(-0.75), this).onlyWhile(() -> Sensors.getInstance()

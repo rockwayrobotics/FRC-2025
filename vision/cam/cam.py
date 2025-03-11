@@ -62,6 +62,7 @@ def get_cam_number(cam_id):
 class PiCam:
     '''Raspberry Pi camera (use MockCam if not on a Pi)'''
     def __init__(self, cam_id, res, fps=30, flip=False):
+        self.fake = False
         self.num = get_cam_number(cam_id)
         self.cam_id = cam_id # keep for debugging
         self.cam = picamera2.Picamera2(self.num)
@@ -102,6 +103,7 @@ class MockCam:
     # pylint: disable=unused-argument
     def __init__(self, num, res, fps=30, flip=False):
         self.num = CAM_NUMS.get(num, 99)
+        self.fake = True
 
         imgpath = Path(__file__).parent.absolute() / f'cam{self.num}.jpg'
         image = cv2.imread(imgpath)
