@@ -62,6 +62,7 @@ public class ScoreCommandsOnlyDrive {
   }
 
   static final Tuner chuteTofDistanceMeters = new Tuner("Score/chute_tof_distance_meters", 0.26, true);
+  static final Tuner scoringSpeedMetersPerSecond = new Tuner("Score/scoring_speed_meters_per_sec", 0.45, true);
 
   public static final double SCORING_EPSILON_METERS = 0.25;
 
@@ -147,7 +148,7 @@ public class ScoreCommandsOnlyDrive {
 
     Command command = Commands.parallel(
         Commands.run(() -> {
-          drive.setTankDrive(new ChassisSpeeds(Constants.Drive.SCORING_SPEED, 0, 0));
+          drive.setTankDrive(new ChassisSpeeds(scoringSpeedMetersPerSecond.get(), 0, 0));
         }),
 
         Commands.sequence(
@@ -157,7 +158,7 @@ public class ScoreCommandsOnlyDrive {
             Commands.race(
               Commands.waitSeconds(2),
               Commands.waitUntil(() -> {
-                return Math.abs(drive.getLeftVelocityMetersPerSec() - Constants.Drive.SCORING_SPEED) < 0.03;
+                return Math.abs(drive.getLeftVelocityMetersPerSec() - scoringSpeedMetersPerSecond.get()) < 0.03;
               })
             ),
             Commands.runOnce(() -> {
@@ -202,7 +203,7 @@ public class ScoreCommandsOnlyDrive {
     return cancellableGroup.finallyDo(interrupted -> {
       System.out.println("Command completed: interrupted? " + interrupted);
       tofTopic.set("none");
-      speedTopic.set(Constants.Drive.SCORING_SPEED);
+      speedTopic.set(scoringSpeedMetersPerSecond.get());
       //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
