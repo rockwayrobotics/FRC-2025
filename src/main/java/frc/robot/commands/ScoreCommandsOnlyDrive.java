@@ -36,6 +36,7 @@ import frc.robot.Constants;
 import frc.robot.RobotTracker;
 import frc.robot.ScoringState.SensorState;
 import frc.robot.subsystems.chute.Chute;
+import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.drive.Drive;
 
 public class ScoreCommandsOnlyDrive {
@@ -124,7 +125,7 @@ public class ScoreCommandsOnlyDrive {
     }
   }
 
-  public static Command score(Drive drive, Chute chute, Constants.ReefBar reefBar) {
+  public static Command score(Drive drive, Chute chute, Constants.ReefBar reefBar, ChuterShooter chuterShooter) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
     DoublePublisher speedTopic = nt.getDoubleTopic(Constants.NT.SPEED).publish();
     StringPublisher tofTopic = nt.getStringTopic(Constants.NT.TOF_MODE).publish();
@@ -190,11 +191,11 @@ public class ScoreCommandsOnlyDrive {
             Commands.run(() -> {
                System.out.println("Trying to shoot");
               drive.stop();
-              chute.startShooting();
+              chuterShooter.startShooting();
             }).withTimeout(2.0),
             Commands.runOnce(() -> {
               System.out.println("Stopping shooting");
-              chute.stopShooting();
+              chuterShooter.stopShooting();
             })));
     command.addRequirements(drive);
     cancellableGroup.addCommands(command);
@@ -205,7 +206,7 @@ public class ScoreCommandsOnlyDrive {
       //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
-      chute.stopShooting();
+      chuterShooter.stopShooting();
       // FIXME: Reset? Detect if coral was shot?
     });
   }

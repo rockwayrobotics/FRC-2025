@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ProxyCommand;
 import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -37,6 +38,8 @@ import frc.robot.simulation.WorldSimulation;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chute.ChuteIOReal;
 import frc.robot.subsystems.chute.ChuteIOSim;
+import frc.robot.subsystems.chuterShooter.ChuterShooter;
+import frc.robot.subsystems.chuterShooter.ChuterShooterIOReal;
 import frc.robot.subsystems.climp.Climp;
 import frc.robot.subsystems.climp.ClimpIOReal;
 import frc.robot.subsystems.climp.ClimpIOSim;
@@ -63,6 +66,7 @@ public class RobotContainer {
   private final Drive drive;
   private final Superstructure superstructure;
   private final Climp climp;
+  private final ChuterShooter chuterShooter;
 
   // Control devices
   private final CommandXboxController driverController = new CommandXboxController(Constants.Gamepads.DRIVER);
@@ -93,12 +97,14 @@ public class RobotContainer {
       Grabber grabber = new Grabber(new GrabberIOReal());
       superstructure = new Superstructure(elevator, chute, grabber);
       climp = new Climp(new ClimpIOReal());
+      chuterShooter = new ChuterShooter(new ChuterShooterIOReal());
     } else {
       simulation = new WorldSimulation();
       drive = simulation.getDrive();
       superstructure = new Superstructure(new Elevator(simulation.getElevator()), new Chute(simulation.getChute()),
           new Grabber(simulation.getGrabber()));
       climp = new Climp(simulation.getClimp());
+      chuterShooter = new ChuterShooter(simulation.getChuterShooter());
     }
 
     // Set up auto routines
@@ -122,15 +128,15 @@ public class RobotContainer {
     // new autos that are UNTESTED
     autoChooser.addOption("justDrive", AutoPaths.justMove(drive, superstructure));
     autoChooser.addOption("pushRookiesV2", AutoPaths.pushRookies(drive, superstructure));
-    autoChooser.addOption("midFarRightL2", AutoPaths.midFarRightL2(drive, superstructure));
-    autoChooser.addOption("rightNearCenterL2", AutoPaths.rightNearCenterL2(drive, superstructure));
-    autoChooser.addOption("leftNearCenterL2", AutoPaths.leftNearCenterL2(drive, superstructure));
-    autoChooser.addOption("rightNearRightTrough", AutoPaths.rightNearRightTrough(drive, superstructure));
-    autoChooser.addOption("leftNearLeftTrough", AutoPaths.leftNearLeftTrough(drive, superstructure));
-    autoChooser.addOption("rightNearCenterTrough", AutoPaths.rightNearCenterTrough(drive, superstructure));
-    autoChooser.addOption("leftNearCenterTrough", AutoPaths.leftNearCenterTrough(drive, superstructure));
-    autoChooser.addOption("rightTestTrough", AutoPaths.rightTestTrough(drive, superstructure));
-    autoChooser.addOption("leftTestTrough", AutoPaths.leftTestTrough(drive, superstructure));
+    autoChooser.addOption("midFarRightL2", AutoPaths.midFarRightL2(drive, superstructure, chuterShooter));
+    autoChooser.addOption("rightNearCenterL2", AutoPaths.rightNearCenterL2(drive, superstructure, chuterShooter));
+    autoChooser.addOption("leftNearCenterL2", AutoPaths.leftNearCenterL2(drive, superstructure, chuterShooter));
+    autoChooser.addOption("rightNearRightTrough", AutoPaths.rightNearRightTrough(drive, superstructure, chuterShooter));
+    autoChooser.addOption("leftNearLeftTrough", AutoPaths.leftNearLeftTrough(drive, superstructure, chuterShooter));
+    autoChooser.addOption("rightNearCenterTrough", AutoPaths.rightNearCenterTrough(drive, superstructure, chuterShooter));
+    autoChooser.addOption("leftNearCenterTrough", AutoPaths.leftNearCenterTrough(drive, superstructure, chuterShooter));
+    autoChooser.addOption("rightTestTrough", AutoPaths.rightTestTrough(drive, superstructure, chuterShooter));
+    autoChooser.addOption("leftTestTrough", AutoPaths.leftTestTrough(drive, superstructure, chuterShooter));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
@@ -195,8 +201,8 @@ public class RobotContainer {
       //     .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175, driverController.getRightX()))));
       // driverController.rightBumper().onFalse(new InstantCommand(() -> drive.set(0, 0)));
 
-      driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR));
-      driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR));
+      driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR, chuterShooter));
+      driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR, chuterShooter));
 
       // driverController.rightBumper()
       //     .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure));
@@ -306,16 +312,16 @@ public class RobotContainer {
       }, climp));
 
       new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
-        superstructure.startShooting();
-      }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.chute.setShooterMotor(0);
-      }, superstructure));
+        chuterShooter.startShooting();
+      }, chuterShooter)).onFalse(Commands.run(() -> {
+        chuterShooter.setShooterMotor(0);
+      }, chuterShooter));
 
       new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
-        superstructure.chute.setShooterMotor(-0.1); // intake
-      }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.stopShooting();
-      }, superstructure));
+        chuterShooter.setShooterMotor(-0.1); // intake
+      }, chuterShooter)).onFalse(Commands.run(() -> {
+        chuterShooter.stopShooting();
+      }, chuterShooter));
 
       new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
         superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.5);
@@ -409,12 +415,16 @@ public class RobotContainer {
       new JoystickButton(operator1Controller, 7).onTrue(Commands.runOnce(() -> {
         superstructure.gotoSetpoint(CoralLevel.L1, Side.RIGHT);
       }, superstructure));
-      new JoystickButton(operator1Controller, 12).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.Intake, Side.LEFT);
-      }, superstructure));
-      new JoystickButton(operator1Controller, 11).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.Intake, Side.RIGHT);
-      }, superstructure));
+
+      new JoystickButton(operator1Controller, 12).onTrue(Commands.sequence(
+        new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.LEFT), superstructure)),
+        new ProxyCommand(chuterShooter.loadCoralChute())
+      ));
+
+      new JoystickButton(operator1Controller, 11).onTrue(Commands.sequence(
+        new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.RIGHT), superstructure)),
+        new ProxyCommand(chuterShooter.loadCoralChute())
+      ));
 
       // Algae setpoints
       // FIXME: spin wheels until algae sensor detects algae
@@ -476,11 +486,11 @@ public class RobotContainer {
     boolean enabled = true;
     if (enabled) {
       driverController.b(testModelButtonLoop).whileTrue(ScoreCommands.testScore(drive, superstructure,
-          driverController.leftBumper(testModelButtonLoop), driverController.rightBumper(testModelButtonLoop)));
+          driverController.leftBumper(testModelButtonLoop), driverController.rightBumper(testModelButtonLoop), chuterShooter));
 
       driverController.x(testModelButtonLoop)
-          .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure)
-              .finallyDo(() -> superstructure.chute.stopShooting()));
+          .whileTrue(Commands.run(() -> chuterShooter.startShooting(), chuterShooter)
+              .finallyDo(() -> chuterShooter.stopShooting()));
       driverController.y(testModelButtonLoop)
           .whileTrue(Commands.run(() -> climp.setNormalizedSpeed(0.1)).finallyDo(() -> climp.setNormalizedSpeed(0)));
 
@@ -517,6 +527,7 @@ public class RobotContainer {
     drive.stayStill();
     superstructure.stayStill();
     climp.stayStill();
+    chuterShooter.stopShooting();
   }
 
   public void home() {

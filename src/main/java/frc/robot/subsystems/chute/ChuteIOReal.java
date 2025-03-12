@@ -32,10 +32,7 @@ import com.revrobotics.spark.SparkMax;
 
 public class ChuteIOReal implements ChuteIO {
   protected final SparkMax pivotMotor = new SparkMax(Constants.CAN.PIVOT_MOTOR, MotorType.kBrushless);
-  protected final SparkMax shooterMotor = new SparkMax(Constants.CAN.SHOOTER_MOTOR, MotorType.kBrushless);
-
   protected final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
-  protected final RelativeEncoder shooterEncoder = shooterMotor.getEncoder();
 
   protected final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
 
@@ -53,7 +50,6 @@ public class ChuteIOReal implements ChuteIO {
   protected AsynchronousInterrupt inte = null;
 
   protected ArmFeedforward pivotFeedforward;
-  protected double shooterSpeed = 0;
 
   public ChuteIOReal() {
     updateParams(true);
@@ -79,16 +75,9 @@ public class ChuteIOReal implements ChuteIO {
       // pivotEncoder.setPosition(Constants.Chute.PIVOT_INITIAL_ANGLE_RADS));
     }
 
-    shooterMotor.set(this.shooterSpeed);
-
     REVUtils.ifOk(pivotMotor, pivotEncoder::getPosition, (value) -> inputs.pivotAngleRadians = value);
     REVUtils.ifOk(pivotMotor, pivotEncoder::getVelocity, (value) -> inputs.pivotVelocityRadPerSec = value);
-    REVUtils.ifOk(shooterMotor, shooterEncoder::getVelocity, (value) -> inputs.shooterVelocityRadPerSec = value);
     REVUtils.ifOk(pivotMotor, pivotMotor::getAppliedOutput, (value) -> inputs.appliedOutput = value);
-
-    // FIXME: Should we be reading this at 50Hz?
-    inputs.coralLoading = Sensors.getInstance().getChuteCoralLoadedBeambreak();
-    inputs.coralReady = Sensors.getInstance().getChuteCoralReadyBeambreak();
   }
 
   @Override
@@ -103,11 +92,6 @@ public class ChuteIOReal implements ChuteIO {
   @Override
   public void stopPivot() {
     pivotMotor.set(0);
-  }
-
-  @Override
-  public void setShooterSpeed(double speed) {
-    this.shooterSpeed = speed;
   }
 
   private void updateParams(boolean resetSafe) {
@@ -127,10 +111,6 @@ public class ChuteIOReal implements ChuteIO {
     REVUtils.tryUntilOk(
         () -> pivotMotor.configure(pivotConfig, resetMode, PersistMode.kPersistParameters));
 
-    SparkMaxConfig shooterConfig = new SparkMaxConfig();
-    shooterConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(38).voltageCompensation(12.0).inverted(true);
-    REVUtils.tryUntilOk(
-        () -> shooterMotor.configure(shooterConfig, resetMode, PersistMode.kPersistParameters));
   }
 
   public void setBrakeMode(boolean mode) {

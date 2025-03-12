@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
 import frc.robot.subsystems.chute.ChuteIOSim;
+import frc.robot.subsystems.chuterShooter.ChuterShooterIOSim;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 
 public class Coral {
@@ -55,11 +56,11 @@ public class Coral {
         .plus(new Transform3d(chutePosition - Constants.Chute.CHUTE_LENGTH_METERS / 2, 0, 0, new Rotation3d()));
   }
 
-  public void periodic(ChuteIOSim chuteIOSim) {
-    this.periodic(0.02, chuteIOSim);
+  public void periodic(ChuteIOSim chuteIOSim, ChuterShooterIOSim chuterShooterIOSim) {
+    this.periodic(0.02, chuteIOSim, chuterShooterIOSim);
   }
 
-  public void periodic(double dt, ChuteIOSim chuteIOSim) {
+  public void periodic(double dt, ChuteIOSim chuteIOSim, ChuterShooterIOSim chuterShooterIOSim) {
     if (!inChute) {
       // FIXME: Simulate states outside of chute
       return;
@@ -68,10 +69,10 @@ public class Coral {
     double chuteAngleRads = Units.degreesToRadians(90) - chuteIOSim.getPivotAngleRads();
     if (chutePosition < 0) {
       inChute = false;
-      chuteIOSim.setCoralLoading(false);
+      chuterShooterIOSim.setCoralLoading(false);
       System.out.println("Coral fell out of chute");
     } else if (chutePosition < Constants.Chute.CHUTE_WHEEL_POSITION_METERS) {
-      chuteIOSim.setCoralLoading(true);
+      chuterShooterIOSim.setCoralLoading(true);
       double normalForce = CORAL_MASS_KG * GRAVITY * Math.cos(chuteAngleRads);
       double gravityForce = CORAL_MASS_KG * GRAVITY * Math.sin(chuteAngleRads);
 
@@ -92,16 +93,16 @@ public class Coral {
 
       if (chutePosition >= Constants.Chute.CHUTE_WHEEL_POSITION_METERS) {
         chutePosition = Constants.Chute.CHUTE_WHEEL_POSITION_METERS;
-        chuteIOSim.setCoralLoading(false);
-        chuteIOSim.setCoralReady(true);
+        chuterShooterIOSim.setCoralLoading(false);
+        chuterShooterIOSim.setCoralReady(true);
       }
     } else {
-      chuteVelocity = chuteIOSim.getShooterVelocityRadPerSec() * Constants.Chute.SHOOTER_WHEEL_RADIUS_METERS;
+      chuteVelocity = chuterShooterIOSim.getShooterVelocityRadPerSec() * Constants.Chute.SHOOTER_WHEEL_RADIUS_METERS;
       chutePosition += chuteVelocity * dt;
 
       if (chutePosition >= Constants.Chute.CHUTE_LENGTH_METERS) {
         inChute = false;
-        chuteIOSim.setCoralReady(false);
+        chuterShooterIOSim.setCoralReady(false);
       }
     }
   }

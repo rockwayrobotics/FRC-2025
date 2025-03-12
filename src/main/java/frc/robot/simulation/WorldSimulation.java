@@ -21,6 +21,8 @@ import frc.robot.Constants;
 import frc.robot.RobotTracker;
 import frc.robot.subsystems.chute.ChuteIO;
 import frc.robot.subsystems.chute.ChuteIOSim;
+import frc.robot.subsystems.chuterShooter.ChuterShooterIO;
+import frc.robot.subsystems.chuterShooter.ChuterShooterIOSim;
 import frc.robot.subsystems.climp.ClimpIO;
 import frc.robot.subsystems.climp.ClimpIOSim;
 import frc.robot.subsystems.drive.Drive;
@@ -89,6 +91,7 @@ public class WorldSimulation {
   private ClimpIOSim climp;
   private ElevatorIOSim elevator;
   private GrabberIOSim grabber;
+  private ChuterShooterIOSim chuterShooter;
 
   private PiSimulation pi;
 
@@ -113,6 +116,7 @@ public class WorldSimulation {
     this.climp = new ClimpIOSim();
     this.elevator = new ElevatorIOSim(0);
     this.grabber = new GrabberIOSim();
+    this.chuterShooter = new ChuterShooterIOSim();
     pi = new PiSimulation(fieldObstacles);
   }
 
@@ -142,6 +146,10 @@ public class WorldSimulation {
 
   public GrabberIO getGrabber() {
     return grabber;
+  }
+
+  public ChuterShooterIO getChuterShooter() {
+    return chuterShooter;
   }
 
   private void simulateLoadCoral(Pose2d robotPose) {
@@ -180,7 +188,7 @@ public class WorldSimulation {
     List<Coral> coralToRemove = new ArrayList<>();
     final List<Pose3d> coralPoses = new ArrayList<>();
     for (Coral coral : corals) {
-      coral.periodic(chute);
+      coral.periodic(chute, chuterShooter);
       if (!coral.isInChute()) {
         // coralToRemove.add(coral);
       } else {

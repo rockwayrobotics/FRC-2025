@@ -76,18 +76,6 @@ public class Superstructure extends SubsystemBase {
     return chute.getPivotAngleRads();
   }
 
-  public void startShooting() {
-    chute.startShooting();
-  }
-
-  public void setShooterMotor(double speed) {
-    chute.setShooterMotor(speed);
-  }
-
-  public void stopShooting() {
-    chute.stopShooting();
-  }
-
   // FIXME: Add grabber methods too
 
   public void setWristGoalRads(double wristAngleRads) {
@@ -182,17 +170,9 @@ public class Superstructure extends SubsystemBase {
       case Intake:
         setChutePivotGoalRads(sideMultiplier * setpoints.intake_chute_pivot_angle_rads());
         setElevatorGoalHeightMillimeters(setpoints.intake_elevator_height_mm());
-        loadCoralChute().schedule();
+        
         break;
     }
-  }
-
-  public Command loadCoralChute() {
-    return Commands.sequence(
-        Commands.waitUntil(() -> chute.isCoralLoading()),
-        Commands.run(() -> chute.setShooterMotor(0.1), this),
-        Commands.waitUntil(() -> chute.isCoralReady())
-    ).finallyDo(() -> chute.setShooterMotor(0));
   }
   
   public void gotoAlgaeSetpoint(AlgaeLevel level) {

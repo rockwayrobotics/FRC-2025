@@ -32,6 +32,7 @@ import frc.robot.Constants;
 import frc.robot.RobotTracker;
 import frc.robot.ScoringState.SensorState;
 import frc.robot.subsystems.chute.Chute;
+import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.drive.Drive;
 
 public class ScoreCommands {
@@ -78,7 +79,7 @@ public class ScoreCommands {
 
   public static final double SCORING_EPSILON_METERS = 0.25;
   // FIXME commented out piState stuff because it doesnt work rn 
-  public static Command score(Drive drive, Superstructure superstructure) {
+  public static Command score(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
    // DoubleArrayPublisher piState = nt.getDoubleArrayTopic(Constants.NT.SENSOR_MODE).publish();
     FloatArrayTopic cornerTopic = nt.getFloatArrayTopic(Constants.NT.CORNERS);
@@ -136,23 +137,23 @@ public class ScoreCommands {
               return Math.abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
             }),
             Commands.run(() -> {
-              superstructure.startShooting();
+              chuterShooter.startShooting();
             }).withTimeout(2.0),
             Commands.runOnce(() -> {
-              superstructure.stopShooting();
+              chuterShooter.stopShooting();
             })));
-    command.addRequirements(drive, superstructure);
+    command.addRequirements(drive, superstructure, chuterShooter);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
       // piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
-      superstructure.stopShooting();
+      chuterShooter.stopShooting();
       // FIXME: Reset? Detect if coral was shot?
     });
   }
 
-  public static Command testScore(Drive drive, Superstructure superstructure, BooleanSupplier fakeCornerTrigger, BooleanSupplier shootNowTrigger) {
+  public static Command testScore(Drive drive, Superstructure superstructure, BooleanSupplier fakeCornerTrigger, BooleanSupplier shootNowTrigger, ChuterShooter chuterShooter) {
     double elevatorHeightMm = ScoreCommands.testScoreElevatorHeightMm.get();
     double chuteAngleDegrees = ScoreCommands.testScoreChuteAngleDegrees.get();
     double driveSpeed = ScoreCommands.testScoreDriveSpeedMetersPerSec.get();
@@ -261,11 +262,11 @@ public class ScoreCommands {
           }),
           Commands.run(() -> {
             System.out.println("TestScore: Starting to shoot");
-            superstructure.startShooting();
+            chuterShooter.startShooting();
           }).withTimeout(shootSpinDuration),
           Commands.runOnce(() -> {
             System.out.println("TestScore: Stopping shooting");
-            superstructure.stopShooting();
+            chuterShooter.stopShooting();
           })
         )
       ),
@@ -274,7 +275,7 @@ public class ScoreCommands {
         drive.stop();
       })
     );
-    command.addRequirements(drive, superstructure);
+    command.addRequirements(drive, superstructure, chuterShooter);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
       if (interrupted) {
@@ -285,7 +286,7 @@ public class ScoreCommands {
       //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
-      superstructure.stopShooting();
+      chuterShooter.stopShooting();
       // FIXME: Reset? Detect if coral was shot?
     });
   }

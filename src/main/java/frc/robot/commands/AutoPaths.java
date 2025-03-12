@@ -25,6 +25,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.CoralLevel;
 import frc.robot.Constants.Side;
 import frc.robot.RobotTracker;
+import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.util.Tuner;
@@ -92,7 +93,7 @@ public class AutoPaths {
    * @return
    */
   private static Command runTrajectory(Trajectory trajectory, CoralLevel level, Side side, Drive drive,
-      Superstructure superstructure) {
+      Superstructure superstructure, ChuterShooter chuterShooter) {
     LTVUnicycleController ltvController = new LTVUnicycleController(LTV_qelems, LTV_relems, LTV_dt,
         config.getMaxVelocity());
     PIDController leftController = new PIDController(kP, kI, kD);
@@ -121,10 +122,10 @@ public class AutoPaths {
         }),
         Commands.waitSeconds(1), // Arbitrary delay to let elevator stabilize
         Commands.runOnce(() -> {
-          superstructure.startShooting();
+          chuterShooter.startShooting();
         }),
         Commands.waitSeconds(0.5)).finallyDo(() -> {
-          superstructure.stopShooting();
+          chuterShooter.stopShooting();
           superstructure.setChutePivotGoalRads(
               superstructure.getPivotAngleRads() > 0 ? Units.degreesToRadians(90) : Units.degreesToRadians(-90));
           superstructure.setElevatorGoalHeightMillimeters(0);
@@ -132,7 +133,7 @@ public class AutoPaths {
         });
   }
 
-  public static Command midFarRightL2(Drive drive, Superstructure superstructure) {
+  public static Command midFarRightL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 4.000;
     double start_pose_heading_deg = 210;
@@ -146,10 +147,10 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTrajectory(trajectory, CoralLevel.L2, Side.LEFT, drive, superstructure);
+    return runTrajectory(trajectory, CoralLevel.L2, Side.LEFT, drive, superstructure, chuterShooter);
   }
 
-  public static Command rightNearCenterL2(Drive drive, Superstructure superstructure) {
+  public static Command rightNearCenterL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 1.000;
     double start_pose_heading_deg = 180;
@@ -163,10 +164,10 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTrajectory(trajectory, CoralLevel.L2, Side.LEFT, drive, superstructure);
+    return runTrajectory(trajectory, CoralLevel.L2, Side.LEFT, drive, superstructure, chuterShooter);
   }
 
-  public static Command leftNearCenterL2(Drive drive, Superstructure superstructure) {
+  public static Command leftNearCenterL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 7.050; // 1 m from wall
     double start_pose_heading_deg = 180;
@@ -180,10 +181,10 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTrajectory(trajectory, CoralLevel.L2, Side.RIGHT, drive, superstructure);
+    return runTrajectory(trajectory, CoralLevel.L2, Side.RIGHT, drive, superstructure, chuterShooter);
   }
 
-  public static Command rightNearCenterTrough(Drive drive, Superstructure superstructure) {
+  public static Command rightNearCenterTrough(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 1.000;
     double start_pose_heading_deg = 180;
@@ -199,10 +200,10 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure);
+    return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure, chuterShooter);
   }
 
-  public static Command leftNearCenterTrough(Drive drive, Superstructure superstructure) {
+  public static Command leftNearCenterTrough(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 7.050; // 1 m from wall
     double start_pose_heading_deg = 180;
@@ -216,10 +217,10 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure);
+    return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure, chuterShooter);
   }
 
-  public static Command rightNearRightTrough(Drive drive, Superstructure superstructure) {
+  public static Command rightNearRightTrough(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 1.000;
     double start_pose_heading_deg = 180;
@@ -238,10 +239,10 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure);
+    return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure, chuterShooter);
   }
 
-  public static Command leftNearLeftTrough(Drive drive, Superstructure superstructure) {
+  public static Command leftNearLeftTrough(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 7.050; // 1 m from wall
     double start_pose_heading_deg = 180;
@@ -258,23 +259,23 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure);
+    return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure, chuterShooter);
   }
 
-  public static Command rightTestTrough(Drive drive, Superstructure superstructure) {
+  public static Command rightTestTrough(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(0, 0, new Rotation2d()), List.of(),
         new Pose2d(0.5, 0, new Rotation2d()), config);
-    return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure);
+    return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure, chuterShooter);
   }
 
-  public static Command leftTestTrough(Drive drive, Superstructure superstructure) {
+  public static Command leftTestTrough(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(new Pose2d(0, 0, new Rotation2d()), List.of(),
         new Pose2d(0.5, 0, new Rotation2d()), config);
-    return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure);
+    return runTroughTrajectory(trajectory, Side.RIGHT, drive, superstructure, chuterShooter);
   }
 
   private static Command runTroughTrajectory(Trajectory trajectory, Side side, Drive drive,
-      Superstructure superstructure) {
+      Superstructure superstructure, ChuterShooter chuterShooter) {
     LTVUnicycleController ltvController = new LTVUnicycleController(LTV_qelems, LTV_relems, LTV_dt,
         config.getMaxVelocity());
     PIDController leftController = new PIDController(kP, kI, kD);
@@ -304,12 +305,12 @@ public class AutoPaths {
         Commands.waitSeconds(stabilizeDelayTuner.get()), // Arbitrary delay to let elevator stabilize
         Commands.parallel(
             Commands.runOnce(() -> {
-              superstructure.setShooterMotor(troughShooterSpeedTuner.get());
+              chuterShooter.setShooterMotor(troughShooterSpeedTuner.get());
             }),
             Commands.run(() -> {
               drive.setTankDrive(new ChassisSpeeds(troughDriveSpeedTuner.get(), 0, 0));
             }).withTimeout(troughTimeTuner.get())).finallyDo(() -> {
-              superstructure.stopShooting();
+              chuterShooter.stopShooting();
               superstructure.setChutePivotGoalRads(
                   superstructure.getPivotAngleRads() > 0 ? Units.degreesToRadians(90) : Units.degreesToRadians(-90));
               superstructure.setElevatorGoalHeightMillimeters(0);
