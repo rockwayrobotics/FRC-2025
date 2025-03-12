@@ -156,6 +156,8 @@ def get_args():
     parser.add_argument("--stdout", action="store_true")
     parser.add_argument("--slope", type=float, default=400,
         help="slope threshold (for corner detector) (default %(default)s)")
+    parser.add_argument("--speed", type=float, default=0.45,
+        help="fake speed (for testing, default %(default)s)")
 
     args = parser.parse_args()
     args.roi = tuple(int(x) for x in args.roi.split(","))
@@ -173,6 +175,7 @@ class TofMain:
         self.args = args
         self.log = logging.getLogger("tof")
         self.running = False
+        self.speed = self.args.speed
 
 
     def nt_init(self):
@@ -227,7 +230,6 @@ class TofMain:
 
         self.nt_init()
 
-        self.speed = 0
         self.cd = CornerDetector(400)
         self.running = True
 
@@ -245,15 +247,21 @@ class TofMain:
         if cd.found_corner():
             self.cornerPub.set([cd.corner_timestamp, cd.corner_angle])
             self.cornerTsPub.set(cd.corner_timestamp)
-            self.cornerAnglePub.set(cd.corner_angle * 180 / math.pi)
+            angle_deg = cd.corner_angle * 180 / math.pi 
+            self.cornerAnglePub.set(angle_deg)
             self.nt.flush()
 
-            self.log.info("CORNER: %.3f,%.3f,%.3fs", ts, cd.corner_timestamp, self.speed)
+            if self.args.stdout:
+                print()
+            self.log.info("CORNER: %.3f,%.3f,%.3fs,%.0f", ts, cd.corner_timestamp,
+                self.speed, angle_deg)
             cd.log_timing()
 
             cd.reset()
         else:
-            self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
+            # self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
+            if self.args.stdout:
+                print("dist,%8.3f,%5.0f,%2d,%5.3f      " % (ts, dist_mm, status, delta), end='\r')
             self.distPub.set(dist_mm)
     
 
@@ -277,7 +285,7 @@ class TofMain:
         thread = threading.Thread(target=reader).start()
         # self.mgr.shutdown()
 
-        # loop_ts = time.monotonic()
+        loop_ts = time.monotonic()
         while self.running:
             # poll for robot info... would be more efficient to use an NT listener
             event = None
@@ -289,9 +297,9 @@ class TofMain:
                 self.speed = self.speedSub.get()
                 self.log.info('mode %s, speed %s', mode, self.speed)
 
-            else:
-                self.speed = 0.45
-                mode = 'right'
+            # else:
+            #     self.speed = 0.45
+            #     mode = 'right'
 
             # handle mode changes
             if mode != lastMode:
@@ -304,11 +312,18 @@ class TofMain:
                 self.log.info('selected tof: %s', mode)
                 lastMode = mode
 
-            self.cd.reset()
+                self.cd.reset()
 
             # pause to avoid busy cpu, as we're not yet using full NT listeners
             time.sleep(0.05)
             # self.log.debug('loop')
+
+            now = time.monotonic()
+            elapsed = now - loop_ts
+            if elapsed > 0.075:
+                self.log.warn('long loop time %.3fs', elapsed)
+            loop_ts = now
+            
 
     def shutdown(self):
         self.log.warn('shutting down')
