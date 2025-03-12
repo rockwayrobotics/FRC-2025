@@ -65,6 +65,7 @@ def main():
 
     # When everything done, release the capture
     cap.release()
+    cv2.destroyAllWindows()
 
 def get_args():
     # pylint: disable=import-outside-toplevel
