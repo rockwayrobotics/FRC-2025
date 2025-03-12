@@ -29,6 +29,7 @@ except ImportError:
     PI = False
 
 from . import cam
+from .camcal import CALS
 from .apriltag import AprilTagDetection
 from .keys import NonBlockingConsole
 from .recording import VideoEncoder
@@ -98,9 +99,9 @@ def main():
     # possibly account for flip=True separately in case that affects the
     # values (or can we just "rotate" the centre/focal point values?)
     try:
-        cal = cam.CALS[args.cals]
+        cal = CALS[args.cals]
     except KeyError:
-        cal = cam.CALS[args.res]
+        cal = CALS[args.res]
 
     aprilDetector = AprilTagDetection(args, nt, cal=cal)
 
