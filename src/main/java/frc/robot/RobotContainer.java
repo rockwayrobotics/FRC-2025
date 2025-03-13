@@ -32,6 +32,7 @@ import frc.robot.Constants.CoralLevel;
 import frc.robot.ScoringState.SensorState;
 import frc.robot.commands.AutoPaths;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.DriveStraight;
 import frc.robot.commands.ScoreCommandsOnlyDrive;
 import frc.robot.simulation.WorldSimulation;
 import frc.robot.subsystems.chute.Chute;
@@ -202,6 +203,7 @@ public class RobotContainer {
 
       driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR, chuterShooter));
       driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR, chuterShooter));
+      driverController.x().whileTrue(new DriveStraight(0.45, drive));
 
       // driverController.rightBumper()
       //     .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure));
