@@ -40,6 +40,7 @@ import frc.robot.subsystems.chute.ChuteIOReal;
 import frc.robot.subsystems.chute.ChuteIOSim;
 import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.chuterShooter.ChuterShooterIOReal;
+import frc.robot.subsystems.chuterShooter.ChuterShooterIOSim;
 import frc.robot.subsystems.climp.Climp;
 import frc.robot.subsystems.climp.ClimpIOReal;
 import frc.robot.subsystems.climp.ClimpIOSim;
@@ -92,12 +93,19 @@ public class RobotContainer {
     if (RobotBase.isReal()) {
       drive = new Drive(new DriveIOSparkMax(), new GyroIONavX());
 
-      Elevator elevator = new Elevator(new ElevatorIOReal());
-      Chute chute = new Chute(new ChuteIOReal());
-      Grabber grabber = new Grabber(new GrabberIOReal());
+      // FIXME: This is how the other subsystems are disabled.
+      // Elevator elevator = new Elevator(new ElevatorIOReal());
+      // Chute chute = new Chute(new ChuteIOReal());
+      // Grabber grabber = new Grabber(new GrabberIOReal());
+      // superstructure = new Superstructure(elevator, chute, grabber);
+      // climp = new Climp(new ClimpIOReal());
+      // chuterShooter = new ChuterShooter(new ChuterShooterIOReal());
+      var elevator = new Elevator(new ElevatorIOSim(0));
+      var chute = new Chute(new ChuteIOSim());
+      var grabber = new Grabber(new GrabberIOSim());
       superstructure = new Superstructure(elevator, chute, grabber);
-      climp = new Climp(new ClimpIOReal());
-      chuterShooter = new ChuterShooter(new ChuterShooterIOReal());
+      climp = new Climp(new ClimpIOSim());
+      chuterShooter = new ChuterShooter(new ChuterShooterIOSim());
     } else {
       simulation = new WorldSimulation();
       drive = simulation.getDrive();
@@ -183,16 +191,16 @@ public class RobotContainer {
     boolean enabled = true;
     if (enabled) {
       driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
-      driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
+      driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
-      driverController.rightBumper().onTrue(new InstantCommand(() -> drive.setScale(0.7)));
-      driverController.rightBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
+      driverController.rightBumper().onTrue(new InstantCommand(() -> drive.setScale(1)));
+      driverController.rightBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
       // driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(rotationTuner.get())));
       // driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
 
       driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setScale(0.1)));
-      driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(1)));
+      driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
       driverController.rightTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(1)));
       driverController.rightTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
@@ -417,14 +425,14 @@ public class RobotContainer {
       }, superstructure));
 
       new JoystickButton(operator1Controller, 12).onTrue(Commands.sequence(
-        new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.LEFT), superstructure)),
-        new ProxyCommand(chuterShooter.loadCoralChute())
-      ));
+        new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.LEFT), superstructure))));
+        // new ProxyCommand(chuterShooter.loadCoralChute())
+      // ));
 
       new JoystickButton(operator1Controller, 11).onTrue(Commands.sequence(
-        new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.RIGHT), superstructure)),
-        new ProxyCommand(chuterShooter.loadCoralChute())
-      ));
+        new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.RIGHT), superstructure))));
+        // new ProxyCommand(chuterShooter.loadCoralChute())
+      // ));
 
       // Algae setpoints
       // FIXME: spin wheels until algae sensor detects algae

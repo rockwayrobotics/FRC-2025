@@ -72,12 +72,12 @@ public class Sensors {
 
   /** @return true when beam is broken */
   public boolean getChuteCoralReadyBeambreak() {
-    return !chuteCoralReadyBeambreak.get();
+    return chuteCoralReadyBeambreak.get();
   }
 
   /** @return true when beam is broken */
   public boolean getChuteCoralLoadedBeambreak() {
-    return !chuteCoralLoadedBeambreak.get();
+    return chuteCoralLoadedBeambreak.get();
   }
 
   // /** @return true when elevator beam is broken */
