@@ -183,16 +183,16 @@ public class RobotContainer {
     boolean enabled = true;
     if (enabled) {
       driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
-      driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
+      driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
-      driverController.rightBumper().onTrue(new InstantCommand(() -> drive.setScale(0.7)));
-      driverController.rightBumper().onFalse(new InstantCommand(() -> drive.setScale(1)));
+      driverController.rightBumper().onTrue(new InstantCommand(() -> drive.setScale(1)));
+      driverController.rightBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
       // driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(rotationTuner.get())));
       // driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
 
       driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setScale(0.1)));
-      driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(1)));
+      driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
       driverController.rightTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(1)));
       driverController.rightTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
