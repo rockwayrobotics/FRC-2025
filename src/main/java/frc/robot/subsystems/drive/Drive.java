@@ -312,6 +312,11 @@ public class Drive extends SubsystemBase {
         wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS, false);
   }
 
+  public void setTankDriveSpeeds(double leftMetersPerSec, double rightMetersPerSec) {
+    differentialDrive.tankDrive(leftMetersPerSec / Constants.Drive.MAX_SPEED_MPS,
+        rightMetersPerSec / Constants.Drive.MAX_SPEED_MPS, false);
+  }
+
   /** Stops the drive. */
   public void stop() {
     io.setVoltage(0.0, 0.0);

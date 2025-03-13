@@ -3,38 +3,20 @@ package frc.robot.commands;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BooleanSupplier;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
-import edu.wpi.first.networktables.FloatArrayEntry;
-import edu.wpi.first.networktables.FloatArrayPublisher;
 import edu.wpi.first.networktables.FloatArrayTopic;
-import edu.wpi.first.networktables.FloatSubscriber;
-import edu.wpi.first.networktables.FloatTopic;
-import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.networktables.StringTopic;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.util.CircularBuffer;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
-import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.util.Tuner;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
-import frc.robot.ScoringState.SensorState;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.drive.Drive;
@@ -62,6 +44,8 @@ public class ScoreCommandsOnlyDrive {
   }
 
   static final Tuner chuteTofDistanceMeters = new Tuner("Score/chute_tof_distance_meters", 0.26, true);
+  static final Tuner scoringSpeedMetersPerSecond = new Tuner("Score/scoring_speed_meters_per_sec", 0.45, true);
+  static final Tuner scoringChuterShooterSpeed = new Tuner("Score/scoring_chuter_shooter_speed", 0.2, true);
 
   public static final double SCORING_EPSILON_METERS = 0.25;
 
@@ -147,7 +131,7 @@ public class ScoreCommandsOnlyDrive {
 
     Command command = Commands.parallel(
         Commands.run(() -> {
-          drive.setTankDrive(new ChassisSpeeds(Constants.Drive.SCORING_SPEED, 0, 0));
+          drive.setTankDrive(new ChassisSpeeds(scoringSpeedMetersPerSecond.get(), 0, 0));
         }),
 
         Commands.sequence(
@@ -157,7 +141,7 @@ public class ScoreCommandsOnlyDrive {
             Commands.race(
               Commands.waitSeconds(2),
               Commands.waitUntil(() -> {
-                return Math.abs(drive.getLeftVelocityMetersPerSec() - Constants.Drive.SCORING_SPEED) < 0.03;
+                return Math.abs(drive.getLeftVelocityMetersPerSec() - scoringSpeedMetersPerSecond.get()) < 0.03;
               })
             ),
             Commands.runOnce(() -> {
@@ -191,7 +175,7 @@ public class ScoreCommandsOnlyDrive {
             Commands.run(() -> {
                System.out.println("Trying to shoot");
               drive.stop();
-              chuterShooter.startShooting();
+              chuterShooter.setShooterMotor(scoringChuterShooterSpeed.get());
             }).withTimeout(2.0),
             Commands.runOnce(() -> {
               System.out.println("Stopping shooting");
@@ -202,7 +186,7 @@ public class ScoreCommandsOnlyDrive {
     return cancellableGroup.finallyDo(interrupted -> {
       System.out.println("Command completed: interrupted? " + interrupted);
       tofTopic.set("none");
-      speedTopic.set(Constants.Drive.SCORING_SPEED);
+      speedTopic.set(scoringSpeedMetersPerSecond.get());
       //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();

@@ -90,12 +90,13 @@ class AprilTagDetection:
                 print(f"  shortest side: {shortest_side_length / 8}")
 
             _, rotations, translations, errors = cv2.solvePnPGeneric(
-                np.array([object_corners[1], object_corners[0], object_corners[3], object_corners[2]]),
+                np.array(object_corners),
                 np.array(image_corners),
                 self.cal.as_array(),
                 None,
                 flags=cv2.SOLVEPNP_SQPNP
             )
+            print('opencv errors:', errors)
 
             camera_to_field_transform = openCvPoseToWpilib(translations[0], rotations[0])
             field_to_camera_transform = camera_to_field_transform.inverse()
@@ -111,10 +112,10 @@ def compute_apriltag_corners(tag_pose: Pose3d) -> list[Pose3d]:
     # Bottom left, bottom right, top right, top left
     # WPILib's coorinates are north-west-up, opencv's are east-down-north
     return [
-        tag_pose.transformBy(Transform3d(0, half_side_length, -half_side_length, Rotation3d())),
         tag_pose.transformBy(Transform3d(0, -half_side_length, -half_side_length, Rotation3d())),
-        tag_pose.transformBy(Transform3d(0, -half_side_length, half_side_length, Rotation3d())),
+        tag_pose.transformBy(Transform3d(0, half_side_length, -half_side_length, Rotation3d())),
         tag_pose.transformBy(Transform3d(0, half_side_length, half_side_length, Rotation3d())),
+        tag_pose.transformBy(Transform3d(0, -half_side_length, half_side_length, Rotation3d())),
     ]
 
 # Coordinate conversions inspired by
