@@ -22,6 +22,7 @@ StandardError=journal
 # Add these lines to grant thread priority capabilities
 AmbientCapabilities=CAP_SYS_NICE
 CapabilityBoundingSet=CAP_SYS_NICE
+Nice=+1
 
 [Install]
 WantedBy=multi-user.target
