@@ -22,7 +22,6 @@ import frc.robot.simulation.WorldSimulation.FieldObstacles;
 public class PiSimulation {
   public static final String DEFAULT_STATE = "none";
   private final StringSubscriber modeSubscriber;
-  private final DoubleSubscriber speedSubscriber;
   private final FloatArrayPublisher cornerPublisher;
   private final FieldObstacles fieldObstacles;
   private String piMode = DEFAULT_STATE;
@@ -38,7 +37,6 @@ public class PiSimulation {
   public PiSimulation(FieldObstacles fieldObstacles) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
     modeSubscriber = nt.getStringTopic(Constants.NT.TOF_MODE).subscribe("none");
-    speedSubscriber = nt.getDoubleTopic(Constants.NT.SPEED).subscribe(0);
     cornerPublisher = nt.getFloatArrayTopic(Constants.NT.CORNERS).publish();
     this.fieldObstacles = fieldObstacles;
   }
@@ -96,7 +94,6 @@ public class PiSimulation {
     if (modes.length > 0) {
       piMode = modes[modes.length - 1];
     }
-    var speed = speedSubscriber.get(0);
 
     if (piMode.equals("none")) {
       return;
@@ -124,7 +121,7 @@ public class PiSimulation {
         + sensorTransform.getRotation().getRadians();
     double distanceMm = ToFSimUtils.simulateSensor(sensorPose, angle, fieldObstacles);
     if (distanceMm < Double.POSITIVE_INFINITY) {
-      var maybeCornerInfo = this.addRecord((float) distanceMm, speed);
+      var maybeCornerInfo = this.addRecord((float) distanceMm, 0.45);
       maybeCornerInfo.ifPresent(cornerInfo -> {
         cornerPublisher.set(new float[] { (float) cornerInfo.cornerTimestamp, (float) cornerInfo.angle });
         data.clear();

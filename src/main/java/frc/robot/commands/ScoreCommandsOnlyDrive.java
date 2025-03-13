@@ -111,7 +111,6 @@ public class ScoreCommandsOnlyDrive {
 
   public static Command score(Drive drive, Chute chute, Constants.ReefBar reefBar, ChuterShooter chuterShooter) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
-    DoublePublisher speedTopic = nt.getDoubleTopic(Constants.NT.SPEED).publish();
     StringPublisher tofTopic = nt.getStringTopic(Constants.NT.TOF_MODE).publish();
     FloatArrayTopic cornerTopic = nt.getFloatArrayTopic(Constants.NT.CORNERS);
     ParallelRaceGroup cancellableGroup = new ParallelRaceGroup();
@@ -147,7 +146,6 @@ public class ScoreCommandsOnlyDrive {
             Commands.runOnce(() -> {
               var speed = drive.getLeftVelocityMetersPerSec();
               System.out.println("Sending start to Pi with speed: " + speed);
-              speedTopic.set(speed);
               if (chute.getPivotGoalRads() > 0) {
                 tofTopic.set("left");
                 sensorLocation.set(Constants.ToFSensorLocation.FRONT_LEFT);
@@ -186,7 +184,6 @@ public class ScoreCommandsOnlyDrive {
     return cancellableGroup.finallyDo(interrupted -> {
       System.out.println("Command completed: interrupted? " + interrupted);
       tofTopic.set("none");
-      speedTopic.set(scoringSpeedMetersPerSecond.get());
       //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();

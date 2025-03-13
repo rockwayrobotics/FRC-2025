@@ -2,6 +2,8 @@ package frc.robot.subsystems.superstructure;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -19,10 +21,14 @@ public class Superstructure extends SubsystemBase {
   public final Chute chute;
   public final Grabber grabber;
 
+  protected final StringPublisher chuteModePublisher;
+
   public Superstructure(Elevator elevator, Chute chute, Grabber grabber) {
     this.elevator = elevator;
     this.chute = chute;
     this.grabber = grabber;
+    var chuteModeTopic = NetworkTableInstance.getDefault().getStringTopic(Constants.NT.CHUTE_MODE);
+    chuteModePublisher = chuteModeTopic.publish();
   }
 
   @Override
@@ -158,28 +164,33 @@ public class Superstructure extends SubsystemBase {
       case L1:
         setChutePivotGoalRads(sideMultiplier * setpoints.L1_chute_pivot_angle_rads());
         setElevatorGoalHeightMillimeters(setpoints.L1_elevator_height_mm());
+        chuteModePublisher.set((side == Side.LEFT) ? "L1/left" : "L1/right");
         break;
       case L2:
         setChutePivotGoalRads(sideMultiplier * setpoints.L2_chute_pivot_angle_rads());
         setElevatorGoalHeightMillimeters(setpoints.L2_elevator_height_mm());
+        chuteModePublisher.set((side == Side.LEFT) ? "L2/left" : "L2/right");
         break;
       case L3:
         setChutePivotGoalRads(sideMultiplier * setpoints.L3_chute_pivot_angle_rads());
         setElevatorGoalHeightMillimeters(setpoints.L3_elevator_height_mm());
+        chuteModePublisher.set((side == Side.LEFT) ? "L3/left" : "L3/right");
         break;
       case Intake:
         setChutePivotGoalRads(sideMultiplier * setpoints.intake_chute_pivot_angle_rads());
         setElevatorGoalHeightMillimeters(setpoints.intake_elevator_height_mm());
-        
+        chuteModePublisher.set((side == Side.LEFT) ? "load/left" : "load/right");
         break;
     }
   }
-  
+
   public void gotoAlgaeSetpoint(AlgaeLevel level) {
     // Runnable suck = () -> {
-    //   Commands.run(() -> grabber.setGrabberMotor(-0.75), this).onlyWhile(() -> Sensors.getInstance()
-    //       .getGrabberAcquiredDistance() < Constants.Grabber.ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS)
-    //       .finallyDo(() -> grabber.setGrabberMotor(0)).schedule();
+    // Commands.run(() -> grabber.setGrabberMotor(-0.75), this).onlyWhile(() ->
+    // Sensors.getInstance()
+    // .getGrabberAcquiredDistance() <
+    // Constants.Grabber.ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS)
+    // .finallyDo(() -> grabber.setGrabberMotor(0)).schedule();
     // };
     switch (level) {
       case Floor:
