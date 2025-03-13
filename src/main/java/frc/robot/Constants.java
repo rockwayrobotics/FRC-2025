@@ -30,9 +30,9 @@ import edu.wpi.first.math.util.Units;
  */
 public final class Constants {
   public static final class NT {
+    public static final String CHUTE_MODE = "/Pi/chute_mode";
     public static final String TOF_MODE = "/Pi/tof_mode";
     public static final String CORNERS = "/Pi/Corners";
-    public static final String SPEED = "/Pi/speed";
   }
 
   public static final class Field {
