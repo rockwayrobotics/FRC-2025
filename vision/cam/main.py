@@ -47,6 +47,7 @@ def main():
 
     fore_cam = cam.get_camera(cam.CAM1, args.res, fps=args.fps, flip=args.fore_flip)
     aft_cam = cam.get_camera(cam.CAM0, args.res, fps=args.fps, flip=args.aft_flip)
+    chute_cam = cam.CV2Cam()
 
     driver_cam = fore_cam
 
@@ -92,6 +93,7 @@ def main():
 
     fore_cam.start()
     aft_cam.start()
+    chute_cam.start()
 
     # pick calibration, falling back on built-in cal for current resolution
     # TODO: support reading from a JSON file with lookup by camera id
@@ -139,6 +141,10 @@ def main():
                 if driver_cam is not aft_cam:
                     print('selecting aft cam')
                 driver_cam = aft_cam
+            elif currentCam == 'chute':
+                if driver_cam is not chute_cam:
+                    print('selecting chute cam')
+                driver_cam = chute_cam
             elif currentCam == 'auto':
                 leftVelocity = leftVelocitySub.get()
                 rightVelocity = rightVelocitySub.get()
@@ -178,7 +184,10 @@ def main():
                     for (i, arr) in enumerate([arr0, arr1]):
                         streams[i].add_frame(arr)
 
-            dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
+            if currentCam == 'chute':
+                dashboard_arr = chute_cam.capture_array()
+            else:
+                dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
             source.putFrame(dashboard_arr)
 
             if not fore_cam.fake:
@@ -211,6 +220,7 @@ def main():
         print('exiting')
         fore_cam.stop()
         aft_cam.stop()
+        chute_cam.stop()
         if streams:
             print('stop recordings')
             for stream in streams:

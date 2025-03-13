@@ -81,6 +81,26 @@ class PiCam:
         '''Start the camera capturing frames.'''
         self.cam.start()
 
+class CV2Cam:
+    def __init__(self):
+        self.cam = cv2.VideoCapture(8)
+        self.cam.set(cv2.CAP_PROP_FPS, 30)
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+
+    def capture_array(self):
+        for i in range(5):
+            ret, frame = self.cam.read()
+            if ret:
+                return frame
+        # FIXME: This is weird?
+        return np.zeros((320,240,4))
+
+    def stop(self):
+        self.cam.release()
+
+    def start(self):
+        pass
 
 class MockCam:
     # pylint: disable=unused-argument
