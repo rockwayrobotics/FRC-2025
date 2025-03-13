@@ -36,9 +36,10 @@ public class ChuteIOReal implements ChuteIO {
 
   protected final SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
 
-  final Tuner pivotFeedforwardkS = new Tuner("Chute/pivot_feedforward_Ks", 0.106, true);
-  final Tuner pivotFeedforwardkG = new Tuner("Chute/pivot_feedforward_Kg", 0.07, true);
-  final Tuner pivotPID_P = new Tuner("Chute/pivot_Kp", 0.4, true);
+  final Tuner pivotFeedforwardkS = new Tuner("Chute/pivot_feedforward_Ks", 0.07, true);
+  // FIXME: why is this negative, it shouldn't be negative
+  final Tuner pivotFeedforwardkG = new Tuner("Chute/pivot_feedforward_Kg", -0.125, true);
+  final Tuner pivotPID_P = new Tuner("Chute/pivot_Kp", 0.3, true);
   final Tuner pivotPID_D = new Tuner("Chute/pivot_Kd", 0, true);
   final Tuner pivotMaxNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_max", 0.3, true);
   final Tuner pivotMinNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_min", -0.3, true);
