@@ -90,7 +90,7 @@ class SensorManager:
                             warned = ex.__class__
                             self.log.error(f"Error: {ex}")
 
-                        time.sleep(0.5)
+                        time.sleep(0.2)
                         continue
                     running = True
                     warned = False
@@ -177,6 +177,9 @@ class TofMain:
         self.log = logging.getLogger("tof")
         self.running = False
         self.speed = self.args.speed
+        self.tof_mode = 'none'
+        self.saw_corner = False
+
         self.tof_mode_sub = None
         self.tof_mode_pub = None
         self.chute_mode_sub = None
@@ -185,7 +188,6 @@ class TofMain:
         self.dist_pub = None
         self.corner_pub = None
         self.corner_ts_pub = None
-        self.corner_angle_pub = None
 
     def nt_init(self):
         '''initialize NetworkTables stuff'''
@@ -216,9 +218,6 @@ class TofMain:
         self.corner_ts_pub = nt.getFloatTopic("/Pi/corner_ts").publish()
         self.corner_ts_pub.set(0.0)
 
-        self.corner_angle_pub = nt.getFloatTopic("/Pi/corner_angle").publish()
-        self.corner_angle_pub.set(0.0)
-
         # for debugging, serve our NT instance
         if self.args.serve:
             nt.startServer()
@@ -232,7 +231,7 @@ class TofMain:
         self.tof_mode_pub = tof_mode_topic.publish()
         self.tof_mode_pub.set('none')
         self.chute_mode_pub = chute_mode_topic.publish()
-        self.chute_mode_pub.set('none')
+        self.chute_mode_pub.set('home/right')
 
     def run(self):
         self.log.info('-' * 40)
@@ -257,14 +256,14 @@ class TofMain:
 
 
     def on_reading(self, ts, dist_mm, status, delta):
+        flush = False # whether to flush NT (any time we publish)
         cd = self.cd
         cd.add_record(ts, dist_mm, self.speed)
         if cd.found_corner():
+            self.saw_corner = True
             self.corner_pub.set([cd.corner_timestamp, cd.corner_angle])
             self.corner_ts_pub.set(cd.corner_timestamp)
-            angle_deg = cd.corner_angle * 180 / math.pi 
-            self.corner_angle_pub.set(angle_deg)
-            self.nt.flush()
+            flush = True
 
             if self.args.stdout:
                 print()
@@ -277,7 +276,14 @@ class TofMain:
             # self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
             if self.args.stdout:
                 print("dist,%8.3f,%5.0f,%2d,%5.3f      " % (ts, dist_mm, status, delta), end='\r')
+
+        if self.tof_mode == 'corner':
             self.dist_pub.set(dist_mm)
+            if self.saw_corner:
+                flush = True
+
+        if flush:
+            self.nt.flush()
     
 
     # Map of modes to GPIO pin indices [5, 14]
@@ -292,33 +298,42 @@ class TofMain:
     }
 
     def loop(self):
-        mode = last_mode = 'right'
-        self.pins.set_index_high(self.MODE_MAP.get(mode))
+        chute_mode = 'right'
+        self.pins.set_index_high(self.MODE_MAP.get(chute_mode))
 
         def reader():
             self.mgr.read(self.args.timing, self.args.inter, callback=self.on_reading)
         thread = threading.Thread(target=reader).start()
-        # self.mgr.shutdown()
 
         loop_ts = time.monotonic()
         while self.running:
             # poll for robot info... would be more efficient to use an NT listener
             for event in self.mode_poller.readQueue():
                 self.log.debug('event: %s', event)
-                breakpoint()
 
-                # handle mode changes
-                if False and mode != last_mode:
-                    # disabling will cause any current reading thread to exit
-                    self.pins.set_index_high(None)
-                    # this gives enough time for the thread to attempt a reading
-                    # and get an i2c error because the sensor will be offline
-                    time.sleep(0.1)
-                    self.pins.set_index_high(self.MODE_MAP.get(mode))
-                    self.log.info('selected tof: %s', mode)
-                    last_mode = mode
+                topic = event.data.topic.getName()
+                if topic == '/Pi/chute_mode':
+                    val = event.data.value.getString()
+                    pos, _, side = val.partition('/')
+                    if chute_mode != side:
+                        chute_mode = side
 
-                    self.cd.reset()
+                        # handle mode changes
+                        # disabling will cause any current reading thread to exit
+                        self.pins.set_index_high(None)
+                        # this gives enough time for the thread to attempt a reading
+                        # and get an i2c error because the sensor will be offline
+                        time.sleep(0.1)
+                        self.pins.set_index_high(self.MODE_MAP.get(chute_mode))
+                        self.log.info('selected tof: %s', chute_mode)
+
+                        self.cd.reset()
+
+                elif topic == '/Pi/tof_mode':
+                    self.dist_pub.set(0.0)
+                    val = event.data.value.getString()
+                    self.saw_corner = False
+                    self.tof_mode = val
 
             # pause to avoid busy cpu, as we're not yet using full NT listeners
             time.sleep(0.05)
