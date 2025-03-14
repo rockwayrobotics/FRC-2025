@@ -17,6 +17,7 @@ import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog;
 
 public interface DriveIO {
 
@@ -55,4 +56,6 @@ public interface DriveIO {
   public default SimpleMotorFeedforward getFeedForward() {
     return null;
   }
+
+  public default void logMotors(SysIdRoutineLog log) {}
 }

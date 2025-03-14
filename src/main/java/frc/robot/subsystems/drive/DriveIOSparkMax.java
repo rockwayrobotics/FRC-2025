@@ -6,6 +6,13 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog;
+import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog.MotorLog;
+
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.DoubleSupplier;
 
@@ -169,5 +176,22 @@ public class DriveIOSparkMax implements DriveIO {
     rightDriveMotorF.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     leftDriveMotorR.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     rightDriveMotorR.configure(new_config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+  }
+
+  private void logMotor(MotorLog log, SparkMax motor, RelativeEncoder encoder) {
+    REVUtils.ifOk(motor, new DoubleSupplier[] {
+        motor::getAppliedOutput, motor::getBusVoltage
+    }, (values) -> log.voltage(Volts.of(values[0] * values[1])));
+    REVUtils.ifOk(motor, encoder::getPosition, (value) -> log.linearPosition(Meters.of(value)));
+    REVUtils.ifOk(motor, encoder::getVelocity, (value) -> log.linearVelocity(MetersPerSecond.of(value)));
+    REVUtils.ifOk(motor, motor::getOutputCurrent, (value) -> log.current(Amps.of(value)));
+  }
+
+  @Override
+  public void logMotors(SysIdRoutineLog log) {
+    MotorLog left = log.motor("drive-left");
+    logMotor(left, leftDriveMotorF, leftEncoder);
+    MotorLog right = log.motor("drive-right");
+    logMotor(right, rightDriveMotorF, rightEncoder);
   }
 }
