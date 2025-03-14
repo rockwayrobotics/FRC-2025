@@ -273,7 +273,7 @@ class TofMain:
 
             cd.reset()
         else:
-            # self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
+            self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
             if self.args.stdout:
                 print("dist,%8.3f,%5.0f,%2d,%5.3f      " % (ts, dist_mm, status, delta), end='\r')
 
