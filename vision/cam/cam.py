@@ -83,10 +83,25 @@ class PiCam:
 
 class CV2Cam:
     def __init__(self):
-        self.cam = cv2.VideoCapture(8)
+        idx = CV2Cam.find_index()
+        self.cam = cv2.VideoCapture(idx)
         self.cam.set(cv2.CAP_PROP_FPS, 30)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+        self.num = idx
+
+    @staticmethod
+    def find_index():
+        from pathlib import Path
+        for path in sorted(Path('/sys/class/video4linux').glob('video*')):
+            name = (path / 'name').read_text().strip()
+            print(path, name)
+            if name == 'USB 2.0 PC Cam':
+                index = int((path / 'index').read_text().strip())
+                print('found', index)
+                return index
+        raise IndexError('USB cam not found')
+
 
     def capture_array(self):
         for i in range(5):

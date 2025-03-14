@@ -47,9 +47,20 @@ def main():
 
     fore_cam = cam.get_camera(cam.CAM1, args.res, fps=args.fps, flip=args.fore_flip)
     aft_cam = cam.get_camera(cam.CAM0, args.res, fps=args.fps, flip=args.aft_flip)
-    chute_cam = cam.CV2Cam()
+    try:
+        chute_cam = cam.CV2Cam()
+    except Exception as ex:
+        chute_cam = cam.MockCam(3, args.res, fps=args.fps)
 
-    driver_cam = fore_cam
+    if args.force == 'aft':
+        driver_cam = aft_cam
+        print('force aft cam')
+    elif args.force == 'chute':
+        driver_cam = chute_cam
+        print('force chute cam')
+    elif args.force == 'fore':
+        driver_cam = fore_cam
+        print('force fore cam')
 
     nt = NetworkTableInstance.getDefault()
     if args.serve:
@@ -136,7 +147,9 @@ def main():
 
         while True:
             currentCam = selectCameraSub.get()
-            if currentCam == 'fore':
+            if args.force:
+                pass
+            elif currentCam == 'fore':
                 if driver_cam is not fore_cam:
                     print('selecting fore cam')
                 driver_cam = fore_cam
@@ -187,7 +200,7 @@ def main():
                     for (i, arr) in enumerate([arr0, arr1]):
                         streams[i].add_frame(arr)
 
-            if currentCam == 'chute':
+            if driver_cam is chute_cam:
                 dashboard_arr = chute_cam.capture_array()
                 if pivotAngleSub.get() < 0:
                     dashboard_arr = cv2.flip(dashboard_arr, 0)
@@ -215,6 +228,9 @@ def main():
                     if driver_cam == fore_cam:
                         driver_cam = aft_cam
                         selectCameraPub.set("aft")
+                    elif driver_cam == aft_cam:
+                        driver_cam = chute_cam
+                        selectCameraPub.set("chute")
                     else:
                         driver_cam = fore_cam
                         selectCameraPub.set("fore")
@@ -258,6 +274,8 @@ def get_args():
         help="record JPEG quality (50-100) (enables MJPEG encoding)")
     parser.add_argument('--serve', action='store_true',
         help="host NT instance for testing")
+    parser.add_argument('--force', default='',
+        help="force camera for testing (fore/aft/chute)")
 
     args = parser.parse_args()
     if args.cals is None:
