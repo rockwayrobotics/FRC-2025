@@ -204,6 +204,7 @@ public class RobotContainer {
       driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR, chuterShooter));
       driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR, chuterShooter));
       driverController.x().whileTrue(new DriveStraight(0.45, drive));
+      driverController.y().whileTrue(ScoreCommands.rampDownSpeed(drive, 1, 3));
 
       // driverController.rightBumper()
       //     .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure));

@@ -53,7 +53,7 @@ public class ScoreCommandsOnlyDrive {
    * Distance in meters between selected ToF sensor and center of far reef bar,
    * assuming front sensors are used for going forwards and back sensors for
    * scoring while reversing.
-   * 
+   *
    * @return distance in meters
    */
   public static double farDistance(Constants.ToFSensorLocation location) {
@@ -190,5 +190,9 @@ public class ScoreCommandsOnlyDrive {
       chuterShooter.stopShooting();
       // FIXME: Reset? Detect if coral was shot?
     });
+  }
+
+  public static Command rampDownSpeed(Drive drive, double targetDistanceMeters, double maxDeceleration) {
+    return new RampDownSpeedCommand(drive, targetDistanceMeters, maxDeceleration);
   }
 }
