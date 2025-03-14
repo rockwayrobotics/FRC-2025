@@ -76,6 +76,8 @@ def main():
     rightVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/RightVelocityMetersPerSec").subscribe(0)
     leftVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/LeftVelocityMetersPerSec").subscribe(0)
 
+    pivotAngleSub = nt.getDoubleTopic("/AdvantageKit/Chute/PivotAngleRadians").subscribe(0)
+
     dsFMSAttachedSub = nt.getBooleanTopic("/AdvantageKit/DriverStation/FMSAttached").subscribe(False)
     dsEnabledSub = nt.getBooleanTopic("/AdvantageKit/DriverStation/Enabled").subscribe(False)
 
@@ -186,6 +188,8 @@ def main():
 
             if currentCam == 'chute':
                 dashboard_arr = chute_cam.capture_array()
+                if pivotAngleSub.get() > 0:
+                    dashboard_arr = cv2.flip(dashboard_arr, 0) 
             else:
                 dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
             source.putFrame(dashboard_arr)
