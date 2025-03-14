@@ -123,12 +123,14 @@ public class Drive extends SubsystemBase {
     // Configure SysId
     sysId = new SysIdRoutine(
         new SysIdRoutine.Config(
-            Voltage.ofBaseUnits(0.2, Volts).div(Time.ofBaseUnits(1, Seconds)),
-            Voltage.ofBaseUnits(3, Volts),
+            Voltage.ofBaseUnits(1, Volts).div(Time.ofBaseUnits(1, Seconds)),
+            Voltage.ofBaseUnits(7, Volts),
             Time.ofBaseUnits(10, Seconds),
             (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
         new SysIdRoutine.Mechanism(
-            (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), null, this));
+            (voltage) -> runOpenLoop(voltage.in(Volts), voltage.in(Volts)), (log) -> {
+              io.logMotors(log);
+            }, this));
   }
 
   private void tofDistancePeriodic(double now) {
