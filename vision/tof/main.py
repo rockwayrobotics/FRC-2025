@@ -267,8 +267,7 @@ class TofMain:
 
             if self.args.stdout:
                 print()
-            self.log.info("CORNER: %.3f,%.3f,%.3fs,%.0f", ts, cd.corner_timestamp,
-                self.speed, angle_deg)
+            self.log.info("CORNER: %.3f,%.3f,%.3fs", ts, cd.corner_timestamp, self.speed)
             cd.log_timing()
 
             cd.reset()
@@ -314,6 +313,7 @@ class TofMain:
                 topic = event.data.topic.getName()
                 if topic == '/Pi/chute_mode':
                     val = event.data.value.getString()
+                    self.log.info('chute: %s', val)
                     pos, _, side = val.partition('/')
                     if chute_mode != side:
                         chute_mode = side
@@ -334,6 +334,7 @@ class TofMain:
                     val = event.data.value.getString()
                     self.saw_corner = False
                     self.tof_mode = val
+                    self.log.info('tof mode: %s', val)
 
             # pause to avoid busy cpu, as we're not yet using full NT listeners
             time.sleep(0.05)
