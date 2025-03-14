@@ -186,6 +186,7 @@ class TofMain:
         self.nt = None
         self.mode_poller = None
         self.dist_pub = None
+        self.ts_dist_pub = None
         self.corner_pub = None
         self.corner_ts_pub = None
 
@@ -208,6 +209,9 @@ class TofMain:
 
         # speedTopic = nt.getDoubleTopic("/Pi/speed")
         # self.speedSub = speedTopic.subscribe(0.0)
+
+        self.ts_dist_pub = nt.getDoubleArrayTopic("/Pi/ts_dist_mm").publish()
+        self.ts_dist_pub.set([0, 0])
 
         self.dist_pub = nt.getFloatTopic("/Pi/dist_mm").publish()
         self.dist_pub.set(0)
@@ -258,16 +262,18 @@ class TofMain:
     def on_reading(self, ts, dist_mm, status, delta):
         flush = False # whether to flush NT (any time we publish)
         cd = self.cd
+        nt_time_offset = self.nt.getServerTimeOffset() / 1e6
         cd.add_record(ts, dist_mm, self.speed)
         if cd.found_corner():
             self.saw_corner = True
-            self.corner_pub.set([cd.corner_timestamp, cd.corner_angle])
+            corner_ts = cd.corner_timestamp + nt_time_offset
+            self.corner_pub.set([corner_ts, cd.corner_angle])
             self.corner_ts_pub.set(cd.corner_timestamp)
             flush = True
 
             if self.args.stdout:
                 print()
-            self.log.info("CORNER: %.3f,%.3f,%.3fs", ts, cd.corner_timestamp, self.speed)
+            self.log.info("CORNER: %.3f,%.3f,%.3fs", ts, corner_ts, self.speed)
             cd.log_timing()
 
             cd.reset()
@@ -277,6 +283,7 @@ class TofMain:
                 print("dist,%8.3f,%5.0f,%2d,%5.3f      " % (ts, dist_mm, status, delta), end='\r')
 
         if self.tof_mode == 'corner':
+            self.ts_dist_pub.set([ts + nt_time_offset, dist_mm])
             self.dist_pub.set(dist_mm)
             if self.saw_corner:
                 flush = True
@@ -330,7 +337,8 @@ class TofMain:
                         self.cd.reset()
 
                 elif topic == '/Pi/tof_mode':
-                    self.dist_pub.set(0.0)
+                    self.ts_dist_pub.set([0, 0])
+                    self.dist_pub.set(0)
                     val = event.data.value.getString()
                     self.saw_corner = False
                     self.tof_mode = val
