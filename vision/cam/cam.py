@@ -93,13 +93,12 @@ class CV2Cam:
     @staticmethod
     def find_index():
         from pathlib import Path
-        for path in sorted(Path('/sys/class/video4linux').glob('video*')):
+        for path in Path('/sys/class/video4linux').glob('video*'):
             name = (path / 'name').read_text().strip()
             print(path, name)
             if name == 'USB 2.0 PC Cam':
-                index = int((path / 'index').read_text().strip())
-                print('found', index)
-                return index
+                if (path / 'index').read_text().strip() == '0':
+                    return int(str(path).rsplit('video', 1)[1])
         raise IndexError('USB cam not found')
 
 
