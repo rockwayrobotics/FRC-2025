@@ -307,11 +307,16 @@ public class Drive extends SubsystemBase {
     wheelSpeeds.desaturate(Constants.Drive.MAX_SPEED_MPS);
     Logger.recordOutput("Traj/TankDriveSpeed",
         new double[] { wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond });
-    Logger.recordOutput("Traj/TankDriveNormalized",
+    var leftVoltage = getFeedForward().calculate(wheelSpeeds.leftMetersPerSecond);
+    var rightVoltage = getFeedForward().calculate(wheelSpeeds.rightMetersPerSecond);
+    Logger.recordOutput("Traj/TankVoltage", new double[] { leftVoltage, rightVoltage });
+    runOpenLoop(leftVoltage, rightVoltage);
+    /*Logger.recordOutput("Traj/TankDriveNormalized",
         new double[] { wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS,
             wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS });
     differentialDrive.tankDrive(wheelSpeeds.leftMetersPerSecond / Constants.Drive.MAX_SPEED_MPS,
         wheelSpeeds.rightMetersPerSecond / Constants.Drive.MAX_SPEED_MPS, false);
+        */
   }
 
   public void setTankDriveSpeeds(double leftMetersPerSec, double rightMetersPerSec) {
