@@ -14,6 +14,7 @@ import ntcore
 try:
     from vl53l1x import TofSensor, ThreadError, SetPins
 except ImportError:
+    print('mock sensor support not supported at the moment')
     raise
     # FIXME: Need to adapt fake_VL53L1x to work with the new API
     # import fake_VL53L1x as VL53L1X
@@ -176,48 +177,62 @@ class TofMain:
         self.log = logging.getLogger("tof")
         self.running = False
         self.speed = self.args.speed
-
+        self.tof_mode_sub = None
+        self.tof_mode_pub = None
+        self.chute_mode_sub = None
+        self.nt = None
+        self.mode_poller = None
+        self.dist_pub = None
+        self.corner_pub = None
+        self.corner_ts_pub = None
+        self.corner_angle_pub = None
 
     def nt_init(self):
+        '''initialize NetworkTables stuff'''
         nt = self.nt = ntcore.NetworkTableInstance.getDefault()
         nt.setServerTeam(8089)
 
-        sensorModeTopic = nt.getStringTopic("/Pi/tof_mode")
-        self.sensorModeSub = sensorModeTopic.subscribe('none',
+        chute_mode_topic = nt.getStringTopic("/Pi/chute_mode")
+        self.chute_mode_sub = chute_mode_topic.subscribe('none',
            ntcore.PubSubOptions(keepDuplicates=True))
-        # sensorModeTopic = nt.getIntegerTopic("/Pi/tof_mode")
-        # self.sensorModeSub = sensorModeTopic.subscribe(0,
-        #    ntcore.PubSubOptions(keepDuplicates=True))
-        self.modeListener = ntcore.NetworkTableListenerPoller(nt)
-        self.modeListener.addListener(self.sensorModeSub, ntcore.EventFlags.kValueAll)
 
-        speedTopic = nt.getDoubleTopic("/Pi/speed")
-        self.speedSub = speedTopic.subscribe(0.0)
+        tof_mode_topic = nt.getStringTopic("/Pi/tof_mode")
+        self.tof_mode_sub = tof_mode_topic.subscribe('none',
+           ntcore.PubSubOptions(keepDuplicates=True))
 
-        self.distPub = nt.getFloatTopic("/Pi/dist_mm").publish()
-        self.distPub.set(0)
+        self.mode_poller = ntcore.NetworkTableListenerPoller(nt)
+        self.mode_poller.addListener(self.tof_mode_sub, ntcore.EventFlags.kValueAll)
+        self.mode_poller.addListener(self.chute_mode_sub, ntcore.EventFlags.kValueAll)
 
-        self.cornerPub = nt.getFloatArrayTopic("/Pi/Corners").publish()
-        self.cornerPub.set([0.0, 0.0])
+        # speedTopic = nt.getDoubleTopic("/Pi/speed")
+        # self.speedSub = speedTopic.subscribe(0.0)
 
-        self.cornerTsPub = nt.getFloatTopic("/Pi/corner_ts").publish()
-        self.cornerTsPub.set(0.0)
+        self.dist_pub = nt.getFloatTopic("/Pi/dist_mm").publish()
+        self.dist_pub.set(0)
 
-        self.cornerAnglePub = nt.getFloatTopic("/Pi/corner_angle").publish()
-        self.cornerAnglePub.set(0.0)
+        self.corner_pub = nt.getFloatArrayTopic("/Pi/Corners").publish()
+        self.corner_pub.set([0.0, 0.0])
+
+        self.corner_ts_pub = nt.getFloatTopic("/Pi/corner_ts").publish()
+        self.corner_ts_pub.set(0.0)
+
+        self.corner_angle_pub = nt.getFloatTopic("/Pi/corner_angle").publish()
+        self.corner_angle_pub.set(0.0)
 
         # for debugging, serve our NT instance
         if self.args.serve:
             nt.startServer()
             # self.sensorModePub = sensorModeTopic.publish()
             # self.sensorModePub.set(0)
-            self.speedPub = speedTopic.publish()
-            self.speedPub.set(0.0)
+            # self.speedPub = speedTopic.publish()
+            # self.speedPub.set(0.0)
         else:
             nt.startClient4("tof")
 
-        self.sensorModePub = sensorModeTopic.publish()
-        self.sensorModePub.set('none')
+        self.tof_mode_pub = tof_mode_topic.publish()
+        self.tof_mode_pub.set('none')
+        self.chute_mode_pub = chute_mode_topic.publish()
+        self.chute_mode_pub.set('none')
 
     def run(self):
         self.log.info('-' * 40)
@@ -245,10 +260,10 @@ class TofMain:
         cd = self.cd
         cd.add_record(ts, dist_mm, self.speed)
         if cd.found_corner():
-            self.cornerPub.set([cd.corner_timestamp, cd.corner_angle])
-            self.cornerTsPub.set(cd.corner_timestamp)
+            self.corner_pub.set([cd.corner_timestamp, cd.corner_angle])
+            self.corner_ts_pub.set(cd.corner_timestamp)
             angle_deg = cd.corner_angle * 180 / math.pi 
-            self.cornerAnglePub.set(angle_deg)
+            self.corner_angle_pub.set(angle_deg)
             self.nt.flush()
 
             if self.args.stdout:
@@ -262,7 +277,7 @@ class TofMain:
             # self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
             if self.args.stdout:
                 print("dist,%8.3f,%5.0f,%2d,%5.3f      " % (ts, dist_mm, status, delta), end='\r')
-            self.distPub.set(dist_mm)
+            self.dist_pub.set(dist_mm)
     
 
     # Map of modes to GPIO pin indices [5, 14]
@@ -277,7 +292,7 @@ class TofMain:
     }
 
     def loop(self):
-        mode = lastMode = 'none'
+        mode = last_mode = 'right'
         self.pins.set_index_high(self.MODE_MAP.get(mode))
 
         def reader():
@@ -288,31 +303,22 @@ class TofMain:
         loop_ts = time.monotonic()
         while self.running:
             # poll for robot info... would be more efficient to use an NT listener
-            event = None
-            for event in self.modeListener.readQueue():
+            for event in self.mode_poller.readQueue():
                 self.log.debug('event: %s', event)
-            # keep only the last one
-            if event is not None:
-                mode = event.data.value.value()
-                self.speed = self.speedSub.get()
-                self.log.info('mode %s, speed %s', mode, self.speed)
+                breakpoint()
 
-            # else:
-            #     self.speed = 0.45
-            #     mode = 'right'
+                # handle mode changes
+                if False and mode != last_mode:
+                    # disabling will cause any current reading thread to exit
+                    self.pins.set_index_high(None)
+                    # this gives enough time for the thread to attempt a reading
+                    # and get an i2c error because the sensor will be offline
+                    time.sleep(0.1)
+                    self.pins.set_index_high(self.MODE_MAP.get(mode))
+                    self.log.info('selected tof: %s', mode)
+                    last_mode = mode
 
-            # handle mode changes
-            if mode != lastMode:
-                # disabling will cause any current reading thread to exit
-                self.pins.set_index_high(None)
-                # this gives enough time for the thread to attempt a reading
-                # and get an i2c error because the sensor will be offline
-                time.sleep(0.1)
-                self.pins.set_index_high(self.MODE_MAP.get(mode))
-                self.log.info('selected tof: %s', mode)
-                lastMode = mode
-
-                self.cd.reset()
+                    self.cd.reset()
 
             # pause to avoid busy cpu, as we're not yet using full NT listeners
             time.sleep(0.05)
