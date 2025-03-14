@@ -177,7 +177,7 @@ def main():
                 if isRecording and not shouldRecord:
                     # Stop recording since the FMS just got detached
                     for i in [0, 1]:
-                        stream[i].close()
+                        streams[i].close()
                     isRecording = False
                 elif shouldRecord:
                     isRecording = True
@@ -188,8 +188,8 @@ def main():
 
             if currentCam == 'chute':
                 dashboard_arr = chute_cam.capture_array()
-                if pivotAngleSub.get() > 0:
-                    dashboard_arr = cv2.flip(dashboard_arr, 0) 
+                if pivotAngleSub.get() < 0:
+                    dashboard_arr = cv2.flip(dashboard_arr, 0)
             else:
                 dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
             source.putFrame(dashboard_arr)
