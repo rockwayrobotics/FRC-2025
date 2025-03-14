@@ -6,7 +6,9 @@ public class RampDownSpeed {
     private double targetDistance;
 
     public RampDownSpeed(double currentVelocity, double targetDistance, double maxDeceleration) {
-        this.targetAcceleration = -Math.min(currentVelocity / targetDistance, maxDeceleration);
+        // solve for acceleration with vf^2 = vi^2 + 2aΔx, vf = 0
+        var accel = currentVelocity * currentVelocity / (2 * targetDistance);
+        this.targetAcceleration = -Math.min(accel, maxDeceleration);
         this.initialVelocity = currentVelocity;
         this.targetDistance = targetDistance;
     }
