@@ -131,6 +131,7 @@ def main():
         reported = start
         count = 0
         fps = 0
+        force_save = False
         print('res', args.res)
 
         while True:
@@ -173,7 +174,7 @@ def main():
             if args.save:
                 fmsAttached = dsFMSAttachedSub.get()
                 enabled = dsEnabledSub.get()
-                shouldRecord = fmsAttached or enabled
+                shouldRecord = fmsAttached or enabled or force_save
                 if isRecording and not shouldRecord:
                     # Stop recording since the FMS just got detached
                     for i in [0, 1]:
@@ -218,6 +219,8 @@ def main():
                         driver_cam = fore_cam
                         selectCameraPub.set("fore")
                     print(f'Switched to camera {driver_cam.num}')
+                elif key == 'F':
+                    force_save = True
 
     finally:
         del console
