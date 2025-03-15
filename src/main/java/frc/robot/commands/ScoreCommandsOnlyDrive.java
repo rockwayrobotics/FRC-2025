@@ -148,11 +148,11 @@ public class ScoreCommandsOnlyDrive {
                 Commands.runOnce(() -> {
                   var speed = drive.getLeftVelocityMetersPerSec();
                   System.out.println("Sending start to Pi with speed: " + speed);
+                  tofTopic.set("corner");
+                  // FIXME: Check that this left/right is correct
                   if (chute.getPivotGoalRads() > 0) {
-                    tofTopic.set("left");
                     sensorLocation.set(Constants.ToFSensorLocation.FRONT_LEFT);
                   } else {
-                    tofTopic.set("right");
                     sensorLocation.set(Constants.ToFSensorLocation.FRONT_RIGHT);
                   }
                 }),
