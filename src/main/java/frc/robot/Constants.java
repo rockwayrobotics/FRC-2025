@@ -227,7 +227,7 @@ public final class Constants {
     // the "face" at the end, or something else?  We measured manually to
     // the centre of the face (which seems to be the best reference point)
     // and got more like 50mm.
-    public static final TIP_TO_WALL = 53.6; // measured from field CAD
+    public static final double TIP_TO_WALL = 53.6; // measured from field CAD
 
     public static final double CORNER_TO_NEAR_POST_METERS = 0.3061;
     public static final double CORNER_TO_FAR_POST_METERS = 0.6347;

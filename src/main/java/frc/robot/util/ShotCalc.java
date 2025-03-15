@@ -40,7 +40,7 @@ public class ShotCalc {
     }
 
     switch (tof) {
-      case TofSensorLocation.NONE_SELECTED: this.tof_to_chute = 0.0,
+      case TofSensorLocation.NONE_SELECTED: this.tof_to_chute = 0.0;
       case TofSensorLocation.FRONT_LEFT: this.tof_to_chute = ToFSensor.TOF_FWD_LEFT_TO_CHUTE;
       case TofSensorLocation.BACK_LEFT: this.tof_to_chute = 0.0;
       case TofSensorLocation.FRONT_RIGHT: this.tof_to_chute = ToFSensor.TOF_FWD_RIGHT_TO_CHUTE;
@@ -51,7 +51,7 @@ public class ShotCalc {
   // Do the math, and report back with a tuple containing the
   // encoder position at the target (lined up to shoot) and
   // the expected orthogonal distance (from chute to branch tip).
-  public update(double pos, double dist) {
+  public void update(double pos, double dist) {
     dist -= ToFSensor.TOF_TO_BUMPER;
 
     // calculate current angle estimate
