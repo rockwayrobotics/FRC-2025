@@ -1,7 +1,6 @@
 package frc.robot;
 
 import org.littletonrobotics.junction.AutoLogOutput;
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -21,7 +20,6 @@ public class RobotTracker {
   private Pose2d odometryPose = new Pose2d();
   private Pose2d estimatedPose = new Pose2d();
   private ChassisSpeeds robotVelocity = new ChassisSpeeds();
-  private ScoringState scoringState = new ScoringState();
 
   public Rotation2d getRotation() {
     return estimatedPose.getRotation();
@@ -85,15 +83,8 @@ public class RobotTracker {
     poseEstimator.resetPosition(rawGyroRotation, leftMeters, rightMeters, pose);
   }
 
-  public ScoringState getScoringState() {
-    return scoringState;
-  }
-
   public void periodic() {
     // Not sure what we want to do here, but this is set up to be called in all modes
     // periodically so we can do updates if needed.
-    if (scoringState != null) {
-      scoringState.logOutput();
-    }
   }
 }

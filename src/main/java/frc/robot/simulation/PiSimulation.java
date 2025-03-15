@@ -15,8 +15,6 @@ import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.util.CircularBuffer;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
-import frc.robot.ScoringState;
-import frc.robot.ScoringState.SensorState;
 import frc.robot.simulation.WorldSimulation.FieldObstacles;
 
 public class PiSimulation {

@@ -160,7 +160,6 @@ public class ScoreCommandsOnlyDrive {
                 Commands.runOnce(() -> {
                   Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp);
                   leftEncoderDistance.ifPresentOrElse(distance -> {
-                    // var scoringState = RobotTracker.getInstance().getScoringState();
                     commandState.cornerDistance = distance;
                     commandState.targetLeftEncoder = distance
                         + getTargetWallDistance(reefBar, sensorLocation.get());// * Math.cos(commandState.angle);
@@ -189,7 +188,6 @@ public class ScoreCommandsOnlyDrive {
       // piState.set(new double[] { SensorState.NONE.piValue(),
       // Constants.Drive.SCORING_SPEED });
       commandState.reset();
-      RobotTracker.getInstance().getScoringState().reset();
       chuterShooter.stopShooting();
       // FIXME: Reset? Detect if coral was shot?
     });
