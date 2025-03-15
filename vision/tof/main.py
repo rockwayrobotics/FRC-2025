@@ -259,15 +259,19 @@ class TofMain:
         self.loop()
 
 
+    def ts_adjusted(self, ts):
+        nt_time_offset = self.nt.getServerTimeOffset() / 1e6
+        return ts - time.monotonic() + ntcore._now() / 1e6 + nt_time_offset
+        
+
     def on_reading(self, ts, dist_mm, status, delta):
         flush = False # whether to flush NT (any time we publish)
         cd = self.cd
-        nt_time_offset = self.nt.getServerTimeOffset() / 1e6
         cd.add_record(ts, dist_mm, self.speed)
         if cd.found_corner():
             self.saw_corner = True
-            corner_ts = (cd.corner_timestamp - time.monotonic()) + ntcore._now() / 1e6 + nt_time_offset
-            self.corner_pub.set([corner_ts, cd.corner_angle])
+            corner_ts = self.ts_adjusted(cd.corner_timestamp)
+            self.corner_pub.set([corner_ts, cd.corner_dist])
             self.corner_ts_pub.set(cd.corner_timestamp)
             flush = True
 
@@ -283,7 +287,7 @@ class TofMain:
                 print("dist,%8.3f,%5.0f,%2d,%5.3f      " % (ts, dist_mm, status, delta), end='\r')
 
         if self.tof_mode == 'corner':
-            self.ts_dist_pub.set([(ts - time.monotonic()) + ntcore._now() / 1e6 + nt_time_offset, dist_mm])
+            self.ts_dist_pub.set([self.ts_adjusted(ts), dist_mm])
             self.dist_pub.set(dist_mm)
             if self.saw_corner:
                 flush = True
