@@ -64,6 +64,14 @@ public class Superstructure extends SubsystemBase {
     return elevator.getHeightMillimeters();
   }
 
+  public void setElevatorMaxSpeed(double speed){
+    elevator.setMaxNormalizedSpeedTuner(speed);
+  }
+
+  public double getElevatorMaxSpeed(){
+    return elevator.getMaxNormalizedSpeedTuner();
+  }
+
   public boolean isElevatorAtGoal() {
     return elevator.atGoal();
   }
@@ -131,7 +139,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   /**
-   * Returns (but does not schedule) a command to shut down the superstructure
+   * Schedules a command to shut down the superstructure
    * carefully. This is intended to be used to get ready for climp.
    */
   public void foldForClimp() {
@@ -213,6 +221,35 @@ public class Superstructure extends SubsystemBase {
         setWristGoalRads(setpoints.algae_score_wrist_angle_rads());
         break;
     }
+  }
+
+  public void bargePrepare(){
+    setElevatorGoalHeightMillimeters(setpoints.barge_prepare_elevator_height_mm());
+    setWristGoalRads(setpoints.barge_prepare_wrist_angle_rads());
+  }
+
+  public Command bargeShot(){
+    double oldSpeed = getElevatorMaxSpeed();
+
+    return Commands.sequence(
+      Commands.runOnce(() -> setElevatorMaxSpeed(setpoints.barge_shoot_elevator_speed())),
+      Commands.runOnce(() -> setElevatorGoalHeightMillimeters(setpoints.barge_shoot_elevator_height_mm())),
+
+      Commands.waitUntil(() -> getElevatorHeightMillimeters() >= setpoints.barge_when_wrist_angle_height_mm()),
+      Commands.runOnce(() -> setWristGoalRads(setpoints.barge_shoot_wrist_angle_rads())),
+      Commands.waitUntil(() -> getElevatorHeightMillimeters() >= setpoints.barge_when_shoot_elevator_height_mm()),
+      // Commands.runOnce(() -> setWristGoalRads(setpoints.barge_shoot_wrist_angle_rads())),
+      // Commands.waitUntil(() -> Math.abs(getGrabberWristAngleRads() - setpoints.barge_shoot_wrist_angle_rads()) < 0.05),
+      Commands.runOnce(() -> setGrabberMotor(1)),
+      Commands.waitSeconds(0.75),
+      Commands.runOnce(() -> {
+        setGrabberMotor(0);
+        setElevatorMaxSpeed(oldSpeed);
+        //foldForClimp();
+      }, this)
+    ).finallyDo((boolean interrupted) -> {
+      setElevatorMaxSpeed(oldSpeed);
+    });
   }
 
   public void stayStill() {

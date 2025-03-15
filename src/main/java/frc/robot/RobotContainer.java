@@ -194,9 +194,24 @@ public class RobotContainer {
       driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setScale(0.1)));
       driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
-      driverController.rightTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(1)));
-      driverController.rightTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
+      // driverController.rightTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(1)));
+      // driverController.rightTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
 
+      driverController.start().onTrue(superstructure.bargeShot());
+      
+      driverController.povUp().onTrue(Commands.runOnce(() -> {
+        superstructure.bargePrepare();
+      }, superstructure));
+
+      driverController.rightTrigger().onTrue(Commands.runOnce(() -> {
+        String currentCam = cameraPublisher.getString("fore");
+        if (currentCam.equals("fore")) {
+          cameraPublisher.setString("chute");
+        } else {
+          cameraPublisher.setString("fore");
+        }
+      })); 
+        
       // driverController.rightTrigger()
       //     .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175, driverController.getRightX()))));
       // driverController.rightBumper().onFalse(new InstantCommand(() -> drive.set(0, 0)));

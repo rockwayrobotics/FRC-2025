@@ -95,6 +95,16 @@ public class ElevatorIOReal implements ElevatorIO {
     motorMain.set(0);
   }
 
+  @Override
+  public void setMaxNormalizedSpeedTuner(double speed) {
+    elevatorMaxNormalizedSpeed.set(speed);
+  }
+
+  @Override
+  public double getMaxNormalizedSpeedTuner() {
+    return elevatorMaxNormalizedSpeed.get();
+  }
+
   public void updateParams(boolean resetSafe) {
     ResetMode resetMode = resetSafe ? ResetMode.kResetSafeParameters : ResetMode.kNoResetSafeParameters;
     feedforward = new ElevatorFeedforward(elevatorFeedforwardkS.get(), elevatorFeedforwardkG.get(), 0);

@@ -39,6 +39,15 @@ public class TunableSetpoints {
   private final Tuner algae_score_wrist_angle_rads = new Tuner("Scoring/Algae/Score/wrist_angle_rads", 1.5,
       true);
 
+  // Barge Algae:
+  private final Tuner barge_prepare_elevator_height_mm = new Tuner("Scoring/Algae/Barge/prepare_elevator_height_mm", 700, true);
+  private final Tuner barge_prepare_wrist_angle_rads = new Tuner("Scoring/Algae/Barge/prepare_wrist_angle_rads", 0, true);
+  private final Tuner barge_shoot_elevator_height_mm = new Tuner("Scoring/Algae/Barge/shoot_elevator_height_mm", 1190, true);
+  private final Tuner barge_shoot_wrist_angle_rads = new Tuner("Scoring/Algae/Barge/shoot_wrist_angle_rads", -1.3, true);
+  private final Tuner barge_shoot_elevator_speed = new Tuner("Scoring/Algae/Barge/shoot_elevator_speed", 0.5, true);
+  private final Tuner barge_when_shoot_elevator_height_mm = new Tuner("Scoring/Algae/Barge/when_shoot_elevator_height_mm", 1100, true);
+  private final Tuner barge_when_wrist_angle_height_mm = new Tuner("Scoring/Algae/Barge/when_wrist_angle_height_mm", 900, true);
+
   public double intake_elevator_height_mm() {
     return intake_elevator_height_mm.get();
   }
@@ -116,4 +125,31 @@ public class TunableSetpoints {
     return algae_score_wrist_angle_rads.get();
   }
 
+  public double barge_prepare_elevator_height_mm() {
+    return barge_prepare_elevator_height_mm.get();
+  }
+
+  public double barge_prepare_wrist_angle_rads() {
+    return barge_prepare_wrist_angle_rads.get();
+  }
+
+  public double barge_shoot_elevator_height_mm() {
+    return barge_shoot_elevator_height_mm.get();
+  }
+
+  public double barge_shoot_wrist_angle_rads() {
+    return barge_shoot_wrist_angle_rads.get();
+  }
+
+  public double barge_shoot_elevator_speed() {
+    return barge_shoot_elevator_speed.get();
+  }
+
+  public double barge_when_shoot_elevator_height_mm() {
+    return barge_when_shoot_elevator_height_mm.get();
+  }
+
+  public double barge_when_wrist_angle_height_mm() {
+    return barge_when_wrist_angle_height_mm.get();
+  }
 }

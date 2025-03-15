@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.networktables.DoubleSubscriber;
+import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableListener;
@@ -23,6 +24,7 @@ public class Tuner {
   private final String key;
   private final double defaultValue;
   private final DoubleSubscriber subscriber;
+  private final DoubleTopic SettableTopic; 
 
   /**
    * defaultValue will be ignored if persist is true, and has been previously set
@@ -31,6 +33,8 @@ public class Tuner {
     this.key = name;
     var nt = NetworkTableInstance.getDefault();
     var topic = nt.getDoubleTopic(String.join("", "/Tuning/", name));
+    this.SettableTopic = topic;
+    
     if (persist && Preferences.containsKey(key)) {
       this.defaultValue = Preferences.getDouble(key, defaultValue);
     } else {
@@ -52,6 +56,10 @@ public class Tuner {
 
   public double get() {
     return subscriber.get();
+  }
+
+  public void set(double value) {
+    SettableTopic.publish().set(value);
   }
 
   public NetworkTableListener addListener(Consumer<NetworkTableEvent> callback) {

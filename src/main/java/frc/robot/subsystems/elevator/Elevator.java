@@ -61,6 +61,14 @@ public class Elevator {
     io.stop();
   }
 
+  public void setMaxNormalizedSpeedTuner(double speed) {
+    io.setMaxNormalizedSpeedTuner(speed);
+  }
+
+  public double getMaxNormalizedSpeedTuner() {
+    return io.getMaxNormalizedSpeedTuner();
+  }
+
   // public boolean isHomeBeamBroken() {
   //   return homeBeamBroken;
   // }
