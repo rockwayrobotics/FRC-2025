@@ -1,10 +1,5 @@
 package frc.robot;
 
-import java.util.function.BooleanSupplier;
-
-import com.pathplanner.lib.commands.PathPlannerAuto;
-
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -19,8 +14,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ProxyCommand;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
@@ -29,7 +22,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.Side;
 import frc.robot.Constants.AlgaeLevel;
 import frc.robot.Constants.CoralLevel;
-import frc.robot.ScoringState.SensorState;
 import frc.robot.commands.AutoPaths;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveStraight;
@@ -37,26 +29,17 @@ import frc.robot.commands.ScoreCommandsOnlyDrive;
 import frc.robot.simulation.WorldSimulation;
 import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chute.ChuteIOReal;
-import frc.robot.subsystems.chute.ChuteIOSim;
 import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.chuterShooter.ChuterShooterIOReal;
 import frc.robot.subsystems.climp.Climp;
 import frc.robot.subsystems.climp.ClimpIOReal;
-import frc.robot.subsystems.climp.ClimpIOSim;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.DriveIOSimComplex;
-import frc.robot.subsystems.drive.DriveIOSimLite;
 import frc.robot.subsystems.drive.DriveIOSparkMax;
-import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
-import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.elevator.ElevatorIOInputsAutoLogged;
 import frc.robot.subsystems.elevator.ElevatorIOReal;
-import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.grabber.Grabber;
 import frc.robot.subsystems.grabber.GrabberIOReal;
-import frc.robot.subsystems.grabber.GrabberIOSim;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.util.Sensors;
 import frc.robot.util.Tuner;
@@ -131,7 +114,8 @@ public class RobotContainer {
     autoChooser.addOption("leftNearCenterL2", AutoPaths.leftNearCenterL2(drive, superstructure, chuterShooter));
     autoChooser.addOption("rightNearRightTrough", AutoPaths.rightNearRightTrough(drive, superstructure, chuterShooter));
     autoChooser.addOption("leftNearLeftTrough", AutoPaths.leftNearLeftTrough(drive, superstructure, chuterShooter));
-    autoChooser.addOption("rightNearCenterTrough", AutoPaths.rightNearCenterTrough(drive, superstructure, chuterShooter));
+    autoChooser.addOption("rightNearCenterTrough",
+        AutoPaths.rightNearCenterTrough(drive, superstructure, chuterShooter));
     autoChooser.addOption("leftNearCenterTrough", AutoPaths.leftNearCenterTrough(drive, superstructure, chuterShooter));
     autoChooser.addOption("rightTestTrough", AutoPaths.rightTestTrough(drive, superstructure, chuterShooter));
     autoChooser.addOption("leftTestTrough", AutoPaths.leftTestTrough(drive, superstructure, chuterShooter));
@@ -161,258 +145,252 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
+    // left bumper -> set drive scale to the tuned drivescale, default to 0.3 when
+    // held
+    driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
+    driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
-    // driver & operator A -> Coral.Pivot (swap side)
-    // driver & operator B -> Coral.shoot
-    // driver & operator X -> Elevator.set-L2
-    // driver & operator Y -> Elevator.set-L3
-    // driver & operator left trigger -> Algae.intake
-    // driver & operator right trigger -> Algae.shoot
-    // driver & operator D-pad up -> Coral.shift-up
-    // driver & operator D-pad down -> Coral.shift-down
-    // driver & operator D-pad left -> Algae.up
-    // driver & operator D-pad right -> Algae.down
+    // right bumper -> set drive scale to 1 when held
+    driverController.rightBumper().onTrue(new InstantCommand(() -> drive.setScale(1)));
+    driverController.rightBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
-    // driver & operator right bumper held -> landing sequence
+    // left trigger -> set drive scale to 0.1 when held
+    driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setScale(0.1)));
+    driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
 
-    // left bumper -> set drive scale to 0.3 when held
+    // Rotation scaling if desired
+    // driverController.leftTrigger().onTrue(new InstantCommand(() ->
+    // drive.setRotationScale(rotationTuner.get())));
+    // driverController.leftTrigger().onFalse(new InstantCommand(() ->
+    // drive.setRotationScale(0.76)));
 
-    // FIXME FIXME FIXME: Everything is disabled for now
-    boolean enabled = true;
-    if (enabled) {
-      driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
-      driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
+    // driverController.rightTrigger().onTrue(new InstantCommand(() ->
+    // drive.setRotationScale(1)));
+    // driverController.rightTrigger().onFalse(new InstantCommand(() ->
+    // drive.setRotationScale(0.76)));
 
-      driverController.rightBumper().onTrue(new InstantCommand(() -> drive.setScale(1)));
-      driverController.rightBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
+    driverController.start().onTrue(superstructure.bargeShot());
 
-      // driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(rotationTuner.get())));
-      // driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
+    driverController.povUp().onTrue(Commands.runOnce(() -> {
+      superstructure.bargePrepare();
+    }, superstructure));
 
-      driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setScale(0.1)));
-      driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
-
-      // driverController.rightTrigger().onTrue(new InstantCommand(() -> drive.setRotationScale(1)));
-      // driverController.rightTrigger().onFalse(new InstantCommand(() -> drive.setRotationScale(0.76)));
-
-      driverController.start().onTrue(superstructure.bargeShot());
-      
-      driverController.povUp().onTrue(Commands.runOnce(() -> {
-        superstructure.bargePrepare();
-      }, superstructure));
-
-      driverController.rightTrigger().onTrue(Commands.runOnce(() -> {
-        String currentCam = cameraPublisher.getString("fore");
-        if (currentCam.equals("fore")) {
-          cameraPublisher.setString("chute");
-        } else {
-          cameraPublisher.setString("fore");
-        }
-      })); 
-        
-      // driverController.rightTrigger()
-      //     .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175, driverController.getRightX()))));
-      // driverController.rightBumper().onFalse(new InstantCommand(() -> drive.set(0, 0)));
-
-      driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR, chuterShooter));
-      driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR, chuterShooter));
-      driverController.x().whileTrue(new DriveStraight(0.45, drive));
-      driverController.y().whileTrue(ScoreCommandsOnlyDrive.rampDownSpeed(drive, 1, 3));
-
-      // driverController.rightBumper()
-      //     .whileTrue(Commands.run(() -> superstructure.chute.startShooting(), superstructure));
-      // driverController.rightBumper().onFalse(Commands.runOnce(() -> superstructure.chute.stopShooting()));
-
-      drive.setDefaultCommand(
-          DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
-    }
-
-    boolean stubBindings = true;
-    if (stubBindings) {
-      new JoystickButton(operator2Controller, 1).whileTrue(Commands.run(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 60);
-      }, superstructure));
-
-      new JoystickButton(operator2Controller, 2).whileTrue(Commands.run(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 60);
-      }, superstructure));
-
-      new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
-        if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
-          superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.4);
-        }
-      }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
-      }, superstructure));
-
-      new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
-        if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
-          superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.4);
-        }
-      }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
-      }, superstructure));
-
-      // new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
-      // climp.setClimpGoalRads(climp.getClimpAngleRads() + 0.01);
-      // }, climp)).onFalse(Commands.run(() -> {
-      // climp.setClimpGoalRads(climp.getClimpAngleRads());
-      // }, climp));
-
-      // new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
-      // climp.setClimpGoalRads(climp.getClimpAngleRads() - 0.01);
-      // }, climp)).onFalse(Commands.run(() -> {
-      // climp.setClimpGoalRads(climp.getClimpAngleRads());
-      // }, climp));
-
-      new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
-        climp.setNormalizedSpeed(1);
-      }, climp)).onFalse(Commands.run(() -> {
-        climp.setNormalizedSpeed(0);
-      }, climp));
-
-      new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
-        climp.setNormalizedSpeed(-1);
-      }, climp)).onFalse(Commands.run(() -> {
-        climp.setNormalizedSpeed(0);
-      }, climp));
-
-      new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
-        chuterShooter.startShooting();
-      }, chuterShooter)).onFalse(Commands.run(() -> {
-        chuterShooter.setShooterMotor(0);
-      }, chuterShooter));
-
-      new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
-        chuterShooter.setShooterMotor(-0.1); // intake
-      }, chuterShooter)).onFalse(Commands.run(() -> {
-        chuterShooter.stopShooting();
-      }, chuterShooter));
-
-      new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
-        superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.5);
-      }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
-      }, superstructure));
-
-      new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
-        superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.5);
-      }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
-      }, superstructure));
-
-      new POVButton(operator2Controller, 0).whileTrue(Commands.run(() -> {
-        superstructure.setGrabberMotor(1);
-      }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.setGrabberMotor(0);
-      }, superstructure));
-
-      new POVButton(operator2Controller, 90).whileTrue(Commands.run(() -> {
-        superstructure.setGrabberMotor(-1);
-      }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.setGrabberMotor(0);
-      }, superstructure));
-
-      // FIXME maybe; cam buttons untestes
-      new JoystickButton(operator2Controller, 13).onTrue(Commands.runOnce(() -> {
+    driverController.rightTrigger().onTrue(Commands.runOnce(() -> {
+      String currentCam = cameraPublisher.getString("fore");
+      if (currentCam.equals("fore")) {
+        cameraPublisher.setString("chute");
+      } else {
         cameraPublisher.setString("fore");
-      }));
+      }
+    }));
 
-      new JoystickButton(operator2Controller, 14).onTrue(Commands.runOnce(() -> {
-        cameraPublisher.setString("fore");
-      }));
+    // driverController.rightTrigger()
+    // .whileTrue(new RepeatCommand(new InstantCommand(() -> drive.set(0.175,
+    // driverController.getRightX()))));
+    // driverController.rightBumper().onFalse(new InstantCommand(() -> drive.set(0,
+    // 0)));
 
-      new JoystickButton(operator2Controller, 11).onTrue(Commands.runOnce(() -> {
-        cameraPublisher.setString("aft");
-      }));
+    driverController.a()
+        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR, chuterShooter));
+    driverController.b()
+        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR, chuterShooter));
+    driverController.x().whileTrue(new DriveStraight(0.45, drive));
+    driverController.y().whileTrue(ScoreCommandsOnlyDrive.rampDownSpeed(drive, 1, 3));
 
-      new JoystickButton(operator2Controller, 12).onTrue(Commands.runOnce(() -> {
-        cameraPublisher.setString("aft");
-      }));
+    // driverController.rightBumper()
+    // .whileTrue(Commands.run(() -> superstructure.chute.startShooting(),
+    // superstructure));
+    // driverController.rightBumper().onFalse(Commands.runOnce(() ->
+    // superstructure.chute.stopShooting()));
 
-      new JoystickButton(operator2Controller, 9).onTrue(Commands.runOnce(() -> {
-        cameraPublisher.setString("auto");
-      }));
+    drive.setDefaultCommand(
+        DriveCommands.defaultDrive(driverController::getLeftY, driverController::getRightX, drive));
 
-      new JoystickButton(operator2Controller, 10).onTrue(Commands.runOnce(() -> {
-        cameraPublisher.setString("auto");
-      }));
+    new JoystickButton(operator2Controller, 1).whileTrue(Commands.run(() -> {
+      superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() + 60);
+    }, superstructure));
 
-      new JoystickButton(operator1Controller, 9).onTrue(Commands.runOnce(() -> {
-        superstructure.home();
-      }, superstructure));
+    new JoystickButton(operator2Controller, 2).whileTrue(Commands.run(() -> {
+      superstructure.setElevatorGoalHeightMillimeters(superstructure.elevator.getHeightMillimeters() - 60);
+    }, superstructure));
 
-      new JoystickButton(operator1Controller, 10).onTrue(Commands.runOnce(() -> {
-        System.out.println("Overriding homing Chute");
-        Sensors.getInstance().overrideChuteHomeSwitch = true;
-      }, superstructure));
+    new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
+      if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+        superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.4);
+      }
+    }, superstructure)).onFalse(Commands.run(() -> {
+      superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
+    }, superstructure));
 
-      new JoystickButton(operator1Controller, 14).onTrue(Commands.runOnce(() -> {
-        superstructure.foldForClimp();
-      }, superstructure));
+    new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
+      if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+        superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.4);
+      }
+    }, superstructure)).onFalse(Commands.run(() -> {
+      superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
+    }, superstructure));
 
-      new JoystickButton(operator1Controller, 2).whileTrue(Commands.run(() -> {
-        climp.setNormalizedSpeed(1);
-      }, climp)).onFalse(Commands.run(() -> {
-        climp.setNormalizedSpeed(0);
-      }, climp));
+    // new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
+    // climp.setClimpGoalRads(climp.getClimpAngleRads() + 0.01);
+    // }, climp)).onFalse(Commands.run(() -> {
+    // climp.setClimpGoalRads(climp.getClimpAngleRads());
+    // }, climp));
 
-      new JoystickButton(operator1Controller, 1).whileTrue(Commands.run(() -> {
-        climp.setNormalizedSpeed(-1);
-      }, climp)).onFalse(Commands.run(() -> {
-        climp.setNormalizedSpeed(0);
-      }, climp));
+    // new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
+    // climp.setClimpGoalRads(climp.getClimpAngleRads() - 0.01);
+    // }, climp)).onFalse(Commands.run(() -> {
+    // climp.setClimpGoalRads(climp.getClimpAngleRads());
+    // }, climp));
 
-      new JoystickButton(operator1Controller, 4).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.L3, Side.RIGHT);
-      }, superstructure));
-      new JoystickButton(operator1Controller, 6).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.L3, Side.LEFT);
-      }, superstructure));
-      new JoystickButton(operator1Controller, 3).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT);
-      }, superstructure));
-      new JoystickButton(operator1Controller, 8).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
-      }, superstructure));
-      new JoystickButton(operator1Controller, 5).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.L1, Side.LEFT);
-      }, superstructure));
-      new JoystickButton(operator1Controller, 7).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoSetpoint(CoralLevel.L1, Side.RIGHT);
-      }, superstructure));
+    new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
+      climp.setNormalizedSpeed(1);
+    }, climp)).onFalse(Commands.run(() -> {
+      climp.setNormalizedSpeed(0);
+    }, climp));
 
-      new JoystickButton(operator1Controller, 12).onTrue(Commands.sequence(
-        new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.LEFT), superstructure))
-        // new ProxyCommand(chuterShooter.loadCoralChute())
-      ));
+    new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
+      climp.setNormalizedSpeed(-1);
+    }, climp)).onFalse(Commands.run(() -> {
+      climp.setNormalizedSpeed(0);
+    }, climp));
 
-      new JoystickButton(operator1Controller, 11).onTrue(Commands.sequence(
-        new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.RIGHT), superstructure))
-        // new ProxyCommand(chuterShooter.loadCoralChute())
-      ));
+    new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
+      chuterShooter.startShooting();
+    }, chuterShooter)).onFalse(Commands.run(() -> {
+      chuterShooter.setShooterMotor(0);
+    }, chuterShooter));
 
-      // Algae setpoints
-      // FIXME: spin wheels until algae sensor detects algae
-      new POVButton(operator1Controller, 270).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoAlgaeSetpoint(AlgaeLevel.L3);
-      }, superstructure));
-      new POVButton(operator1Controller, 180).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoAlgaeSetpoint(AlgaeLevel.L2);
-      }, superstructure));
-      new POVButton(operator1Controller, 90).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoAlgaeSetpoint(AlgaeLevel.Floor);
-      }, superstructure));
-      new JoystickButton(operator1Controller, 13).onTrue(Commands.runOnce(() -> {
-        superstructure.gotoAlgaeSetpoint(AlgaeLevel.Score);
-      }, superstructure));
+    new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
+      chuterShooter.setShooterMotor(-0.1); // intake
+    }, chuterShooter)).onFalse(Commands.run(() -> {
+      chuterShooter.stopShooting();
+    }, chuterShooter));
 
-      new POVButton(operator1Controller, 0).whileTrue(Commands.run(() -> {
-        superstructure.setGrabberMotor(1);
-      }, superstructure)).onFalse(Commands.run(() -> {
-        superstructure.setGrabberMotor(0);
-      }, superstructure));
-    }
+    new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
+      superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.5);
+    }, superstructure)).onFalse(Commands.run(() -> {
+      superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
+    }, superstructure));
+
+    new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
+      superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.5);
+    }, superstructure)).onFalse(Commands.run(() -> {
+      superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
+    }, superstructure));
+
+    new POVButton(operator2Controller, 0).whileTrue(Commands.run(() -> {
+      superstructure.setGrabberMotor(1);
+    }, superstructure)).onFalse(Commands.run(() -> {
+      superstructure.setGrabberMotor(0);
+    }, superstructure));
+
+    new POVButton(operator2Controller, 90).whileTrue(Commands.run(() -> {
+      superstructure.setGrabberMotor(-1);
+    }, superstructure)).onFalse(Commands.run(() -> {
+      superstructure.setGrabberMotor(0);
+    }, superstructure));
+
+    // FIXME maybe; cam buttons untestes
+    new JoystickButton(operator2Controller, 13).onTrue(Commands.runOnce(() -> {
+      cameraPublisher.setString("fore");
+    }));
+
+    new JoystickButton(operator2Controller, 14).onTrue(Commands.runOnce(() -> {
+      cameraPublisher.setString("fore");
+    }));
+
+    new JoystickButton(operator2Controller, 11).onTrue(Commands.runOnce(() -> {
+      cameraPublisher.setString("aft");
+    }));
+
+    new JoystickButton(operator2Controller, 12).onTrue(Commands.runOnce(() -> {
+      cameraPublisher.setString("aft");
+    }));
+
+    new JoystickButton(operator2Controller, 9).onTrue(Commands.runOnce(() -> {
+      cameraPublisher.setString("auto");
+    }));
+
+    new JoystickButton(operator2Controller, 10).onTrue(Commands.runOnce(() -> {
+      cameraPublisher.setString("auto");
+    }));
+
+    new JoystickButton(operator1Controller, 9).onTrue(Commands.runOnce(() -> {
+      superstructure.home();
+    }, superstructure));
+
+    new JoystickButton(operator1Controller, 10).onTrue(Commands.runOnce(() -> {
+      System.out.println("Overriding homing Chute");
+      Sensors.getInstance().overrideChuteHomeSwitch = true;
+    }, superstructure));
+
+    new JoystickButton(operator1Controller, 14).onTrue(Commands.runOnce(() -> {
+      superstructure.foldForClimp();
+    }, superstructure));
+
+    new JoystickButton(operator1Controller, 2).whileTrue(Commands.run(() -> {
+      climp.setNormalizedSpeed(1);
+    }, climp)).onFalse(Commands.run(() -> {
+      climp.setNormalizedSpeed(0);
+    }, climp));
+
+    new JoystickButton(operator1Controller, 1).whileTrue(Commands.run(() -> {
+      climp.setNormalizedSpeed(-1);
+    }, climp)).onFalse(Commands.run(() -> {
+      climp.setNormalizedSpeed(0);
+    }, climp));
+
+    new JoystickButton(operator1Controller, 4).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoSetpoint(CoralLevel.L3, Side.RIGHT);
+    }, superstructure));
+    new JoystickButton(operator1Controller, 6).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoSetpoint(CoralLevel.L3, Side.LEFT);
+    }, superstructure));
+    new JoystickButton(operator1Controller, 3).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT);
+    }, superstructure));
+    new JoystickButton(operator1Controller, 8).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
+    }, superstructure));
+    new JoystickButton(operator1Controller, 5).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoSetpoint(CoralLevel.L1, Side.LEFT);
+    }, superstructure));
+    new JoystickButton(operator1Controller, 7).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoSetpoint(CoralLevel.L1, Side.RIGHT);
+    }, superstructure));
+
+    new JoystickButton(operator1Controller, 12).onTrue(Commands.sequence(
+        new ProxyCommand(
+            Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.LEFT), superstructure))
+    // new ProxyCommand(chuterShooter.loadCoralChute())
+    ));
+
+    new JoystickButton(operator1Controller, 11).onTrue(Commands.sequence(
+        new ProxyCommand(
+            Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.RIGHT), superstructure))
+    // new ProxyCommand(chuterShooter.loadCoralChute())
+    ));
+
+    // Algae setpoints
+    // FIXME: spin wheels until algae sensor detects algae
+    new POVButton(operator1Controller, 270).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoAlgaeSetpoint(AlgaeLevel.L3);
+    }, superstructure));
+    new POVButton(operator1Controller, 180).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoAlgaeSetpoint(AlgaeLevel.L2);
+    }, superstructure));
+    new POVButton(operator1Controller, 90).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoAlgaeSetpoint(AlgaeLevel.Floor);
+    }, superstructure));
+    new JoystickButton(operator1Controller, 13).onTrue(Commands.runOnce(() -> {
+      superstructure.gotoAlgaeSetpoint(AlgaeLevel.Score);
+    }, superstructure));
+
+    new POVButton(operator1Controller, 0).whileTrue(Commands.run(() -> {
+      superstructure.setGrabberMotor(1);
+    }, superstructure)).onFalse(Commands.run(() -> {
+      superstructure.setGrabberMotor(0);
+    }, superstructure));
   }
 
   public void setupTestBindings() {
