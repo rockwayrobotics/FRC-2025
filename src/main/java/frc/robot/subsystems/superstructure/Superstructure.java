@@ -98,6 +98,10 @@ public class Superstructure extends SubsystemBase {
     return grabber.getCurrentRads();
   }
 
+  public boolean isGrabberWristAtGoal() {
+    return grabber.isWristAtGoal();
+  }
+
   public void setGrabberMotor(double speed) {
     grabber.setGrabberMotor(speed);
   }

@@ -22,6 +22,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
+import frc.robot.Constants.AlgaeLevel;
 import frc.robot.Constants.CoralLevel;
 import frc.robot.Constants.Side;
 import frc.robot.RobotTracker;
@@ -60,6 +61,13 @@ public class AutoPaths {
       .setKinematics(RobotTracker.getInstance().getDriveKinematics())
       .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration));
 
+  // The single trajectory config that applies to all autos
+  private static final TrajectoryConfig reversedConfig = new TrajectoryConfig(trajectoryMaxVelocity,
+      trajectoryMaxAcceleration)
+      .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+      .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration))
+      .setReversed(true);
+
   private AutoPaths() {
   }
 
@@ -84,19 +92,7 @@ public class AutoPaths {
     });
   }
 
-  /**
-   * Generates a trajectory
-   * 
-   * @param startPose
-   * @param endPose
-   * @param level
-   * @param side
-   * @param drive
-   * @param superstructure
-   * @return
-   */
-  private static Command runTrajectory(Trajectory trajectory, CoralLevel level, Side side, Drive drive,
-      Superstructure superstructure, ChuterShooter chuterShooter) {
+  private static Command runTrajectory(Trajectory trajectory, Drive drive) {
     LTVUnicycleController ltvController = new LTVUnicycleController(LTV_qelems, LTV_relems, LTV_dt,
         config.getMaxVelocity());
     PIDController leftController = new PIDController(kP, kI, kD);
@@ -115,7 +111,25 @@ public class AutoPaths {
           drive.setPose(pose);
         }, drive);
 
-    Command command = Commands.sequence(Commands.waitSeconds(autoWaitTime.get()), path1,
+    return path1;
+  }
+
+  /**
+   * Generates a trajectory
+   * 
+   * @param startPose
+   * @param endPose
+   * @param level
+   * @param side
+   * @param drive
+   * @param superstructure
+   * @return
+   */
+  private static Command runShootingTrajectory(Trajectory trajectory, CoralLevel level, Side side, Drive drive,
+      Superstructure superstructure, ChuterShooter chuterShooter) {
+    Command followPath = runTrajectory(trajectory, drive);
+
+    Command command = Commands.sequence(Commands.waitSeconds(autoWaitTime.get()), followPath,
         Commands.runOnce(() -> {
           drive.stop();
           superstructure.gotoSetpoint(level, side);
@@ -152,7 +166,7 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTrajectory(trajectory, CoralLevel.L2, Side.LEFT, drive, superstructure, chuterShooter);
+    return runShootingTrajectory(trajectory, CoralLevel.L2, Side.LEFT, drive, superstructure, chuterShooter);
   }
 
   public static Command rightNearCenterL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
@@ -169,7 +183,7 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTrajectory(trajectory, CoralLevel.L2, Side.LEFT, drive, superstructure, chuterShooter);
+    return runShootingTrajectory(trajectory, CoralLevel.L2, Side.LEFT, drive, superstructure, chuterShooter);
   }
 
   public static Command leftNearCenterL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
@@ -186,7 +200,7 @@ public class AutoPaths {
         new Pose2d(start_pose_x, start_pose_y,
             Rotation2d.fromDegrees(start_pose_heading_deg)),
         interior_waypoints, new Pose2d(end_pose_x, end_pose_y, Rotation2d.fromDegrees(end_pose_heading_deg)), config);
-    return runTrajectory(trajectory, CoralLevel.L2, Side.RIGHT, drive, superstructure, chuterShooter);
+    return runShootingTrajectory(trajectory, CoralLevel.L2, Side.RIGHT, drive, superstructure, chuterShooter);
   }
 
   public static Command rightNearCenterTrough(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
@@ -321,6 +335,74 @@ public class AutoPaths {
               superstructure.setElevatorGoalHeightMillimeters(0);
               drive.stop();
             }));
+    command.addRequirements(drive, superstructure, chuterShooter);
+    return command;
+  }
+
+  public static Command leftFarFancy(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
+    double start_pose_x = 7.464;
+    double start_pose_y = 7.050; // 1 m from wall
+    double start_pose_heading_deg = 180;
+    // 0.5m away is (5.3597399999999995, 5.533565117443839)
+    double approach_algae_x = 5.36;
+    double approach_algae_y = 5.5336;
+    double approach_algae_heading_deg = 240;
+    // touching the wall is (5.110239999999999, 5.101418440955404)
+    double grab_algae_x = 5.11;
+    double grab_algae_y = 5.101;
+    double grab_algae_heading_deg = 240;
+
+    double backup_algae_x = 4.735;
+    double backup_algae_y = 6.103;
+    double backup_algae_heading_deg = 285;
+
+    // 5.317584369519958, 5.003647423627308
+    double coral1_x = 5.3175;
+    double coral1_y = 5.0036;
+    double coral1_heading_deg = -30;
+
+    Trajectory approachAlgaeTrajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        List.of(), new Pose2d(approach_algae_x, approach_algae_y, Rotation2d.fromDegrees(approach_algae_heading_deg)),
+        config);
+
+    Trajectory grabAlgaeTrajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(approach_algae_x, approach_algae_y,
+            Rotation2d.fromDegrees(approach_algae_heading_deg)),
+        List.of(), new Pose2d(grab_algae_x, grab_algae_y, Rotation2d.fromDegrees(grab_algae_heading_deg)), config);
+
+    Trajectory backupAlgaeTrajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(grab_algae_x, grab_algae_y,
+            Rotation2d.fromDegrees(grab_algae_heading_deg)),
+        List.of(), new Pose2d(backup_algae_x, backup_algae_y, Rotation2d.fromDegrees(backup_algae_heading_deg)),
+        reversedConfig);
+
+    Trajectory coral1Trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(backup_algae_x, backup_algae_y,
+            Rotation2d.fromDegrees(backup_algae_heading_deg)),
+        List.of(), new Pose2d(coral1_x, coral1_y, Rotation2d.fromDegrees(coral1_heading_deg)), config);
+
+    var command = Commands.sequence(
+        runTrajectory(approachAlgaeTrajectory, drive),
+        Commands.runOnce(() -> {
+          drive.stop();
+          superstructure.gotoAlgaeSetpoint(AlgaeLevel.L3);
+        }),
+        Commands.waitUntil(() -> {
+          return superstructure.isElevatorAtGoal() && superstructure.isGrabberWristAtGoal();
+        }),
+        Commands.runOnce(() -> {
+          // Suck in algae
+          superstructure.setGrabberMotor(-1);
+        }),
+        runTrajectory(grabAlgaeTrajectory, drive),
+        Commands.runOnce(() -> {
+          // Suck in algae
+          superstructure.setGrabberMotor(0);
+        }),
+        runTrajectory(backupAlgaeTrajectory, drive),
+        runTrajectory(coral1Trajectory, drive));
     command.addRequirements(drive, superstructure, chuterShooter);
     return command;
   }

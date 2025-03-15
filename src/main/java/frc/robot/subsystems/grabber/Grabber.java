@@ -56,6 +56,10 @@ public class Grabber {
     return wristGoalRads;
   }
 
+  public boolean isWristAtGoal() {
+    return Math.abs(getCurrentRads() - getWristGoalRads()) < Units.degreesToRadians(3);
+  }
+
   public void setGrabberMotor(double speed) {
     io.setGrabberMotor(speed);
   }
