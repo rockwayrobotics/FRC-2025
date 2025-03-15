@@ -90,8 +90,6 @@ public class Superstructure extends SubsystemBase {
     return chute.getPivotAngleRads();
   }
 
-  // FIXME: Add grabber methods too
-
   public void setWristGoalRads(double wristAngleRads) {
     grabber.setWristGoalRads(wristAngleRads);
   }
