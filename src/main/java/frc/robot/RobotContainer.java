@@ -435,12 +435,12 @@ public class RobotContainer {
 
       new JoystickButton(operator1Controller, 12).onTrue(Commands.sequence(
         new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.LEFT), superstructure)),
-        new ProxyCommand(chuterShooter.loadCoralChute())
+        // new ProxyCommand(chuterShooter.loadCoralChute())
       ));
 
       new JoystickButton(operator1Controller, 11).onTrue(Commands.sequence(
         new ProxyCommand(Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.RIGHT), superstructure)),
-        new ProxyCommand(chuterShooter.loadCoralChute())
+        // new ProxyCommand(chuterShooter.loadCoralChute())
       ));
 
       // Algae setpoints
