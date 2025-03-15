@@ -96,15 +96,6 @@ public class RobotContainer {
     autoChooser.addOption("Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption("SysID All (Rev then Fwd)", drive.sysIDRunAll());
-    // Remove Pathplanner paths for now
-    // autoChooser.addOption("Pathplanner", new PathPlannerAuto("straightlong"));
-    autoChooser.addOption("Forward", DriveCommands.driveForward(drive));
-    autoChooser.addOption("Auto1", DriveCommands.auto1(drive));
-    autoChooser.addOption("Auto2", DriveCommands.auto2(drive));
-    autoChooser.addOption("Auto3", DriveCommands.auto3(drive));
-    autoChooser.addOption("Auto4", DriveCommands.auto4(drive));
-    autoChooser.addOption("ToReef", DriveCommands.toReef(drive));
-    autoChooser.addOption("FromReef", DriveCommands.fromReef(drive));
 
     // new autos that are UNTESTED
     autoChooser.addOption("justDrive", AutoPaths.justMove(drive, superstructure));

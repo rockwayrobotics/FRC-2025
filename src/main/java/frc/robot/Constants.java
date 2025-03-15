@@ -45,7 +45,6 @@ public final class Constants {
     public static final int DRIVER = 0;
     public static final int OPERATOR_1 = 1;
     public static final int OPERATOR_2 = 2;
-    public static final int TEST = 3;
 
     // Since the default joystick has negative as forward, this scale is negative
     // when MASTER_ORIENTATION_REVERSED is false; you should probably never have to
@@ -70,10 +69,10 @@ public final class Constants {
     public static final int RIGHT_DRIVE_MOTOR_R = 3;
     public static final int RIGHT_DRIVE_MOTOR_F = 4;
 
-    // Vortex with Spark Flex
+    // NEO with Spark MAX
     public static final int CLIMP_MOTOR = 5;
 
-    // Vortex with Spark Flex
+    // NEO with Spark MAX
     public static final int ELEVATOR_MOTOR_BACK = 6;
     public static final int ELEVATOR_MOTOR_FRONT = 12;
 
