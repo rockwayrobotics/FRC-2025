@@ -24,7 +24,7 @@ public class Tuner {
   private final String key;
   private final double defaultValue;
   private final DoubleSubscriber subscriber;
-  private final DoubleTopic SettableTopic; 
+  private final DoubleTopic topic;
 
   /**
    * defaultValue will be ignored if persist is true, and has been previously set
@@ -32,9 +32,8 @@ public class Tuner {
   public Tuner(String name, double defaultValue, boolean persist) {
     this.key = name;
     var nt = NetworkTableInstance.getDefault();
-    var topic = nt.getDoubleTopic(String.join("", "/Tuning/", name));
-    this.SettableTopic = topic;
-    
+    topic = nt.getDoubleTopic(String.join("", "/Tuning/", name));
+
     if (persist && Preferences.containsKey(key)) {
       this.defaultValue = Preferences.getDouble(key, defaultValue);
     } else {
@@ -59,7 +58,7 @@ public class Tuner {
   }
 
   public void set(double value) {
-    SettableTopic.publish().set(value);
+    topic.publish().set(value);
   }
 
   public NetworkTableListener addListener(Consumer<NetworkTableEvent> callback) {
