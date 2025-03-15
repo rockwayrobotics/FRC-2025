@@ -137,8 +137,11 @@ public final class Constants {
     public final static double WHEEL_ENCODER_SCALING = WHEEL_CIRCUM_CM / WHEEL_GEAR_RATIO;
 
     // Measured with the feedForwardCharacterization drive command
-    public static final double REAL_KS = 0.23357;
-    public static final double REAL_KV = 2.22866;
+    //                                         Mar 14 Simple        SysId
+    public static final double REAL_KS = 0.23357; // 0.24487 // left 0.23191 right 0.23573
+    public static final double REAL_KV = 2.22866; // 2.36262 // left 2.2005 right 2.2267
+    // left kA 0.66129
+    // right kA 0.59644
     public static final double SIM_KS = 0.08776;
     public static final double SIM_KV = 2.27678;
 
