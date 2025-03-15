@@ -300,7 +300,7 @@ class TofMain:
 
     # Map of modes to GPIO pin indices [5, 14]
     MODE_MAP = {
-        'none': None,
+        'none': 0, # temporarily map to right so we keep logging something all the time
         'left': 1,
         'right': 0,
         'front-left': 1,
