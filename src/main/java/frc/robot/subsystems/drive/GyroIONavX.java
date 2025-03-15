@@ -34,4 +34,16 @@ public class GyroIONavX implements GyroIO {
     inputs.yawPosition = Rotation2d.fromDegrees(-navX.getAngle() - initialYaw);
     inputs.yawVelocityRadPerSec = Units.degreesToRadians(-navX.getRawGyroZ());
   }
+
+  @Override
+  public void zeroGyro() {
+    navX.zeroYaw();
+    initialYaw = 0;
+    initialYawSet = true;
+  }
+
+  @Override
+  public double getAngle() {
+    return navX.getAngle();
+  }
 }

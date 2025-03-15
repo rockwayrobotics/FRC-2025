@@ -208,6 +208,10 @@ public class Drive extends SubsystemBase {
     }
   }
 
+  public double getGyroAngle() {
+    return gyroIO.getAngle();
+  }
+
   @Override
   public void periodic() {
     io.updateInputs(inputs);

@@ -49,6 +49,9 @@ public class AutoPaths {
   static final Tuner troughDriveSpeedTuner = new Tuner("TroughDriveSpeedMetersPerSec", 0.2, true);
   static final Tuner troughTimeTuner = new Tuner("TroughDurationSeconds", 5, true);
 
+  static final Tuner algaeRotateSpeed = new Tuner("AlgaeRotateSpeed", 0.5, true);
+  static final Tuner algaeDriveSpeed = new Tuner("AlgaeDriveSpeed", 1, true);
+
   // adjustable auto wait time
   private final static Tuner autoWaitTime = new Tuner("AutoWaitTime", 0.0, false);
 
