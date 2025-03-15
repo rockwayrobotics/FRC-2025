@@ -61,6 +61,8 @@ def main():
     elif args.force == 'fore':
         driver_cam = fore_cam
         print('force fore cam')
+    else:
+        driver_cam = fore_cam
 
     nt = NetworkTableInstance.getDefault()
     if args.serve:
