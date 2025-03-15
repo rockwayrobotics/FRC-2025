@@ -33,6 +33,7 @@ public final class Constants {
     public static final String CHUTE_MODE = "/Pi/chute_mode";
     public static final String TOF_MODE = "/Pi/tof_mode";
     public static final String CORNERS = "/Pi/Corners";
+    public static final String TS_DIST_MM = "/Pi/ts_dist_mm";
   }
 
   public static final class Field {

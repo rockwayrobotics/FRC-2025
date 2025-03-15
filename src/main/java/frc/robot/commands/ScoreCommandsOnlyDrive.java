@@ -167,12 +167,9 @@ public class ScoreCommandsOnlyDrive {
                 System.err.println("Failed to find scoring encoder distance because we have no position data");
               })));
             }),
-            Commands.waitUntil(() -> {
-              return Math.abs(drive.getLeftPositionMeters() - commandState.targetLeftEncoder) < SCORING_EPSILON_METERS;
-            }),
+            new RampDownSpeedCommand(drive, () -> commandState.targetLeftEncoder - drive.getLeftPositionMeters(), 5.0),
             Commands.run(() -> {
                System.out.println("Trying to shoot");
-              drive.stop();
               chuterShooter.setShooterMotor(scoringChuterShooterSpeed.get());
             }).withTimeout(2.0),
             Commands.runOnce(() -> {
@@ -193,6 +190,6 @@ public class ScoreCommandsOnlyDrive {
   }
 
   public static Command rampDownSpeed(Drive drive, double targetDistanceMeters, double maxDeceleration) {
-    return new RampDownSpeedCommand(drive, targetDistanceMeters, maxDeceleration);
+    return new RampDownSpeedCommand(drive, () -> targetDistanceMeters, maxDeceleration);
   }
 }
