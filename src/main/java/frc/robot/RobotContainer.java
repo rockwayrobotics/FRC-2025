@@ -111,6 +111,8 @@ public class RobotContainer {
     autoChooser.addOption("rightTestTrough", AutoPaths.rightTestTrough(drive, superstructure, chuterShooter));
     autoChooser.addOption("leftTestTrough", AutoPaths.leftTestTrough(drive, superstructure, chuterShooter));
 
+    autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
+
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
     configureBindings();
