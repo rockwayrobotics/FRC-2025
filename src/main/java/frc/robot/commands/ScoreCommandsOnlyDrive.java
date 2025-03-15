@@ -116,7 +116,8 @@ public class ScoreCommandsOnlyDrive {
     ParallelRaceGroup cancellableGroup = new ParallelRaceGroup();
     ScoreCommandState commandState = new ScoreCommandState();
     // FIXME make this not atomic and cringe
-    final AtomicReference<Constants.ToFSensorLocation> sensorLocation = new AtomicReference<>(Constants.ToFSensorLocation.NONE_SELECTED);
+    final AtomicReference<Constants.ToFSensorLocation> sensorLocation = new AtomicReference<>(
+        Constants.ToFSensorLocation.NONE_SELECTED);
 
     // We never stop listening to this
     nt.addListener(cornerTopic, EnumSet.of(Kind.kValueAll), networkTableEvent -> {
@@ -128,60 +129,65 @@ public class ScoreCommandsOnlyDrive {
       commandState.isValid = true;
     });
 
-    Command command = Commands.parallel(
-        Commands.run(() -> {
-          drive.setTankDrive(new ChassisSpeeds(scoringSpeedMetersPerSecond.get(), 0, 0));
-        }),
-
-        Commands.sequence(
-            Commands.runOnce(() -> {
-              System.out.println("Speed before wait: " + drive.getLeftVelocityMetersPerSec());
-            }),
-            Commands.race(
-              Commands.waitSeconds(2),
-              Commands.waitUntil(() -> {
-                return Math.abs(drive.getLeftVelocityMetersPerSec() - scoringSpeedMetersPerSecond.get()) < 0.03;
-              })
-            ),
-            Commands.runOnce(() -> {
-              var speed = drive.getLeftVelocityMetersPerSec();
-              System.out.println("Sending start to Pi with speed: " + speed);
-              if (chute.getPivotGoalRads() > 0) {
-                tofTopic.set("left");
-                sensorLocation.set(Constants.ToFSensorLocation.FRONT_LEFT);
-              } else {
-                tofTopic.set("right");
-                sensorLocation.set(Constants.ToFSensorLocation.FRONT_RIGHT);
-              }
-            }),
-            Commands.waitUntil(() -> commandState.isValid),
-            Commands.runOnce(() -> {
-              Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp);
-              leftEncoderDistance.ifPresentOrElse(distance -> {
-                //var scoringState = RobotTracker.getInstance().getScoringState();
-                commandState.cornerDistance = distance;
-                commandState.targetLeftEncoder = distance
-                    + getTargetWallDistance(reefBar, sensorLocation.get()) * Math.cos(commandState.angle);
-                System.out.println("Setting targets: " + commandState.cornerDistance + ", " + commandState.targetLeftEncoder);
-              }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
-                System.err.println("Failed to find scoring encoder distance because we have no position data");
-              })));
-            }),
-            new RampDownSpeedCommand(drive, () -> commandState.targetLeftEncoder - drive.getLeftPositionMeters(), 5.0),
+    Command command = Commands.sequence(
+        Commands.race(
             Commands.run(() -> {
-               System.out.println("Trying to shoot");
-              chuterShooter.setShooterMotor(scoringChuterShooterSpeed.get());
-            }).withTimeout(2.0),
-            Commands.runOnce(() -> {
-              System.out.println("Stopping shooting");
-              chuterShooter.stopShooting();
-            })));
+              drive.setTankDrive(new ChassisSpeeds(scoringSpeedMetersPerSecond.get(), 0, 0));
+            }),
+
+            Commands.sequence(
+                Commands.runOnce(() -> {
+                  System.out.println("Speed before wait: " + drive.getLeftVelocityMetersPerSec());
+                  commandState.isValid = false;
+                }),
+                Commands.race(
+                    Commands.waitSeconds(2),
+                    Commands.waitUntil(() -> {
+                      return Math.abs(drive.getLeftVelocityMetersPerSec() - scoringSpeedMetersPerSecond.get()) < 0.03;
+                    })),
+                Commands.runOnce(() -> {
+                  var speed = drive.getLeftVelocityMetersPerSec();
+                  System.out.println("Sending start to Pi with speed: " + speed);
+                  if (chute.getPivotGoalRads() > 0) {
+                    tofTopic.set("left");
+                    sensorLocation.set(Constants.ToFSensorLocation.FRONT_LEFT);
+                  } else {
+                    tofTopic.set("right");
+                    sensorLocation.set(Constants.ToFSensorLocation.FRONT_RIGHT);
+                  }
+                }),
+                Commands.waitUntil(() -> commandState.isValid),
+                Commands.runOnce(() -> {
+                  Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp);
+                  leftEncoderDistance.ifPresentOrElse(distance -> {
+                    // var scoringState = RobotTracker.getInstance().getScoringState();
+                    commandState.cornerDistance = distance;
+                    commandState.targetLeftEncoder = distance
+                        + getTargetWallDistance(reefBar, sensorLocation.get());// * Math.cos(commandState.angle);
+                    System.out.println(
+                        "Setting targets: " + commandState.cornerDistance + ", " + commandState.targetLeftEncoder);
+                  }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
+                    System.err.println("Failed to find scoring encoder distance because we have no position data");
+                  })));
+                }))),
+
+        // Corner found, start slowing down to shoot
+        new RampDownSpeedCommand(drive, () -> commandState.targetLeftEncoder - drive.getLeftPositionMeters(), 5.0),
+        Commands.run(() -> {
+          System.out.println("Trying to shoot");
+          chuterShooter.setShooterMotor(scoringChuterShooterSpeed.get());
+        }).withTimeout(2.0),
+        Commands.runOnce(() -> {
+          System.out.println("Stopping shooting");
+          chuterShooter.stopShooting();
+        }));
     command.addRequirements(drive);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
       System.out.println("Command completed: interrupted? " + interrupted);
       tofTopic.set("none");
-      //piState.set(new double[] { SensorState.NONE.piValue(), Constants.Drive.SCORING_SPEED });
+      // piState.set(new double[] { SensorState.NONE.piValue(),
+      // Constants.Drive.SCORING_SPEED });
       commandState.reset();
       RobotTracker.getInstance().getScoringState().reset();
       chuterShooter.stopShooting();
