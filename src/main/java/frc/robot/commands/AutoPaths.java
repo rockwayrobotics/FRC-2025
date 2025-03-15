@@ -115,7 +115,7 @@ public class AutoPaths {
           drive.setPose(pose);
         }, drive);
 
-    return Commands.sequence(Commands.waitSeconds(autoWaitTime.get()), path1,
+    Command command = Commands.sequence(Commands.waitSeconds(autoWaitTime.get()), path1,
         Commands.runOnce(() -> {
           drive.stop();
           superstructure.gotoSetpoint(level, side);
@@ -134,6 +134,8 @@ public class AutoPaths {
           superstructure.setElevatorGoalHeightMillimeters(0);
           drive.stop();
         });
+    command.addRequirements(drive, superstructure, chuterShooter);
+    return command;
   }
 
   public static Command midFarRightL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
@@ -297,7 +299,7 @@ public class AutoPaths {
           drive.setPose(pose);
         }, drive);
 
-    return Commands.sequence(Commands.waitSeconds(autoWaitTime.get()), path1,
+    Command command = Commands.sequence(Commands.waitSeconds(autoWaitTime.get()), path1,
         Commands.runOnce(() -> {
           drive.stop();
           superstructure.gotoSetpoint(CoralLevel.L1, side);
@@ -319,5 +321,7 @@ public class AutoPaths {
               superstructure.setElevatorGoalHeightMillimeters(0);
               drive.stop();
             }));
+    command.addRequirements(drive, superstructure, chuterShooter);
+    return command;
   }
 }

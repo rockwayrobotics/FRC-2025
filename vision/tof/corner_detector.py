@@ -37,6 +37,7 @@ class CornerDetector:
         self.end_index = 0
         self.corner_timestamp = None
         self.corner_angle = None
+        self.corner_dist = 0
         self.timing = np.zeros(50)
         self.timing_index = 0
 
@@ -116,7 +117,7 @@ class CornerDetector:
             # The way we are reading the values, we always expect the slope to increase
             and second_regression.slope - first_regression.slope > self.slope_threshold
         ):
-            self.corner_timestamp = self.intersect_walls(
+            (self.corner_timestamp, self.corner_dist) = self.intersect_walls(
                 first_regression, second_regression
             )
             if speed is not None:
@@ -131,7 +132,9 @@ class CornerDetector:
             # Should be impossible, walls are parallel
             return
 
-        return (second.intercept - first.intercept) / (first.slope - second.slope)
+        corner_ts = (second.intercept - first.intercept) / (first.slope - second.slope)
+        corner_dist = first.slope * corner_ts + first.intercept
+        return (corner_ts, corner_dist)
 
     def add_record(self, timestamp, distance, speed=None):
         start_ts = time.monotonic()

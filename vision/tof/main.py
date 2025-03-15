@@ -196,8 +196,7 @@ class TofMain:
         nt.setServerTeam(8089)
 
         chute_mode_topic = nt.getStringTopic("/Pi/chute_mode")
-        self.chute_mode_sub = chute_mode_topic.subscribe('none',
-           ntcore.PubSubOptions(keepDuplicates=True))
+        self.chute_mode_sub = chute_mode_topic.subscribe('none')
 
         tof_mode_topic = nt.getStringTopic("/Pi/tof_mode")
         self.tof_mode_sub = tof_mode_topic.subscribe('none',
@@ -221,6 +220,8 @@ class TofMain:
 
         self.corner_ts_pub = nt.getFloatTopic("/Pi/corner_ts").publish()
         self.corner_ts_pub.set(0.0)
+        self.corner_dist_pub = nt.getFloatTopic("/Pi/corner_dist_mm").publish()
+        self.corner_dist_pub.set(0.0)
 
         # for debugging, serve our NT instance
         if self.args.serve:
@@ -259,16 +260,21 @@ class TofMain:
         self.loop()
 
 
+    def ts_adjusted(self, ts):
+        nt_time_offset = self.nt.getServerTimeOffset() / 1e6
+        return ts - time.monotonic() + ntcore._now() / 1e6 + nt_time_offset
+        
+
     def on_reading(self, ts, dist_mm, status, delta):
         flush = False # whether to flush NT (any time we publish)
         cd = self.cd
-        nt_time_offset = self.nt.getServerTimeOffset() / 1e6
         cd.add_record(ts, dist_mm, self.speed)
         if cd.found_corner():
             self.saw_corner = True
-            corner_ts = (cd.corner_timestamp - time.monotonic()) + ntcore._now() / 1e6 + nt_time_offset
-            self.corner_pub.set([corner_ts, cd.corner_angle])
+            corner_ts = self.ts_adjusted(cd.corner_timestamp)
+            self.corner_pub.set([corner_ts, cd.corner_dist])
             self.corner_ts_pub.set(cd.corner_timestamp)
+            self.corner_dist_pub.set(cd.corner_dist)
             flush = True
 
             if self.args.stdout:
@@ -278,12 +284,12 @@ class TofMain:
 
             cd.reset()
         else:
-            self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
+            # self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
             if self.args.stdout:
                 print("dist,%8.3f,%5.0f,%2d,%5.3f      " % (ts, dist_mm, status, delta), end='\r')
 
         if self.tof_mode == 'corner':
-            self.ts_dist_pub.set([(ts - time.monotonic()) + ntcore._now() / 1e6 + nt_time_offset, dist_mm])
+            self.ts_dist_pub.set([self.ts_adjusted(ts), dist_mm])
             self.dist_pub.set(dist_mm)
             if self.saw_corner:
                 flush = True
@@ -304,8 +310,9 @@ class TofMain:
     }
 
     def loop(self):
-        chute_mode = 'right'
-        self.pins.set_index_high(self.MODE_MAP.get(chute_mode))
+        # chute_mode = 'home/right'
+        chute_side = 'right'
+        self.pins.set_index_high(self.MODE_MAP.get(chute_side))
 
         def reader():
             self.mgr.read(self.args.timing, self.args.inter, callback=self.on_reading)
@@ -322,10 +329,10 @@ class TofMain:
                     val = event.data.value.getString()
                     self.log.info('chute: %s', val)
                     pos, _, side = val.partition('/')
-                    if chute_mode != side:
-                        if pos != 'load':
-                            side = 'left' if side == 'right' else 'right'
-                        chute_mode = side
+                    if pos != 'load':
+                        side = 'left' if side == 'right' else 'right'
+                    if chute_side != side:
+                        chute_side = side
 
                         # handle mode changes
                         # disabling will cause any current reading thread to exit
@@ -333,8 +340,8 @@ class TofMain:
                         # this gives enough time for the thread to attempt a reading
                         # and get an i2c error because the sensor will be offline
                         time.sleep(0.1)
-                        self.pins.set_index_high(self.MODE_MAP.get(chute_mode))
-                        self.log.info('selected tof: %s', chute_mode)
+                        self.pins.set_index_high(self.MODE_MAP.get(chute_side))
+                        self.log.info('selected tof: %s (from %s)', chute_side, val)
 
                         self.cd.reset()
 
