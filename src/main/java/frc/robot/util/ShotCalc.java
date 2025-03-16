@@ -1,7 +1,10 @@
 
 package frc.robot.util;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.util.Units;
 import frc.robot.Constants.Reef;
 import frc.robot.Constants.ReefBar;
 import frc.robot.Constants.ToFSensor;
@@ -37,6 +40,9 @@ public class ShotCalc {
     this.dist = dist - ToFSensor.TOF_TO_BUMPER;
     this.bar = bar;
     this.tof = tof;
+
+    Logger.recordOutput("/ShotCalc/pos", pos);
+    Logger.recordOutput("/ShotCalc/dist", dist);
 
     if (bar == ReefBar.NEAR) {
       this.corner_to_post = Reef.CORNER_TO_NEAR_POST_METERS * 1000.0;
@@ -84,12 +90,15 @@ public class ShotCalc {
   // the expected orthogonal distance (from chute to branch tip).
   public void update(double pos, double dist) {
     dist -= ToFSensor.TOF_TO_BUMPER;
+    Logger.recordOutput("/ShotCalc/pos", pos);
+    Logger.recordOutput("/ShotCalc/dist", dist);
 
     // calculate current angle estimate
     double delta_pos = pos - this.pos;
     double delta_dist = dist - this.dist;
     // angle in radians, positive is moving away from wall
     double angle = Math.atan2(delta_dist, delta_pos);
+    Logger.recordOutput("/ShotCalc/angle_deg", Units.radiansToDegrees(angle));
 
     // calculate position where chute will be aligned with target
     double run_fore = this.corner_to_post * Math.cos(angle);
@@ -107,6 +116,8 @@ public class ShotCalc {
     
     this.run_to_target = this.pos + run_total;
     this.dist_to_target = shot_dist;
+    Logger.recordOutput("/ShotCalc/run_to_target", run_to_target);
+    Logger.recordOutput("/ShotCalc/dist_to_target", dist_to_target);
   }
 
   public double getTargetPos() {
@@ -124,6 +135,7 @@ public class ShotCalc {
   // In radians... adjusted to be negative on the right, postive on the left
   public double getChuteAngleRads() {
     double degrees = chuteAngleTable.get(this.dist_to_target);
-    return degrees * this.chute_angle_sign * 180.0 / Math.PI;
+    Logger.recordOutput("/ShotCalc/chuteAngleDeg", degrees);
+    return Units.degreesToRadians(degrees * this.chute_angle_sign);
   }
 }

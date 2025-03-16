@@ -4,6 +4,8 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.DoubleArrayTopic;
 import edu.wpi.first.networktables.FloatArrayTopic;
@@ -48,6 +50,7 @@ public class ScoreCommandsOnlyDrive {
   static final Tuner chuteTofDistanceMeters = new Tuner("Score/chute_tof_distance_meters", 0.26, true);
   static final Tuner scoringSpeedMetersPerSecond = new Tuner("Score/scoring_speed_meters_per_sec", 0.45, true);
   static final Tuner scoringChuterShooterSpeed = new Tuner("Score/scoring_chuter_shooter_speed", 0.2, true);
+  static final Tuner earlyShotMillimeterTuner = new Tuner("Score/early_shot_mm", 50, true);
 
   public static final double SCORING_EPSILON_METERS = 0.25;
 
@@ -111,7 +114,8 @@ public class ScoreCommandsOnlyDrive {
     }
   }
 
-  public static Command score(Drive drive, Superstructure superstructure, Constants.ReefBar reefBar, ChuterShooter chuterShooter) {
+  public static Command score(Drive drive, Superstructure superstructure, Constants.ReefBar reefBar,
+      ChuterShooter chuterShooter) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
     StringPublisher tofTopic = nt.getStringTopic(Constants.NT.TOF_MODE).publish();
     DoubleArrayTopic tsDistTopic = nt.getDoubleArrayTopic(Constants.NT.TS_DIST_MM);
@@ -166,41 +170,56 @@ public class ScoreCommandsOnlyDrive {
                 }),
                 Commands.waitUntil(() -> commandState.isValid),
                 Commands.runOnce(() -> {
-                  Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp.get());
+                  Optional<Double> leftEncoderDistance = drive
+                      .getLeftPositionAtTime(commandState.cornerTimestamp.get());
+                  Logger.recordOutput("/ScoreCommands/corner_timestamp", commandState.cornerTimestamp.get());
                   leftEncoderDistance.ifPresentOrElse(distance -> {
-                    commandState.shotCalc = new ShotCalc(distance, commandState.cornerDistanceMm.get(), reefBar, sensorLocation.get());
+                    Logger.recordOutput("/ScoreCommands/distance", distance);
+                    Logger.recordOutput("/ScoreCommands/corner_distance", commandState.cornerDistanceMm.get());
+                    commandState.shotCalc = new ShotCalc(distance * 1000.0, commandState.cornerDistanceMm.get(),
+                        reefBar, sensorLocation.get());
                   }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
                     System.err.println("Failed to find scoring encoder distance because we have no position data");
                   })));
                 }))),
 
         Commands.race(
-          new RampDownSpeedCommand(drive, () -> commandState.shotCalc.getTargetPos() - drive.getLeftPositionMeters(), 5.0),
-          Commands.run(() -> {
-            double distanceTimestamp = commandState.distanceTimestamp.get();
-            if (commandState.lastProcessedTimestamp < distanceTimestamp) {
-              var optionalLeft = drive.getLeftPositionAtTime(distanceTimestamp);
-              optionalLeft.ifPresent((pos) -> {
-                commandState.shotCalc.update(pos, commandState.distanceDistanceMm.get());
-              });
-              commandState.lastProcessedTimestamp = distanceTimestamp;
-            }
+            Commands.run(() -> {
+              drive.setTankDrive(new ChassisSpeeds(scoringSpeedMetersPerSecond.get(), 0, 0));
+            }).withTimeout(2),
+            Commands.waitUntil(() -> {
+              return drive.getLeftPositionMeters() * 1000 + earlyShotMillimeterTuner.get() >= commandState.shotCalc
+                  .getTargetPos() && commandState.shotCalc.getTargetDist() > 0.0;
+            }),
+            // new RampDownSpeedCommand(drive, () -> commandState.shotCalc.getTargetPos() *
+            // 1000 - drive.getLeftPositionMeters(), 5.0),
+            Commands.run(() -> {
+              double distanceTimestamp = commandState.distanceTimestamp.get();
+              if (commandState.lastProcessedTimestamp < distanceTimestamp) {
+                var optionalLeft = drive.getLeftPositionAtTime(distanceTimestamp);
+                optionalLeft.ifPresent((pos) -> {
+                  commandState.shotCalc.update(pos * 1000, commandState.distanceDistanceMm.get());
+                });
+                commandState.lastProcessedTimestamp = distanceTimestamp;
+              }
 
-            // Using latest shot calculation, update chute setpoint constantly
-            // to match what the estimates say will be the right value when
-            // we reach the shot position.
-            superstructure.setChutePivotGoalRads(commandState.shotCalc.getChuteAngleRads());
-          })
-        ),
+              // Using latest shot calculation, update chute setpoint constantly
+              // to match what the estimates say will be the right value when
+              // we reach the shot position.
+              superstructure.setChutePivotGoalRads(commandState.shotCalc.getChuteAngleRads());
+            })),
         // Corner found, start slowing down to shoot
-        Commands.run(() -> {
-          System.out.println("Trying to shoot");
-          chuterShooter.setShooterMotor(commandState.shotCalc.getShooterSpeed());
-        }).withTimeout(2.0),
-        Commands.runOnce(() -> {
-          System.out.println("Stopping shooting");
-          chuterShooter.stopShooting();
-        }));
+        Commands.race(
+            new RampDownSpeedCommand(drive, () -> commandState.shotCalc.getTargetPos() / 1000 - drive.getLeftPositionMeters() + 1, 5.0),
+            Commands.sequence(
+                Commands.run(() -> {
+                  System.out.println("Trying to shoot");
+                  chuterShooter.setShooterMotor(commandState.shotCalc.getShooterSpeed());
+                }).withTimeout(2.0),
+                Commands.runOnce(() -> {
+                  System.out.println("Stopping shooting");
+                  chuterShooter.stopShooting();
+                }))));
     command.addRequirements(drive, superstructure);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
