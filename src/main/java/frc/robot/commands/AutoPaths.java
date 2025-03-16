@@ -68,6 +68,17 @@ public class AutoPaths {
       .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration))
       .setReversed(true);
 
+  private static final TrajectoryConfig slowConfig = new TrajectoryConfig(1, 0.2)
+  .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+  .addConstraint(new CentripetalAccelerationConstraint(0.5));
+
+  // The single trajectory config that applies to all autos
+  private static final TrajectoryConfig slowReverseConfig = new TrajectoryConfig(1,
+      0.2)
+      .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+      .addConstraint(new CentripetalAccelerationConstraint(0.5))
+      .setReversed(true);
+
   private AutoPaths() {
   }
 
@@ -338,6 +349,79 @@ public class AutoPaths {
     command.addRequirements(drive, superstructure, chuterShooter);
     return command;
   }
+
+  public static Command grabTroughAlgaeL3(Drive drive, Superstructure superstructure){
+    double start_pose_x = 4.194;
+    double start_pose_y = 5.393;
+    double start_pose_heading_deg = 210;
+    
+    double position_self_x = 5.890;
+    double position_self_y = 6.603;
+    double position_self_heading_deg = 270;
+
+    double approach_algae_x = 5.157;
+    double approach_algae_y = 5.109;
+    double approach_algae_heading_deg = 120;
+    // touching the wall is (5.110239999999999, 5.101418440955404)
+
+    double grab_algae_x = 4.895;
+    double grab_algae_y = 4.702;
+    double grab_algae_heading_deg = 120;
+
+    double backup_algae_x = 5.157;
+    double backup_algae_y = 5.109;
+    double backup_algae_heading_deg = 120;
+
+    Trajectory startPositioningTrajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(start_pose_x, start_pose_y,
+            Rotation2d.fromDegrees(start_pose_heading_deg)),
+        List.of(), new Pose2d(position_self_x, position_self_y, Rotation2d.fromDegrees(position_self_heading_deg)),
+        reversedConfig);
+
+    Trajectory approachAlgaeTrajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(position_self_x, position_self_y,
+            Rotation2d.fromDegrees(position_self_heading_deg)),
+        List.of(), new Pose2d(approach_algae_x, approach_algae_y, Rotation2d.fromDegrees(approach_algae_heading_deg)),
+        config);
+
+    Trajectory grabAlgaeTrajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(approach_algae_x, approach_algae_y,
+            Rotation2d.fromDegrees(approach_algae_heading_deg)),
+        List.of(), new Pose2d(grab_algae_x, grab_algae_y, Rotation2d.fromDegrees(grab_algae_heading_deg)), slowConfig);
+
+    Trajectory backupAlgaeTrajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(grab_algae_x, grab_algae_y,
+            Rotation2d.fromDegrees(grab_algae_heading_deg)),
+        List.of(), new Pose2d(backup_algae_x, backup_algae_y, Rotation2d.fromDegrees(backup_algae_heading_deg)),
+        slowReverseConfig);
+
+    return Commands.sequence(
+      runTrajectory(startPositioningTrajectory, drive),
+      runTrajectory(approachAlgaeTrajectory, drive),
+      Commands.runOnce(() -> {
+        drive.stop();
+        superstructure.gotoAlgaeSetpoint(AlgaeLevel.L2);
+      }),
+      Commands.waitUntil(() -> {
+        return superstructure.isElevatorAtGoal() && superstructure.isGrabberWristAtGoal();
+      }),
+      Commands.runOnce(() -> {
+        // Suck in algae
+        superstructure.setGrabberMotor(-1);
+      }),
+      runTrajectory(grabAlgaeTrajectory, drive),
+      Commands.waitSeconds(1),
+      Commands.runOnce(() -> {
+        // stop
+        superstructure.setGrabberMotor(0);
+      }),
+      runTrajectory(backupAlgaeTrajectory, drive),
+      Commands.runOnce(() -> {
+        superstructure.setElevatorGoalHeightMillimeters(20);
+      }
+    ));
+  }
+
 
   public static Command leftFarFancy(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;

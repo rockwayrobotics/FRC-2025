@@ -112,6 +112,8 @@ public class RobotContainer {
     autoChooser.addOption("leftTestTrough", AutoPaths.leftTestTrough(drive, superstructure, chuterShooter));
 
     autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
+    // INCREDIBLY SUS may GO KABOOM
+    autoChooser.addOption("algae grab" , AutoPaths.grabTroughAlgaeL3(drive, superstructure));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
