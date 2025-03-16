@@ -52,7 +52,7 @@ public class ShotCalc {
   // Do the math, and report back with a tuple containing the
   // encoder position at the target (lined up to shoot) and
   // the expected orthogonal distance (from chute to branch tip).
-  public synchronized void update(double pos, double dist) {
+  public void update(double pos, double dist) {
     dist -= ToFSensor.TOF_TO_BUMPER;
 
     // calculate current angle estimate
@@ -79,19 +79,15 @@ public class ShotCalc {
     this.dist_to_target = shot_dist;
   }
 
-  public synchronized double getTargetPos() {
+  public double getTargetPos() {
     return this.run_to_target;
   }
 
-  public synchronized double getRemainingDistance() {
-    return this.run_to_target - this.pos;
-  }
-
-  public synchronized double getTargetDist() {
+  public double getTargetDist() {
     return this.dist_to_target;
   }
 
-  public synchronized double getShooterSpeed() {
+  public double getShooterSpeed() {
     return 0.2;
   }
 }

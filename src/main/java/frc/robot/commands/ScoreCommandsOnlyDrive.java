@@ -23,10 +23,12 @@ import frc.robot.subsystems.superstructure.Superstructure;
 
 public class ScoreCommandsOnlyDrive {
   public static class ScoreCommandState {
-    public float cornerTimestamp;
-    public float cornerDistanceMm;
+    public AtomicReference<Float> cornerTimestamp;
+    public AtomicReference<Float> cornerDistanceMm;
+    public AtomicReference<Double> distanceTimestamp;
+    public AtomicReference<Double> distanceDistanceMm;
+    public double lastProcessedTimestamp;
     public boolean isValid;
-    public CircularBuffer<Double> speeds = new CircularBuffer<Double>(3);
     public ShotCalc shotCalc;
 
     public ScoreCommandState() {
@@ -34,9 +36,13 @@ public class ScoreCommandsOnlyDrive {
     }
 
     public void reset() {
-      cornerTimestamp = 0;
-      cornerDistanceMm = 0;
+      cornerTimestamp.set(0f);
+      cornerDistanceMm.set(0f);
+      distanceTimestamp.set(0d);
+      distanceDistanceMm.set(0d);
+      lastProcessedTimestamp = 0d;
       isValid = false;
+      shotCalc = null;
     }
   }
 
@@ -120,15 +126,16 @@ public class ScoreCommandsOnlyDrive {
     // We never stop listening to this
     nt.addListener(cornerTopic, EnumSet.of(Kind.kValueAll), networkTableEvent -> {
       float[] results = networkTableEvent.valueData.value.getFloatArray();
-      commandState.cornerTimestamp = results[0];
-      commandState.cornerDistanceMm = results[1];
+      commandState.cornerTimestamp.set(results[0]);
+      commandState.cornerDistanceMm.set(results[1]);
       System.out.println("Received results from Pi: " + results[0] + ", " + results[1]);
       commandState.isValid = true;
     });
 
     nt.addListener(tsDistTopic, EnumSet.of(Kind.kValueAll), networkTableEvent -> {
       double[] results = networkTableEvent.valueData.value.getDoubleArray();
-      commandState.shotCalc.update(results[0], results[1]);
+      commandState.distanceTimestamp.set(results[0]);
+      commandState.distanceDistanceMm.set(results[1]);
     });
 
     Command command = Commands.sequence(
@@ -160,17 +167,25 @@ public class ScoreCommandsOnlyDrive {
                 }),
                 Commands.waitUntil(() -> commandState.isValid),
                 Commands.runOnce(() -> {
-                  Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp);
+                  Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp.get());
                   leftEncoderDistance.ifPresentOrElse(distance -> {
-                    commandState.shotCalc = new ShotCalc(distance, commandState.cornerDistanceMm, reefBar, sensorLocation.get());
+                    commandState.shotCalc = new ShotCalc(distance, commandState.cornerDistanceMm.get(), reefBar, sensorLocation.get());
                   }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
                     System.err.println("Failed to find scoring encoder distance because we have no position data");
                   })));
                 }))),
 
         Commands.race(
-          new RampDownSpeedCommand(drive, () -> commandState.shotCalc.getRemainingDistance(), 5.0),
+          new RampDownSpeedCommand(drive, () -> commandState.shotCalc.getTargetPos() - drive.getLeftPositionMeters(), 5.0),
           Commands.run(() -> {
+            double distanceTimestamp = commandState.distanceTimestamp.get();
+            if (commandState.lastProcessedTimestamp < distanceTimestamp) {
+              var optionalLeft = drive.getLeftPositionAtTime(distanceTimestamp);
+              optionalLeft.ifPresent((pos) -> {
+                commandState.shotCalc.update(pos, commandState.distanceDistanceMm.get());
+              });
+              commandState.lastProcessedTimestamp = distanceTimestamp;
+            }
             // Do something with commandState.shotCalc.getTargetDist
             // to set this:
             // superstructure.setChutePivotGoalRads();
