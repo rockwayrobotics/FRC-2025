@@ -186,10 +186,11 @@ public class ScoreCommandsOnlyDrive {
               });
               commandState.lastProcessedTimestamp = distanceTimestamp;
             }
-            // Do something with commandState.shotCalc.getTargetDist
-            // to set this:
-            // superstructure.setChutePivotGoalRads();
-            // Also set shot speed potentially?
+
+            // Using latest shot calculation, update chute setpoint constantly
+            // to match what the estimates say will be the right value when
+            // we reach the shot position.
+            superstructure.setChutePivotGoalRads(commandState.shotCalc.getChuteAngleRads());
           })
         ),
         // Corner found, start slowing down to shoot

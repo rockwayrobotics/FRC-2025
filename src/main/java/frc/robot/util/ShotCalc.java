@@ -1,5 +1,7 @@
+
 package frc.robot.util;
 
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import frc.robot.Constants.Reef;
 import frc.robot.Constants.ReefBar;
 import frc.robot.Constants.ToFSensor;
@@ -23,9 +25,12 @@ public class ShotCalc {
   private ToFSensorLocation tof;
   private double corner_to_post; // distance from corner to target post
   private double tof_to_chute; // distance from tof sensor to chute centre
+  private double chute_angle_sign; // 1.0 or -1.0 depending on left vs right
 
   private double run_to_target = 0.0;
   private double dist_to_target = 0.0;
+
+  InterpolatingDoubleTreeMap chuteAngleTable = new InterpolatingDoubleTreeMap();
 
   public ShotCalc(double pos, double dist, ReefBar bar, ToFSensorLocation tof) {
     this.pos = pos;
@@ -40,13 +45,38 @@ public class ShotCalc {
       this.corner_to_post = Reef.CORNER_TO_FAR_POST_METERS * 1000.0;
     }
 
+    this.chute_angle_sign = 1.0; // left by default
+
     switch (tof) {
-      case NONE_SELECTED: this.tof_to_chute = 0.0;
-      case FRONT_LEFT: this.tof_to_chute = ToFSensor.TOF_FWD_LEFT_TO_CHUTE;
-      case BACK_LEFT: this.tof_to_chute = 0.0;
-      case FRONT_RIGHT: this.tof_to_chute = ToFSensor.TOF_FWD_RIGHT_TO_CHUTE;
-      case BACK_RIGHT: this.tof_to_chute = 0.0;
+      case NONE_SELECTED:
+        this.tof_to_chute = 0.0;
+        break;
+
+      case FRONT_LEFT:
+        this.tof_to_chute = ToFSensor.TOF_FWD_LEFT_TO_CHUTE;
+        break;
+        
+      case BACK_LEFT:
+        this.tof_to_chute = 0.0;
+        break;
+        
+      case FRONT_RIGHT:
+        this.tof_to_chute = ToFSensor.TOF_FWD_RIGHT_TO_CHUTE;
+        this.chute_angle_sign = -1.0;
+        break;
+        
+      case BACK_RIGHT:
+        this.tof_to_chute = 0.0;
+        this.chute_angle_sign = -1.0;
+        break;
     }
+    
+    // Docs don't say what this does with values outside the edges of the
+    // table so we're being explicit about the 0..100 and 500... range.
+    chuteAngleTable.put(0.0, 70.0);
+    chuteAngleTable.put(100.0, 70.0);
+    chuteAngleTable.put(500.0, 90.0);
+    chuteAngleTable.put(999.0, 90.0);
   }
 
   // Do the math, and report back with a tuple containing the
@@ -89,5 +119,11 @@ public class ShotCalc {
 
   public double getShooterSpeed() {
     return 0.2;
+  }
+
+  // In radians... adjusted to be negative on the right, postive on the left
+  public double getChuteAngleRads() {
+    double degrees = chuteAngleTable.get(this.dist_to_target);
+    return degrees * this.chute_angle_sign * 180.0 / Math.PI;
   }
 }
