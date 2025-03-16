@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.DoubleArrayTopic;
 import edu.wpi.first.networktables.FloatArrayTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
@@ -14,21 +14,20 @@ import edu.wpi.first.util.CircularBuffer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
+import frc.robot.util.ShotCalc;
 import frc.robot.util.Tuner;
 import frc.robot.Constants;
-import frc.robot.RobotTracker;
-import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.superstructure.Superstructure;
 
 public class ScoreCommandsOnlyDrive {
   public static class ScoreCommandState {
     public float cornerTimestamp;
-    public float angle;
+    public float cornerDistanceMm;
     public boolean isValid;
-    public double cornerDistance;
-    public double targetLeftEncoder;
     public CircularBuffer<Double> speeds = new CircularBuffer<Double>(3);
+    public ShotCalc shotCalc;
 
     public ScoreCommandState() {
       reset();
@@ -36,10 +35,8 @@ public class ScoreCommandsOnlyDrive {
 
     public void reset() {
       cornerTimestamp = 0;
-      angle = 0;
+      cornerDistanceMm = 0;
       isValid = false;
-      cornerDistance = 0;
-      targetLeftEncoder = 0;
     }
   }
 
@@ -109,9 +106,10 @@ public class ScoreCommandsOnlyDrive {
     }
   }
 
-  public static Command score(Drive drive, Chute chute, Constants.ReefBar reefBar, ChuterShooter chuterShooter) {
+  public static Command score(Drive drive, Superstructure superstructure, Constants.ReefBar reefBar, ChuterShooter chuterShooter) {
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
     StringPublisher tofTopic = nt.getStringTopic(Constants.NT.TOF_MODE).publish();
+    DoubleArrayTopic tsDistTopic = nt.getDoubleArrayTopic(Constants.NT.TS_DIST_MM);
     FloatArrayTopic cornerTopic = nt.getFloatArrayTopic(Constants.NT.CORNERS);
     ParallelRaceGroup cancellableGroup = new ParallelRaceGroup();
     ScoreCommandState commandState = new ScoreCommandState();
@@ -123,10 +121,14 @@ public class ScoreCommandsOnlyDrive {
     nt.addListener(cornerTopic, EnumSet.of(Kind.kValueAll), networkTableEvent -> {
       float[] results = networkTableEvent.valueData.value.getFloatArray();
       commandState.cornerTimestamp = results[0];
-      // Angle is in radians
-      commandState.angle = results[1];
+      commandState.cornerDistanceMm = results[1];
       System.out.println("Received results from Pi: " + results[0] + ", " + results[1]);
       commandState.isValid = true;
+    });
+
+    nt.addListener(tsDistTopic, EnumSet.of(Kind.kValueAll), networkTableEvent -> {
+      double[] results = networkTableEvent.valueData.value.getDoubleArray();
+      commandState.shotCalc.update(results[0], results[1]);
     });
 
     Command command = Commands.sequence(
@@ -150,7 +152,7 @@ public class ScoreCommandsOnlyDrive {
                   System.out.println("Sending start to Pi with speed: " + speed);
                   tofTopic.set("corner");
                   // FIXME: Check that this left/right is correct
-                  if (chute.getPivotGoalRads() > 0) {
+                  if (superstructure.chute.getPivotGoalRads() > 0) {
                     sensorLocation.set(Constants.ToFSensorLocation.FRONT_LEFT);
                   } else {
                     sensorLocation.set(Constants.ToFSensorLocation.FRONT_RIGHT);
@@ -160,27 +162,31 @@ public class ScoreCommandsOnlyDrive {
                 Commands.runOnce(() -> {
                   Optional<Double> leftEncoderDistance = drive.getLeftPositionAtTime(commandState.cornerTimestamp);
                   leftEncoderDistance.ifPresentOrElse(distance -> {
-                    commandState.cornerDistance = distance;
-                    commandState.targetLeftEncoder = distance
-                        + getTargetWallDistance(reefBar, sensorLocation.get());// * Math.cos(commandState.angle);
-                    System.out.println(
-                        "Setting targets: " + commandState.cornerDistance + ", " + commandState.targetLeftEncoder);
+                    commandState.shotCalc = new ShotCalc(distance, commandState.cornerDistanceMm, reefBar, sensorLocation.get());
                   }, () -> cancellableGroup.addCommands(Commands.runOnce(() -> {
                     System.err.println("Failed to find scoring encoder distance because we have no position data");
                   })));
                 }))),
 
+        Commands.race(
+          new RampDownSpeedCommand(drive, () -> commandState.shotCalc.getRemainingDistance(), 5.0),
+          Commands.run(() -> {
+            // Do something with commandState.shotCalc.getTargetDist
+            // to set this:
+            // superstructure.setChutePivotGoalRads();
+            // Also set shot speed potentially?
+          })
+        ),
         // Corner found, start slowing down to shoot
-        new RampDownSpeedCommand(drive, () -> commandState.targetLeftEncoder - drive.getLeftPositionMeters(), 5.0),
         Commands.run(() -> {
           System.out.println("Trying to shoot");
-          chuterShooter.setShooterMotor(scoringChuterShooterSpeed.get());
+          chuterShooter.setShooterMotor(commandState.shotCalc.getShooterSpeed());
         }).withTimeout(2.0),
         Commands.runOnce(() -> {
           System.out.println("Stopping shooting");
           chuterShooter.stopShooting();
         }));
-    command.addRequirements(drive);
+    command.addRequirements(drive, superstructure);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
       System.out.println("Command completed: interrupted? " + interrupted);

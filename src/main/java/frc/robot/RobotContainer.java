@@ -184,9 +184,9 @@ public class RobotContainer {
     // 0)));
 
     driverController.a()
-        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR, chuterShooter));
+        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, Constants.ReefBar.NEAR, chuterShooter));
     driverController.b()
-        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR, chuterShooter));
+        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, Constants.ReefBar.FAR, chuterShooter));
     driverController.x().whileTrue(new DriveStraight(0.45, drive));
     driverController.y().whileTrue(ScoreCommandsOnlyDrive.rampDownSpeed(drive, 1, 3));
 

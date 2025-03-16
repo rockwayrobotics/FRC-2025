@@ -1,3 +1,4 @@
+package frc.robot.util;
 
 import frc.robot.Constants.Reef;
 import frc.robot.Constants.ReefBar;
@@ -51,7 +52,7 @@ public class ShotCalc {
   // Do the math, and report back with a tuple containing the
   // encoder position at the target (lined up to shoot) and
   // the expected orthogonal distance (from chute to branch tip).
-  public void update(double pos, double dist) {
+  public synchronized void update(double pos, double dist) {
     dist -= ToFSensor.TOF_TO_BUMPER;
 
     // calculate current angle estimate
@@ -78,11 +79,19 @@ public class ShotCalc {
     this.dist_to_target = shot_dist;
   }
 
-  public double getTargetPos() {
+  public synchronized double getTargetPos() {
     return this.run_to_target;
   }
 
-  public double getTargetDist() {
+  public synchronized double getRemainingDistance() {
+    return this.run_to_target - this.pos;
+  }
+
+  public synchronized double getTargetDist() {
     return this.dist_to_target;
+  }
+
+  public synchronized double getShooterSpeed() {
+    return 0.2;
   }
 }
