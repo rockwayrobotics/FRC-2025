@@ -40,11 +40,11 @@ public class ShotCalc {
     }
 
     switch (tof) {
-      case TofSensorLocation.NONE_SELECTED: this.tof_to_chute = 0.0;
-      case TofSensorLocation.FRONT_LEFT: this.tof_to_chute = ToFSensor.TOF_FWD_LEFT_TO_CHUTE;
-      case TofSensorLocation.BACK_LEFT: this.tof_to_chute = 0.0;
-      case TofSensorLocation.FRONT_RIGHT: this.tof_to_chute = ToFSensor.TOF_FWD_RIGHT_TO_CHUTE;
-      case TofSensorLocation.BACK_RIGHT: this.tof_to_chute = 0.0;
+      case NONE_SELECTED: this.tof_to_chute = 0.0;
+      case FRONT_LEFT: this.tof_to_chute = ToFSensor.TOF_FWD_LEFT_TO_CHUTE;
+      case BACK_LEFT: this.tof_to_chute = 0.0;
+      case FRONT_RIGHT: this.tof_to_chute = ToFSensor.TOF_FWD_RIGHT_TO_CHUTE;
+      case BACK_RIGHT: this.tof_to_chute = 0.0;
     }
   }
 
