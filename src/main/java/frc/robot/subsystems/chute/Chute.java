@@ -2,6 +2,7 @@ package frc.robot.subsystems.chute;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -14,6 +15,8 @@ public class Chute {
   private final CoralIOInputsAutoLogged inputs = new CoralIOInputsAutoLogged();
 
   final Interlock unlocked = new Interlock("Chute");
+
+  final Tuner pivotTweakDegreesTuner = new Tuner("Chute/pivotTweakDegrees", 0, true);
 
   private double pivotGoalRads = Constants.Chute.PIVOT_INITIAL_ANGLE_RADS;
   private double pivotAngleRads = Constants.Chute.PIVOT_INITIAL_ANGLE_RADS;
@@ -62,7 +65,7 @@ public class Chute {
     // Commands.waitUntil(() -> promise.isDone()).finallyDo(() -> {
     // this.isHomed = promise.getNow(false);
     // }).schedule();
-    io.setEncoder(Units.degreesToRadians(-90));
+    io.setEncoder(Units.degreesToRadians(-90 + MathUtil.clamp(pivotTweakDegreesTuner.get(), -5, 5)));
     this.isHomed = true;
   }
 
