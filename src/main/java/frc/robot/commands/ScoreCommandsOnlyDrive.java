@@ -10,7 +10,6 @@ import edu.wpi.first.networktables.FloatArrayTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
-import edu.wpi.first.util.CircularBuffer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
@@ -23,10 +22,10 @@ import frc.robot.subsystems.superstructure.Superstructure;
 
 public class ScoreCommandsOnlyDrive {
   public static class ScoreCommandState {
-    public AtomicReference<Float> cornerTimestamp;
-    public AtomicReference<Float> cornerDistanceMm;
-    public AtomicReference<Double> distanceTimestamp;
-    public AtomicReference<Double> distanceDistanceMm;
+    public AtomicReference<Float> cornerTimestamp = new AtomicReference<>();
+    public AtomicReference<Float> cornerDistanceMm = new AtomicReference<>();
+    public AtomicReference<Double> distanceTimestamp = new AtomicReference<>();
+    public AtomicReference<Double> distanceDistanceMm = new AtomicReference<>();
     public double lastProcessedTimestamp;
     public boolean isValid;
     public ShotCalc shotCalc;
