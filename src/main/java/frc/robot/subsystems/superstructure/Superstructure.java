@@ -15,6 +15,7 @@ import frc.robot.subsystems.chute.Chute;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.grabber.Grabber;
 import frc.robot.util.TunableSetpoints;
+import frc.robot.util.Tuner;
 
 public class Superstructure extends SubsystemBase {
   public final Elevator elevator;
@@ -22,6 +23,8 @@ public class Superstructure extends SubsystemBase {
   public final Grabber grabber;
 
   protected final StringPublisher chuteModePublisher;
+
+  protected final Tuner pivotAngleTweakTuner = new Tuner("Chute/pivot_angle_tweak_deg", 0, true);
 
   public Superstructure(Elevator elevator, Chute chute, Grabber grabber) {
     this.elevator = elevator;
@@ -64,11 +67,11 @@ public class Superstructure extends SubsystemBase {
     return elevator.getHeightMillimeters();
   }
 
-  public void setElevatorMaxSpeed(double speed){
+  public void setElevatorMaxSpeed(double speed) {
     elevator.setMaxNormalizedSpeedTuner(speed);
   }
 
-  public double getElevatorMaxSpeed(){
+  public double getElevatorMaxSpeed() {
     return elevator.getMaxNormalizedSpeedTuner();
   }
 
@@ -170,24 +173,25 @@ public class Superstructure extends SubsystemBase {
 
   public void gotoSetpoint(CoralLevel level, Side side) {
     int sideMultiplier = (side == Side.LEFT) ? -1 : 1;
+    double pivotAngleTweak = Units.degreesToRadians(MathUtil.clamp(pivotAngleTweakTuner.get(), -10, 10));
     switch (level) {
       case L1:
-        setChutePivotGoalRads(sideMultiplier * setpoints.L1_chute_pivot_angle_rads());
+        setChutePivotGoalRads(sideMultiplier * setpoints.L1_chute_pivot_angle_rads() + pivotAngleTweak);
         setElevatorGoalHeightMillimeters(setpoints.L1_elevator_height_mm());
         chuteModePublisher.set((side == Side.LEFT) ? "L1/left" : "L1/right");
         break;
       case L2:
-        setChutePivotGoalRads(sideMultiplier * setpoints.L2_chute_pivot_angle_rads());
+        setChutePivotGoalRads(sideMultiplier * setpoints.L2_chute_pivot_angle_rads() + pivotAngleTweak);
         setElevatorGoalHeightMillimeters(setpoints.L2_elevator_height_mm());
         chuteModePublisher.set((side == Side.LEFT) ? "L2/left" : "L2/right");
         break;
       case L3:
-        setChutePivotGoalRads(sideMultiplier * setpoints.L3_chute_pivot_angle_rads());
+        setChutePivotGoalRads(sideMultiplier * setpoints.L3_chute_pivot_angle_rads() + pivotAngleTweak);
         setElevatorGoalHeightMillimeters(setpoints.L3_elevator_height_mm());
         chuteModePublisher.set((side == Side.LEFT) ? "L3/left" : "L3/right");
         break;
       case Intake:
-        setChutePivotGoalRads(sideMultiplier * setpoints.intake_chute_pivot_angle_rads());
+        setChutePivotGoalRads(sideMultiplier * setpoints.intake_chute_pivot_angle_rads() + pivotAngleTweak);
         setElevatorGoalHeightMillimeters(setpoints.intake_elevator_height_mm());
         chuteModePublisher.set((side == Side.LEFT) ? "load/left" : "load/right");
         break;
@@ -225,33 +229,34 @@ public class Superstructure extends SubsystemBase {
     }
   }
 
-  public void bargePrepare(){
+  public void bargePrepare() {
     setElevatorGoalHeightMillimeters(setpoints.barge_prepare_elevator_height_mm());
     setWristGoalRads(setpoints.barge_prepare_wrist_angle_rads());
   }
 
-  public Command bargeShot(){
+  public Command bargeShot() {
     double oldSpeed = getElevatorMaxSpeed();
 
     return Commands.sequence(
-      Commands.runOnce(() -> setElevatorMaxSpeed(setpoints.barge_shoot_elevator_speed())),
-      Commands.runOnce(() -> setElevatorGoalHeightMillimeters(setpoints.barge_shoot_elevator_height_mm())),
+        Commands.runOnce(() -> setElevatorMaxSpeed(setpoints.barge_shoot_elevator_speed())),
+        Commands.runOnce(() -> setElevatorGoalHeightMillimeters(setpoints.barge_shoot_elevator_height_mm())),
 
-      Commands.waitUntil(() -> getElevatorHeightMillimeters() >= setpoints.barge_when_wrist_angle_height_mm()),
-      Commands.runOnce(() -> setWristGoalRads(setpoints.barge_shoot_wrist_angle_rads())),
-      Commands.waitUntil(() -> getElevatorHeightMillimeters() >= setpoints.barge_when_shoot_elevator_height_mm()),
-      // Commands.runOnce(() -> setWristGoalRads(setpoints.barge_shoot_wrist_angle_rads())),
-      // Commands.waitUntil(() -> Math.abs(getGrabberWristAngleRads() - setpoints.barge_shoot_wrist_angle_rads()) < 0.05),
-      Commands.runOnce(() -> setGrabberMotor(1)),
-      Commands.waitSeconds(0.75),
-      Commands.runOnce(() -> {
-        setGrabberMotor(0);
-        setElevatorMaxSpeed(oldSpeed);
-        //foldForClimp();
-      }, this)
-    ).finallyDo((boolean interrupted) -> {
-      setElevatorMaxSpeed(oldSpeed);
-    });
+        Commands.waitUntil(() -> getElevatorHeightMillimeters() >= setpoints.barge_when_wrist_angle_height_mm()),
+        Commands.runOnce(() -> setWristGoalRads(setpoints.barge_shoot_wrist_angle_rads())),
+        Commands.waitUntil(() -> getElevatorHeightMillimeters() >= setpoints.barge_when_shoot_elevator_height_mm()),
+        // Commands.runOnce(() ->
+        // setWristGoalRads(setpoints.barge_shoot_wrist_angle_rads())),
+        // Commands.waitUntil(() -> Math.abs(getGrabberWristAngleRads() -
+        // setpoints.barge_shoot_wrist_angle_rads()) < 0.05),
+        Commands.runOnce(() -> setGrabberMotor(1)),
+        Commands.waitSeconds(0.75),
+        Commands.runOnce(() -> {
+          setGrabberMotor(0);
+          setElevatorMaxSpeed(oldSpeed);
+          // foldForClimp();
+        }, this)).finallyDo((boolean interrupted) -> {
+          setElevatorMaxSpeed(oldSpeed);
+        });
   }
 
   public void stayStill() {

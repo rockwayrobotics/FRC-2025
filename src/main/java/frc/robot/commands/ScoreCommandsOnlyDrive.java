@@ -211,6 +211,7 @@ public class ScoreCommandsOnlyDrive {
         // Corner found, start slowing down to shoot
         Commands.race(
             new RampDownSpeedCommand(drive, () -> commandState.shotCalc.getTargetPos() / 1000 - drive.getLeftPositionMeters() + 1, 5.0),
+            // FIXME: Use edu.wpi.first.wpilibj.Notifier to schedule the shot off periodic
             Commands.sequence(
                 Commands.run(() -> {
                   System.out.println("Trying to shoot");

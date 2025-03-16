@@ -136,6 +136,10 @@ public class ShotCalc {
   public double getChuteAngleRads() {
     double degrees = chuteAngleTable.get(this.dist_to_target);
     Logger.recordOutput("/ShotCalc/chuteAngleDeg", degrees);
+    if (this.chute_angle_sign > 0) {
+      // This is a compensating factor for shooting on the left, because our chute is not level
+      return Units.degreesToRadians(degrees * this.chute_angle_sign - 13);
+    }
     return Units.degreesToRadians(degrees * this.chute_angle_sign);
   }
 }
