@@ -13,8 +13,7 @@ public class ChuterShooterIOSim implements ChuterShooterIO {
   private boolean coralLoading = false;
   private boolean coralReady = false;
 
-  // Null callbacks do not get called.
-  private Notifier delayedShootNotifier = new Notifier(null);
+  private Notifier delayedShootNotifier = new Notifier(() -> {});
 
   public ChuterShooterIOSim() {
     // Not sure if this is actually a flywheel, and these are random numbers

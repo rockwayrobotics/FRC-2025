@@ -22,8 +22,7 @@ public class ChuterShooterIOReal implements ChuterShooterIO {
 
     protected double shooterSpeed = 0;
 
-    // Null callbacks do not get called.
-    private Notifier delayedShootNotifier = new Notifier(null);
+    private Notifier delayedShootNotifier = new Notifier(() -> {});
 
     @Override
     public void updateInputs(ChuterShooterIOInputs inputs) {
