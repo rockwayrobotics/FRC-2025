@@ -85,9 +85,12 @@ class CV2Cam:
     def __init__(self):
         idx = CV2Cam.find_index()
         self.cam = cv2.VideoCapture(idx)
-        self.cam.set(cv2.CAP_PROP_FPS, 30)
-        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+        self.fps = 30
+        self.width = 320
+        self.height = 240
+        self.cam.set(cv2.CAP_PROP_FPS, self.fps)
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         self.num = idx
 
     @staticmethod
@@ -108,7 +111,7 @@ class CV2Cam:
             if ret:
                 return frame
         # FIXME: This is weird?
-        return np.zeros((320,240,4))
+        return np.zeros((self.width,self.height,4))
 
     def stop(self):
         self.cam.release()

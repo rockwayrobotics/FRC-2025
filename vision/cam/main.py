@@ -86,7 +86,7 @@ def main():
     selectCameraSub = selectCameraTopic.subscribe("fore")
 
     camAutoDeadbandTopic = nt.getDoubleTopic("/Tuning/Camera Auto Deadband")
-    camAutoDeadbandSub = camAutoDeadbandTopic.subscribe(0)    
+    camAutoDeadbandSub = camAutoDeadbandTopic.subscribe(0)
 
     rightVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/RightVelocityMetersPerSec").subscribe(0)
     leftVelocitySub = nt.getDoubleTopic("/AdvantageKit/Drive/LeftVelocityMetersPerSec").subscribe(0)
@@ -96,7 +96,10 @@ def main():
     dsFMSAttachedSub = nt.getBooleanTopic("/AdvantageKit/DriverStation/FMSAttached").subscribe(False)
     dsEnabledSub = nt.getBooleanTopic("/AdvantageKit/DriverStation/Enabled").subscribe(False)
 
+    tofModeSub = nt.getStringTopic("/Pi/tof_mode").subscribe("none")
+
     isRecording = False
+    isRecordingChute = False
 
     mjpegUrls = [f"mjpg:http://10.80.89.11:{port}/?action=stream"]
     try:
@@ -135,11 +138,17 @@ def main():
 
     streams = []
     if args.save:
+        # Add fore and aft cams
         for i in [0, 1]:
             stream = VideoEncoder(i, fps=args.fps,
                 width=args.res[0], height=args.res[1], quality=args.quality,
                 debug=args.debug)
             streams.append(stream)
+        # Add chute cam
+        chuteStream = VideoEncoder(2, fps=chute_cam.fps,
+            width=chute_cam.width, height=chute_cam.height, quality=args.quality,
+            debug=args.debug)
+        streams.append(chuteStream)
 
     try:
         now = start = time.time()
@@ -188,14 +197,22 @@ def main():
             arr1 = aft_cam.capture_array('main')
             #dashboard_arr = driver_cam.capture_array('lores')
 
+            inCornerMode = args.save and tofModeSub.get() == 'corner'
+            if driver_cam is chute_cam or inCornerMode:
+                chuteImage = chute_cam.capture_array()
+                if pivotAngleSub.get() < 0:
+                    chuteImage = cv2.rotate(chuteImage, cv2.ROTATE_180)
+            else:
+                chuteImage = None
+
             if args.save:
                 fmsAttached = dsFMSAttachedSub.get()
                 enabled = dsEnabledSub.get()
                 shouldRecord = fmsAttached or enabled or force_save
                 if isRecording and not shouldRecord:
                     # Stop recording since the FMS just got detached
-                    for i in [0, 1]:
-                        streams[i].close()
+                    for stream in streams:
+                        stream.close()
                     isRecording = False
                 elif shouldRecord:
                     isRecording = True
@@ -204,10 +221,17 @@ def main():
                     for (i, arr) in enumerate([arr0, arr1]):
                         streams[i].add_frame(arr)
 
+                if isRecordingChute and not inCornerMode:
+                    # No longer in corner mode, close the chute stream
+                    chuteStream.close()
+                elif inCornerMode:
+                    isRecordingChute = True
+
+                if isRecordingChute:
+                    chuteStream.add_frame(chuteImage)
+
             if driver_cam is chute_cam:
-                dashboard_arr = chute_cam.capture_array()
-                if pivotAngleSub.get() < 0:
-                    dashboard_arr = cv2.rotate(dashboard_arr, cv2.ROTATE_180)
+                dashboard_arr = chuteImage
             else:
                 dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
             source.putFrame(dashboard_arr)
@@ -290,4 +314,4 @@ def get_args():
 
 if __name__ == '__main__':
     main()
-    
+
