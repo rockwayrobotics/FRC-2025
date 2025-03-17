@@ -71,4 +71,9 @@ public class TrajectoryUtils {
     }
     return new Trajectory(newStates);
   }
+
+  public static Pose2d rotatePose180(Pose2d pose) {
+    var center = new Translation2d(FIELD_X_DIMENSION_METERS / 2, FIELD_Y_DIMENSION_METERS / 2);
+    return pose.rotateAround(center, Rotation2d.k180deg);
+  }
 }

@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.Side;
 import frc.robot.Constants.AlgaeLevel;
 import frc.robot.Constants.CoralLevel;
+import frc.robot.Constants.ReefBar;
 import frc.robot.commands.AutoPaths;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveStraight;
@@ -111,9 +112,11 @@ public class RobotContainer {
     autoChooser.addOption("rightTestTrough", AutoPaths.rightTestTrough(drive, superstructure, chuterShooter));
     autoChooser.addOption("leftTestTrough", AutoPaths.leftTestTrough(drive, superstructure, chuterShooter));
 
-    autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
     // INCREDIBLY SUS may GO KABOOM
     autoChooser.addOption("algae grab" , AutoPaths.grabTroughAlgaeL3(drive, superstructure));
+    autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
+    autoChooser.addOption("leftNearAutoL2", AutoPaths.leftNearAutoL2(drive, superstructure, chuterShooter));
+    autoChooser.addOption("rightNearAutoL2", AutoPaths.rightNearAutoL2(drive, superstructure, chuterShooter));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
@@ -186,9 +189,9 @@ public class RobotContainer {
     // 0)));
 
     driverController.a()
-        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, Constants.ReefBar.NEAR, chuterShooter));
+        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
     driverController.b()
-        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, Constants.ReefBar.FAR, chuterShooter));
+        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.FAR, chuterShooter));
     driverController.x().whileTrue(new DriveStraight(0.45, drive));
     driverController.y().whileTrue(ScoreCommandsOnlyDrive.rampDownSpeed(drive, 1, 3));
 

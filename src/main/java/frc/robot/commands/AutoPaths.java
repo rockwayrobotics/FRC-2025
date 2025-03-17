@@ -24,11 +24,13 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.Constants.AlgaeLevel;
 import frc.robot.Constants.CoralLevel;
+import frc.robot.Constants.ReefBar;
 import frc.robot.Constants.Side;
 import frc.robot.RobotTracker;
 import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.util.TrajectoryUtils;
 import frc.robot.util.Tuner;
 
 public class AutoPaths {
@@ -56,23 +58,31 @@ public class AutoPaths {
   // adjustable auto wait time
   private final static Tuner autoWaitTime = new Tuner("AutoWaitTime", 0.0, false);
 
-  // The single trajectory config that applies to all autos
+  // A trajectory config that ends at the configured scoring speed for
+  // ScoreCommands
+  private static final TrajectoryConfig autoScoreConfig = new TrajectoryConfig(1, 0.2)
+      .setEndVelocity(ScoreCommandsOnlyDrive.scoringSpeedMetersPerSecond.get())
+      .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+      .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration));
+
+  // The forward trajectory config that applies to most autos
   private static final TrajectoryConfig config = new TrajectoryConfig(trajectoryMaxVelocity, trajectoryMaxAcceleration)
       .setKinematics(RobotTracker.getInstance().getDriveKinematics())
       .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration));
 
-  // The single trajectory config that applies to all autos
+  // The reverse trajectory config that applies to most autos
   private static final TrajectoryConfig reversedConfig = new TrajectoryConfig(trajectoryMaxVelocity,
       trajectoryMaxAcceleration)
       .setKinematics(RobotTracker.getInstance().getDriveKinematics())
       .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration))
       .setReversed(true);
 
+  // A slow forward trajectory config
   private static final TrajectoryConfig slowConfig = new TrajectoryConfig(1, 0.2)
-  .setKinematics(RobotTracker.getInstance().getDriveKinematics())
-  .addConstraint(new CentripetalAccelerationConstraint(0.5));
+      .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+      .addConstraint(new CentripetalAccelerationConstraint(0.5));
 
-  // The single trajectory config that applies to all autos
+  // A slow reverse trajectory config
   private static final TrajectoryConfig slowReverseConfig = new TrajectoryConfig(1,
       0.2)
       .setKinematics(RobotTracker.getInstance().getDriveKinematics())
@@ -350,11 +360,11 @@ public class AutoPaths {
     return command;
   }
 
-  public static Command grabTroughAlgaeL3(Drive drive, Superstructure superstructure){
+  public static Command grabTroughAlgaeL3(Drive drive, Superstructure superstructure) {
     double start_pose_x = 4.194;
     double start_pose_y = 5.393;
     double start_pose_heading_deg = 210;
-    
+
     double position_self_x = 5.890;
     double position_self_y = 6.603;
     double position_self_heading_deg = 270;
@@ -396,32 +406,78 @@ public class AutoPaths {
         slowReverseConfig);
 
     return Commands.sequence(
-      runTrajectory(startPositioningTrajectory, drive),
-      runTrajectory(approachAlgaeTrajectory, drive),
-      Commands.runOnce(() -> {
-        drive.stop();
-        superstructure.gotoAlgaeSetpoint(AlgaeLevel.L2);
-      }),
-      Commands.waitUntil(() -> {
-        return superstructure.isElevatorAtGoal() && superstructure.isGrabberWristAtGoal();
-      }),
-      Commands.runOnce(() -> {
-        // Suck in algae
-        superstructure.setGrabberMotor(-1);
-      }),
-      runTrajectory(grabAlgaeTrajectory, drive),
-      Commands.waitSeconds(1),
-      Commands.runOnce(() -> {
-        // stop
-        superstructure.setGrabberMotor(0);
-      }),
-      runTrajectory(backupAlgaeTrajectory, drive),
-      Commands.runOnce(() -> {
-        superstructure.setElevatorGoalHeightMillimeters(20);
-      }
-    ));
+        runTrajectory(startPositioningTrajectory, drive),
+        runTrajectory(approachAlgaeTrajectory, drive),
+        Commands.runOnce(() -> {
+          drive.stop();
+          superstructure.gotoAlgaeSetpoint(AlgaeLevel.L2);
+        }),
+        Commands.waitUntil(() -> {
+          return superstructure.isElevatorAtGoal() && superstructure.isGrabberWristAtGoal();
+        }),
+        Commands.runOnce(() -> {
+          // Suck in algae
+          superstructure.setGrabberMotor(-1);
+        }),
+        runTrajectory(grabAlgaeTrajectory, drive),
+        Commands.waitSeconds(1),
+        Commands.runOnce(() -> {
+          // stop
+          superstructure.setGrabberMotor(0);
+        }),
+        runTrajectory(backupAlgaeTrajectory, drive),
+        Commands.runOnce(() -> {
+          superstructure.setElevatorGoalHeightMillimeters(20);
+        }));
   }
 
+  public static Command leftNearAutoL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
+    // 1 m from wall
+    Pose2d startPose = new Pose2d(7.464, 7.050, Rotation2d.fromDegrees(180));
+    Pose2d endPose = new Pose2d(5.2085, 5.9086, Rotation2d.fromDegrees(210));
+    Pose2d flippedPose = TrajectoryUtils.rotatePose180(endPose);
+    Trajectory approachAutoScoreTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), endPose,
+        autoScoreConfig);
+
+    var command = Commands.sequence(
+        Commands.parallel(
+            runTrajectory(approachAutoScoreTrajectory, drive),
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  var robotPose = (RobotTracker.getInstance().getEstimatedPose().getTranslation());
+                  return endPose.getTranslation().getDistance(robotPose) < 1.0
+                      || flippedPose.getTranslation().getDistance(robotPose) < 1.0;
+                }),
+                Commands.runOnce(() -> {
+                  superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT);
+                }))),
+        ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
+    command.addRequirements(drive, superstructure, chuterShooter);
+    return command;
+  }
+
+  public static Command rightNearAutoL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
+    // 1 m from wall
+    Pose2d startPose = new Pose2d(7.464, 1.0, Rotation2d.fromDegrees(180));
+    Pose2d endPose = new Pose2d(5.2085, 2.1432, Rotation2d.fromDegrees(150));
+    Trajectory approachAutoScoreTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), endPose,
+        autoScoreConfig);
+
+    var command = Commands.sequence(
+        Commands.parallel(
+            runTrajectory(approachAutoScoreTrajectory, drive),
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  return endPose.getTranslation()
+                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 1.0;
+                }),
+                Commands.runOnce(() -> {
+                  superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
+                }))),
+        ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
+    command.addRequirements(drive, superstructure, chuterShooter);
+    return command;
+  }
 
   public static Command leftFarFancy(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
