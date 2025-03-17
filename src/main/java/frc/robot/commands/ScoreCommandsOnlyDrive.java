@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import frc.robot.util.ShotCalc;
 import frc.robot.util.Tuner;
 import frc.robot.Constants;
+import frc.robot.Constants.CoralLevel;
 import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -263,6 +264,7 @@ public class ScoreCommandsOnlyDrive {
       // Constants.Drive.SCORING_SPEED });
       commandState.reset();
       chuterShooter.stopShooting();
+      superstructure.setElevatorGoalHeightMillimeters(Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM);
       // FIXME: Reset? Detect if coral was shot?
     });
   }

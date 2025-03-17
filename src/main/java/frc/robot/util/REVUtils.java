@@ -5,6 +5,8 @@ import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.REVLibError;
 import com.revrobotics.spark.SparkBase;
 
@@ -25,6 +27,7 @@ public class REVUtils {
 
   private static void recordFailure() {
     failureCount++;
+    Logger.recordOutput("RevUtils/failure_count", failureCount);
   }
 
   /**
