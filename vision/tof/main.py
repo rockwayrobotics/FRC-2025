@@ -295,10 +295,10 @@ class TofMain:
             adjusted_ts = self.ts_adjusted(ts)
             if adjusted_ts is not None:
                 self.ts_dist_pub.set([adjusted_ts, dist_mm])
-                self.dist_pub.set(dist_mm)
                 if self.saw_corner:
                     flush = True
 
+        self.dist_pub.set(dist_mm)
         if flush:
             self.nt.flush()
     
