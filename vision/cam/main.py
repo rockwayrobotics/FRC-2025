@@ -11,6 +11,7 @@ import threading
 import math
 from netifaces import interfaces, ifaddresses, AF_INET
 import os
+import sys
 import time
 import traceback
 from cscore import CvSource, VideoMode, CameraServer, MjpegServer
@@ -34,6 +35,7 @@ from .apriltag import AprilTagDetection
 from .keys import NonBlockingConsole
 from .recording import VideoEncoder
 
+STDOUT = sys.stdout.isatty()
 
 def ip4_addresses():
     ip_list = []
@@ -221,7 +223,8 @@ def main():
                 fps = count / (now - reported)
                 reported = now
                 count = 0
-                print(f'FPS: {fps}   ', end='\r')
+                if STDOUT:
+                    print(f'FPS: {fps}   ', end='\r')
 
             if key is not None:
                 if key.lower() == 'q':
