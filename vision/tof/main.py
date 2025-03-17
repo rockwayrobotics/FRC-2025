@@ -261,8 +261,10 @@ class TofMain:
 
 
     def ts_adjusted(self, ts):
-        nt_time_offset = self.nt.getServerTimeOffset() / 1e6
-        return ts - time.monotonic() + ntcore._now() / 1e6 + nt_time_offset
+        offset_or_none = self.nt.getServerTimeOffset()
+        if offset_or_none is None:
+            return None
+        return ts - time.monotonic() + (ntcore._now() + offset_or_none) / 1e6
         
 
     def on_reading(self, ts, dist_mm, status, delta):
@@ -272,14 +274,15 @@ class TofMain:
         if cd.found_corner():
             self.saw_corner = True
             corner_ts = self.ts_adjusted(cd.corner_timestamp)
-            self.corner_pub.set([corner_ts, cd.corner_dist])
-            self.corner_ts_pub.set(cd.corner_timestamp)
-            self.corner_dist_pub.set(cd.corner_dist)
-            flush = True
+            if corner_ts is not None:
+                self.corner_pub.set([corner_ts, cd.corner_dist])
+                self.corner_ts_pub.set(cd.corner_timestamp)
+                self.corner_dist_pub.set(cd.corner_dist)
+                flush = True
 
-            if self.args.stdout:
-                print()
-            self.log.info("CORNER: %.3f,%.3f,%.3fs", ts, corner_ts, self.speed)
+                if self.args.stdout:
+                    print()
+                self.log.info("CORNER: %.3f,%.3f,%.3fs", ts, corner_ts, self.speed)
             cd.log_timing()
 
             cd.reset()
@@ -289,10 +292,12 @@ class TofMain:
                 print("dist,%8.3f,%5.0f,%2d,%5.3f      " % (ts, dist_mm, status, delta), end='\r')
 
         if self.tof_mode == 'corner':
-            self.ts_dist_pub.set([self.ts_adjusted(ts), dist_mm])
-            self.dist_pub.set(dist_mm)
-            if self.saw_corner:
-                flush = True
+            adjusted_ts = self.ts_adjusted(ts)
+            if adjusted_ts is not None:
+                self.ts_dist_pub.set([adjusted_ts, dist_mm])
+                self.dist_pub.set(dist_mm)
+                if self.saw_corner:
+                    flush = True
 
         if flush:
             self.nt.flush()
