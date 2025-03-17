@@ -213,7 +213,9 @@ def main(args):
             angle = z_rot - math.pi / 2 if z_rot > math.pi else z_rot + math.pi / 2
             angle_deg = angle * 180.0 / math.pi
             print(f"Approaching wall with angle {angle_deg:.2f} degrees")
-            if args.far:
+            if args.w is not None:
+              distance_along_wall = chute_distance + args.w
+            elif args.far:
               distance_along_wall = chute_distance - bar_distance / 2
             elif args.trough:
               distance_along_wall = chute_distance + bar_distance
@@ -229,7 +231,9 @@ def main(args):
             angle = z_rot - math.pi / 2 if z_rot > math.pi else z_rot + math.pi / 2
             angle_deg = angle * 180.0 / math.pi
             print(f"Approaching wall with angle {angle_deg:.2f} degrees")
-            if args.far:
+            if args.w is not None:
+              distance_along_wall = chute_distance - args.w
+            elif args.far:
               distance_along_wall = chute_distance - bar_distance / 2
             elif args.trough:
               distance_along_wall = chute_distance + bar_distance
@@ -265,6 +269,8 @@ if __name__ == "__main__":
     parser.add_argument("-t", type=int, default=17)
     # Intended distance from wall in millimeters
     parser.add_argument("-d", type=float, default=30)
+    # Intended distance parallel to wall, negative is before AprilTag, positive is after
+    parser.add_argument("-w", type=float, default=None)
     # Shoot early for trough
     parser.add_argument("--trough", action="store_true")
 
