@@ -7,6 +7,7 @@ public class GyroIOSim extends GyroIONavX {
   }
 
   public SimDeviceSim getGyroDeviceSim() {
-    return new SimDeviceSim("navX-Sensor", navX.getPort());
+    // return new SimDeviceSim("navX-Sensor", navX.getPort());
+    return new SimDeviceSim("navX-Sensor", 0);
   }
 }

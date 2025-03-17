@@ -207,7 +207,7 @@ def main():
             if driver_cam is chute_cam:
                 dashboard_arr = chute_cam.capture_array()
                 if pivotAngleSub.get() < 0:
-                    dashboard_arr = cv2.flip(dashboard_arr, 0)
+                    dashboard_arr = cv2.rotate(dashboard_arr, cv2.ROTATE_180)
             else:
                 dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
             source.putFrame(dashboard_arr)

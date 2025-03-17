@@ -188,6 +188,8 @@ def main(args):
             sys.exit(1)
         else:
             start = Vector(args.x, end.y - math.tan(math.pi + z_rot) * (end.x - args.x))
+            angle_deg = 180 + z_rot_deg
+            print(angle_deg)
             if start.y < 0.5:
                 print("Start point off the field bottom, need intermediate point")
                 print(

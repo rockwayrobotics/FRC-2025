@@ -111,6 +111,10 @@ public class RobotContainer {
     autoChooser.addOption("rightTestTrough", AutoPaths.rightTestTrough(drive, superstructure, chuterShooter));
     autoChooser.addOption("leftTestTrough", AutoPaths.leftTestTrough(drive, superstructure, chuterShooter));
 
+    autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
+    // INCREDIBLY SUS may GO KABOOM
+    autoChooser.addOption("algae grab" , AutoPaths.grabTroughAlgaeL3(drive, superstructure));
+
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
     configureBindings();
@@ -182,9 +186,9 @@ public class RobotContainer {
     // 0)));
 
     driverController.a()
-        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.NEAR, chuterShooter));
+        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, Constants.ReefBar.NEAR, chuterShooter));
     driverController.b()
-        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure.chute, Constants.ReefBar.FAR, chuterShooter));
+        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, Constants.ReefBar.FAR, chuterShooter));
     driverController.x().whileTrue(new DriveStraight(0.45, drive));
     driverController.y().whileTrue(ScoreCommandsOnlyDrive.rampDownSpeed(drive, 1, 3));
 

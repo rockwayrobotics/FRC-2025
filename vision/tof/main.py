@@ -196,8 +196,7 @@ class TofMain:
         nt.setServerTeam(8089)
 
         chute_mode_topic = nt.getStringTopic("/Pi/chute_mode")
-        self.chute_mode_sub = chute_mode_topic.subscribe('none',
-           ntcore.PubSubOptions(keepDuplicates=True))
+        self.chute_mode_sub = chute_mode_topic.subscribe('none')
 
         tof_mode_topic = nt.getStringTopic("/Pi/tof_mode")
         self.tof_mode_sub = tof_mode_topic.subscribe('none',
@@ -221,6 +220,8 @@ class TofMain:
 
         self.corner_ts_pub = nt.getFloatTopic("/Pi/corner_ts").publish()
         self.corner_ts_pub.set(0.0)
+        self.corner_dist_pub = nt.getFloatTopic("/Pi/corner_dist_mm").publish()
+        self.corner_dist_pub.set(0.0)
 
         # for debugging, serve our NT instance
         if self.args.serve:
@@ -273,6 +274,7 @@ class TofMain:
             corner_ts = self.ts_adjusted(cd.corner_timestamp)
             self.corner_pub.set([corner_ts, cd.corner_dist])
             self.corner_ts_pub.set(cd.corner_timestamp)
+            self.corner_dist_pub.set(cd.corner_dist)
             flush = True
 
             if self.args.stdout:
@@ -298,7 +300,7 @@ class TofMain:
 
     # Map of modes to GPIO pin indices [5, 14]
     MODE_MAP = {
-        'none': None,
+        'none': 0, # temporarily map to right so we keep logging something all the time
         'left': 1,
         'right': 0,
         'front-left': 1,
@@ -308,8 +310,9 @@ class TofMain:
     }
 
     def loop(self):
-        chute_mode = 'right'
-        self.pins.set_index_high(self.MODE_MAP.get(chute_mode))
+        # chute_mode = 'home/right'
+        chute_side = 'right'
+        self.pins.set_index_high(self.MODE_MAP.get(chute_side))
 
         def reader():
             self.mgr.read(self.args.timing, self.args.inter, callback=self.on_reading)
@@ -326,10 +329,10 @@ class TofMain:
                     val = event.data.value.getString()
                     self.log.info('chute: %s', val)
                     pos, _, side = val.partition('/')
-                    if chute_mode != side:
-                        if pos != 'load':
-                            side = 'left' if side == 'right' else 'right'
-                        chute_mode = side
+                    if pos != 'load':
+                        side = 'left' if side == 'right' else 'right'
+                    if chute_side != side:
+                        chute_side = side
 
                         # handle mode changes
                         # disabling will cause any current reading thread to exit
@@ -337,8 +340,8 @@ class TofMain:
                         # this gives enough time for the thread to attempt a reading
                         # and get an i2c error because the sensor will be offline
                         time.sleep(0.1)
-                        self.pins.set_index_high(self.MODE_MAP.get(chute_mode))
-                        self.log.info('selected tof: %s', chute_mode)
+                        self.pins.set_index_high(self.MODE_MAP.get(chute_side))
+                        self.log.info('selected tof: %s (from %s)', chute_side, val)
 
                         self.cd.reset()
 

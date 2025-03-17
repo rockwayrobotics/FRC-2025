@@ -13,18 +13,19 @@
 
 package frc.robot.subsystems.drive;
 
-import com.studica.frc.AHRS;
-import com.studica.frc.AHRS.NavXComType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import frc.robot.NavX.AHRS;
+import edu.wpi.first.wpilibj.SPI.Port;
+
 
 /** IO implementation for NavX. */
 public class GyroIONavX implements GyroIO {
-  protected final AHRS navX = new AHRS(NavXComType.kMXP_SPI);
+  protected final AHRS navX = new AHRS(Port.kMXP, (byte) 50);
   private boolean initialYawSet = false;
   private double initialYaw = 0;
 
-  @Override
+  @Override   
   public void updateInputs(GyroIOInputs inputs) {
     inputs.connected = navX.isConnected();
     if (!initialYawSet && inputs.connected) {
@@ -33,5 +34,17 @@ public class GyroIONavX implements GyroIO {
     }
     inputs.yawPosition = Rotation2d.fromDegrees(-navX.getAngle() - initialYaw);
     inputs.yawVelocityRadPerSec = Units.degreesToRadians(-navX.getRawGyroZ());
+  }
+
+  @Override
+  public void zeroGyro() {
+    navX.zeroYaw();
+    initialYaw = 0;
+    initialYawSet = true;
+  }
+
+  @Override
+  public double getAngle() {
+    return navX.getAngle();
   }
 }
