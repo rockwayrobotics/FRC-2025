@@ -51,6 +51,8 @@ public class ScoreCommandsOnlyDrive {
   static final Tuner scoringSpeedMetersPerSecond = new Tuner("Score/scoring_speed_meters_per_sec", 0.45, true);
   static final Tuner scoringChuterShooterSpeed = new Tuner("Score/scoring_chuter_shooter_speed", 0.2, true);
   static final Tuner earlyShotMillimeterTuner = new Tuner("Score/early_shot_mm", 50, true);
+  static final Tuner angleProportionalTuner = new Tuner("Score/angle_proportional_early_shot", 0, true);
+  static final Tuner speedProportionalTuner = new Tuner("Score/speed_proportional_early_shot", 0, true);
 
   public static final double SCORING_EPSILON_METERS = 0.25;
 
@@ -183,7 +185,8 @@ public class ScoreCommandsOnlyDrive {
                   })));
                 }))),
 
-        // Corner found, keep driving and now use the shot calculator for distance/angle.
+        // Corner found, keep driving and now use the shot calculator for
+        // distance/angle.
         Commands.race(
             Commands.run(() -> {
               drive.setTankDrive(new ChassisSpeeds(scoringSpeedMetersPerSecond.get(), 0, 0));
@@ -197,10 +200,13 @@ public class ScoreCommandsOnlyDrive {
 
               double currentEncoderMm = drive.getLeftPositionMeters() * 1000;
               double millimetersPerPeriodic = drive.getLeftVelocityMetersPerSec() * 1000 * 0.02;
-              double targetPosMm = commandState.shotCalc.getTargetPos() - earlyShotMillimeterTuner.get();
+              double targetPosMm = commandState.shotCalc.getTargetPos() - earlyShotMillimeterTuner.get()
+                  - angleProportionalTuner.get() * commandState.shotCalc.getWallAngleRads()
+                  - speedProportionalTuner.get() * scoringSpeedMetersPerSecond.get();
               double nextEncoderMm = currentEncoderMm + millimetersPerPeriodic;
 
-              // If the delayed shot isn't working and tuning is hard, the original condition was:
+              // If the delayed shot isn't working and tuning is hard, the original condition
+              // was:
               // return currentEncoderMm >= targetPosMm;
 
               if (nextEncoderMm < targetPosMm) {
@@ -210,7 +216,8 @@ public class ScoreCommandsOnlyDrive {
 
               double fractionOfPeriod = (targetPosMm - currentEncoderMm) / millimetersPerPeriodic;
               Logger.recordOutput("/ScoreCommands/fraction_of_period", fractionOfPeriod);
-              // If we return true and do not schedule a shot, we will start shooting in 20 ms, when we expect to be at nextEncoderMm.
+              // If we return true and do not schedule a shot, we will start shooting in 20
+              // ms, when we expect to be at nextEncoderMm.
               if (fractionOfPeriod < 1.0) {
                 chuterShooter.scheduleShoot(commandState.shotCalc.getShooterSpeed(), fractionOfPeriod * 0.02);
               }

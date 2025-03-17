@@ -32,6 +32,7 @@ public class ShotCalc {
 
   private double run_to_target = 0.0;
   private double dist_to_target = 0.0;
+  private double wall_angle_rads = 0.0;
 
   InterpolatingDoubleTreeMap chuteAngleTable = new InterpolatingDoubleTreeMap();
 
@@ -98,6 +99,7 @@ public class ShotCalc {
     double delta_dist = dist - this.dist;
     // angle in radians, positive is moving away from wall
     double angle = Math.atan2(delta_dist, delta_pos);
+    this.wall_angle_rads = angle;
     Logger.recordOutput("/ShotCalc/angle_deg", Units.radiansToDegrees(angle));
 
     // calculate position where chute will be aligned with target
@@ -141,5 +143,9 @@ public class ShotCalc {
       return Units.degreesToRadians(degrees * this.chute_angle_sign - 13);
     }
     return Units.degreesToRadians(degrees * this.chute_angle_sign);
+  }
+
+  public double getWallAngleRads() {
+    return this.wall_angle_rads;
   }
 }
