@@ -2,14 +2,19 @@ package frc.robot.subsystems.chuterShooter;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 
 public class ChuterShooterIOSim implements ChuterShooterIO {
+  private final Object motorLock = new Object();
   protected final FlywheelSim shooterSim;
 
   private double shooterSpeed = 0;
   private boolean coralLoading = false;
   private boolean coralReady = false;
+
+  // Null callbacks do not get called.
+  private Notifier delayedShootNotifier = new Notifier(null);
 
   public ChuterShooterIOSim() {
     // Not sure if this is actually a flywheel, and these are random numbers
@@ -19,7 +24,9 @@ public class ChuterShooterIOSim implements ChuterShooterIO {
 
   @Override
   public void updateInputs(ChuterShooterIOInputs inputs) {
-    shooterSim.setInputVoltage(12.0 * shooterSpeed);
+    synchronized (motorLock) {
+      shooterSim.setInputVoltage(12.0 * shooterSpeed);
+    }
     shooterSim.update(0.02);
     shooterSim.getAngularVelocityRadPerSec();
 
@@ -31,6 +38,23 @@ public class ChuterShooterIOSim implements ChuterShooterIO {
   @Override
   public void setShooterSpeed(double speed) {
     shooterSpeed = speed;
+  }
+
+  @Override
+  public void stopShooting() {
+    this.shooterSpeed = 0;
+    delayedShootNotifier.stop();
+  }
+
+  @Override
+  public void scheduleShoot(double speed, double delaySeconds) {
+    delayedShootNotifier.setCallback(() -> {
+      synchronized (motorLock) {
+        shooterSim.setInputVoltage(12.0 * speed);
+      }
+    });
+    delayedShootNotifier.startSingle(delaySeconds);
+    setShooterSpeed(speed);
   }
 
   public void setCoralLoading(boolean loading) {

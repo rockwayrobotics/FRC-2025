@@ -183,16 +183,39 @@ public class ScoreCommandsOnlyDrive {
                   })));
                 }))),
 
+        // Corner found, keep driving and now use the shot calculator for distance/angle.
         Commands.race(
             Commands.run(() -> {
               drive.setTankDrive(new ChassisSpeeds(scoringSpeedMetersPerSecond.get(), 0, 0));
             }).withTimeout(2),
             Commands.waitUntil(() -> {
-              return drive.getLeftPositionMeters() * 1000 + earlyShotMillimeterTuner.get() >= commandState.shotCalc
-                  .getTargetPos() && commandState.shotCalc.getTargetDist() > 0.0;
+              if (commandState.shotCalc.getTargetDist() <= 0.0) {
+                // No target distance yet means we haven't received any readings, wait for at
+                // least one.
+                return false;
+              }
+
+              double currentEncoderMm = drive.getLeftPositionMeters() * 1000;
+              double millimetersPerPeriodic = drive.getLeftVelocityMetersPerSec() * 1000 * 0.02;
+              double targetPosMm = commandState.shotCalc.getTargetPos() - earlyShotMillimeterTuner.get();
+              double nextEncoderMm = currentEncoderMm + millimetersPerPeriodic;
+
+              // If the delayed shot isn't working and tuning is hard, the original condition was:
+              // return currentEncoderMm >= targetPosMm;
+
+              if (nextEncoderMm < targetPosMm) {
+                // We won't reach the target next periodic, keep going.
+                return false;
+              }
+
+              double fractionOfPeriod = (targetPosMm - currentEncoderMm) / millimetersPerPeriodic;
+              Logger.recordOutput("/ScoreCommands/fraction_of_period", fractionOfPeriod);
+              // If we return true and do not schedule a shot, we will start shooting in 20 ms, when we expect to be at nextEncoderMm.
+              if (fractionOfPeriod < 1.0) {
+                chuterShooter.scheduleShoot(commandState.shotCalc.getShooterSpeed(), fractionOfPeriod * 0.02);
+              }
+              return true;
             }),
-            // new RampDownSpeedCommand(drive, () -> commandState.shotCalc.getTargetPos() *
-            // 1000 - drive.getLeftPositionMeters(), 5.0),
             Commands.run(() -> {
               double distanceTimestamp = commandState.distanceTimestamp.get();
               if (commandState.lastProcessedTimestamp < distanceTimestamp) {
@@ -208,20 +231,23 @@ public class ScoreCommandsOnlyDrive {
               // we reach the shot position.
               superstructure.setChutePivotGoalRads(commandState.shotCalc.getChuteAngleRads());
             })),
-        // Corner found, start slowing down to shoot
+
+        // Time to shoot, keep driving while we shoot, but slow down.
         Commands.race(
-            new RampDownSpeedCommand(drive, () -> commandState.shotCalc.getTargetPos() / 1000 - drive.getLeftPositionMeters() + 1, 5.0),
-            // FIXME: Use edu.wpi.first.wpilibj.Notifier to schedule the shot off periodic
             Commands.sequence(
                 Commands.run(() -> {
-                  System.out.println("Trying to shoot");
+                  drive.setTankDrive(new ChassisSpeeds(scoringSpeedMetersPerSecond.get(), 0, 0));
+                }).withTimeout(0.3),
+                new RampDownSpeedCommand(drive,
+                    () -> commandState.shotCalc.getTargetPos() / 1000 - drive.getLeftPositionMeters() + 1, 5.0)),
+            Commands.sequence(
+                Commands.run(() -> {
                   chuterShooter.setShooterMotor(commandState.shotCalc.getShooterSpeed());
                 }).withTimeout(2.0),
                 Commands.runOnce(() -> {
-                  System.out.println("Stopping shooting");
                   chuterShooter.stopShooting();
                 }))));
-    command.addRequirements(drive, superstructure);
+    command.addRequirements(drive, superstructure, chuterShooter);
     cancellableGroup.addCommands(command);
     return cancellableGroup.finallyDo(interrupted -> {
       System.out.println("Command completed: interrupted? " + interrupted);

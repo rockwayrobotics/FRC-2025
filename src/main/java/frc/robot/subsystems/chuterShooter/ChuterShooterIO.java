@@ -20,6 +20,12 @@ public interface ChuterShooterIO {
     public default void setShooterSpeed(double speed) {
     }
 
+    public default void scheduleShoot(double speed, double delaySeconds) {
+    }
+
+    public default void stopShooting() {
+    }
+
     public default void updateInputs(ChuterShooterIOInputs inputs) {
     }
 

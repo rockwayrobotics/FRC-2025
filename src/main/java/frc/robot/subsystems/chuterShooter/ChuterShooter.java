@@ -42,7 +42,7 @@ public class ChuterShooter extends SubsystemBase {
     }
 
     public void stopShooting() {
-        io.setShooterSpeed(0);
+        io.stopShooting();
     }
 
     public boolean isCoralLoading() {
@@ -53,11 +53,15 @@ public class ChuterShooter extends SubsystemBase {
         return coralReady;
     }
 
+    public void scheduleShoot(double speed, double delaySeconds) {
+        io.scheduleShoot(speed, delaySeconds);
+    }
+
     public Command loadCoralChute() {
         return Commands.sequence(
                 Commands.waitUntil(() -> this.isCoralLoading()),
                 Commands.run(() -> this.setShooterMotor(0.1), this),
-                Commands.waitUntil(() -> this.isCoralReady())
-                ).finallyDo(() -> this.setShooterMotor(0)).withTimeout(Time.ofBaseUnits(15, Seconds));
+                Commands.waitUntil(() -> this.isCoralReady())).finallyDo(() -> this.setShooterMotor(0))
+                .withTimeout(Time.ofBaseUnits(15, Seconds));
     }
 }
