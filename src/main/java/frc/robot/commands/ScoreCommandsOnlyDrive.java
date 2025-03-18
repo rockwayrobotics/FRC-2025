@@ -267,7 +267,9 @@ public class ScoreCommandsOnlyDrive {
       // We wanted to go to safe chute height, but in the rare case that a coral manages to land
       // vertically on the robot, that would be unsafe.
       // Instead, go down to L2 height.
-      superstructure.gotoElevatorL2();
+      // Operator doesn't like moving after shot, so L2 height commented out. 
+      // superstructure.gotoElevatorL2();
+
       // FIXME: Reset? Detect if coral was shot?
     });
   }

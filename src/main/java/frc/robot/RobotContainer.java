@@ -387,11 +387,15 @@ public class RobotContainer {
       superstructure.gotoAlgaeSetpoint(AlgaeLevel.Score);
     }, superstructure));
 
-    new POVButton(operator1Controller, 0).whileTrue(Commands.run(() -> {
-      superstructure.setGrabberMotor(1);
-    }, superstructure)).onFalse(Commands.run(() -> {
-      superstructure.setGrabberMotor(0);
+    new POVButton(operator1Controller, 0).onTrue(Commands.runOnce(() -> {
+      superstructure.bargePrepare();
     }, superstructure));
+
+    // new POVButton(operator1Controller, 0).whileTrue(Commands.run(() -> {
+    //   superstructure.setGrabberMotor(1);
+    // }, superstructure)).onFalse(Commands.run(() -> {
+    //   superstructure.setGrabberMotor(0);
+    // }, superstructure));
   }
 
   public void setupTestBindings() {
