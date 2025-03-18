@@ -34,6 +34,8 @@ public class ShotCalc {
   private double dist_to_target = 0.0;
   private double wall_angle_rads = 0.0;
 
+  private Tuner chuteAngleOffset = new Tuner("ShotCalc/chuteAngleOffset", 0, true); 
+
   InterpolatingDoubleTreeMap chuteAngleTable = new InterpolatingDoubleTreeMap();
 
   public ShotCalc(double pos, double dist, ReefBar bar, ToFSensorLocation tof) {
@@ -115,6 +117,7 @@ public class ShotCalc {
     double dist_to_wall = this.dist + run_adjusted * Math.tan(angle);
     double wall_to_tip = Reef.TIP_TO_WALL / Math.cos(angle);
     double shot_dist = dist_to_wall + wall_to_tip;
+
     
     this.run_to_target = this.pos + run_total;
     this.dist_to_target = shot_dist;
@@ -140,7 +143,7 @@ public class ShotCalc {
     Logger.recordOutput("/ShotCalc/chuteAngleDeg", degrees);
     if (this.chute_angle_sign > 0) {
       // This is a compensating factor for shooting on the left, because our chute is not level
-      return Units.degreesToRadians(degrees * this.chute_angle_sign - 13);
+      return Units.degreesToRadians(degrees * this.chute_angle_sign - chuteAngleOffset.get());
     }
     return Units.degreesToRadians(degrees * this.chute_angle_sign);
   }
