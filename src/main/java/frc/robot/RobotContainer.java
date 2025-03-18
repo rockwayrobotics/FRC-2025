@@ -112,11 +112,13 @@ public class RobotContainer {
     autoChooser.addOption("rightTestTrough", AutoPaths.rightTestTrough(drive, superstructure, chuterShooter));
     autoChooser.addOption("leftTestTrough", AutoPaths.leftTestTrough(drive, superstructure, chuterShooter));
 
+    // Left and right with auto-shoot on L2 on near center
+    autoChooser.addOption("leftNearCenterAutoL2", AutoPaths.leftNearCenterAutoL2(drive, superstructure, chuterShooter));
+    autoChooser.addOption("rightNearCenterAutoL2", AutoPaths.rightNearCenterAutoL2(drive, superstructure, chuterShooter));
+
     // INCREDIBLY SUS may GO KABOOM
     autoChooser.addOption("algae grab" , AutoPaths.grabTroughAlgaeL3(drive, superstructure));
     autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
-    autoChooser.addOption("leftNearAutoL2", AutoPaths.leftNearAutoL2(drive, superstructure, chuterShooter));
-    autoChooser.addOption("rightNearAutoL2", AutoPaths.rightNearAutoL2(drive, superstructure, chuterShooter));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 

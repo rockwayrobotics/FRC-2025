@@ -479,6 +479,52 @@ public class AutoPaths {
     return command;
   }
 
+  public static Command rightNearCenterAutoL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
+    // 1 m from wall
+    Pose2d startPose = new Pose2d(7.464, 1.0, Rotation2d.fromDegrees(180));
+    Pose2d endPose = new Pose2d(2.9, 3, Rotation2d.fromDegrees(90));
+    Trajectory approachAutoScoreTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), endPose,
+        autoScoreConfig);
+
+    var command = Commands.sequence(
+        Commands.parallel(
+            runTrajectory(approachAutoScoreTrajectory, drive),
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  return endPose.getTranslation()
+                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 1.0;
+                }),
+                Commands.runOnce(() -> {
+                  superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
+                }))),
+        ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
+    command.addRequirements(drive, superstructure, chuterShooter);
+    return command;
+  }
+
+  public static Command leftNearCenterAutoL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
+    // 1 m from wall
+    Pose2d startPose = new Pose2d(7.464, 7.05, Rotation2d.fromDegrees(180));
+    Pose2d endPose = new Pose2d(3.05, 5.2, Rotation2d.fromDegrees(-90));
+    Trajectory approachAutoScoreTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), endPose,
+        autoScoreConfig);
+
+    var command = Commands.sequence(
+        Commands.parallel(
+            runTrajectory(approachAutoScoreTrajectory, drive),
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  return endPose.getTranslation()
+                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 1.0;
+                }),
+                Commands.runOnce(() -> {
+                  superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT);
+                }))),
+        ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
+    command.addRequirements(drive, superstructure, chuterShooter);
+    return command;
+  }
+
   public static Command leftFarFancy(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 7.050; // 1 m from wall
