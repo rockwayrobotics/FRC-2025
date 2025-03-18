@@ -264,7 +264,10 @@ public class ScoreCommandsOnlyDrive {
       // Constants.Drive.SCORING_SPEED });
       commandState.reset();
       chuterShooter.stopShooting();
-      superstructure.setElevatorGoalHeightMillimeters(Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM);
+      // We wanted to go to safe chute height, but in the rare case that a coral manages to land
+      // vertically on the robot, that would be unsafe.
+      // Instead, go down to L2 height.
+      superstructure.gotoElevatorL2();
       // FIXME: Reset? Detect if coral was shot?
     });
   }

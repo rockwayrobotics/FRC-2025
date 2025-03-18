@@ -171,6 +171,10 @@ public class Superstructure extends SubsystemBase {
 
   TunableSetpoints setpoints = new TunableSetpoints();
 
+  public void gotoElevatorL2() {
+    setElevatorGoalHeightMillimeters(setpoints.L2_elevator_height_mm());
+  }
+
   public void gotoSetpoint(CoralLevel level, Side side) {
     int sideMultiplier = (side == Side.LEFT) ? -1 : 1;
     double pivotAngleTweak = Units.degreesToRadians(MathUtil.clamp(pivotAngleTweakTuner.get(), -10, 10));
