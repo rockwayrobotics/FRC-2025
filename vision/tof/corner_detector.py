@@ -5,8 +5,8 @@ import scipy as sp
 import time
 
 # distances in mm
-min_distance = 150
-max_distance = 750
+min_distance = 50
+max_distance = 1000
 
 # number of elements in full buffer
 buffer_size = 1000
