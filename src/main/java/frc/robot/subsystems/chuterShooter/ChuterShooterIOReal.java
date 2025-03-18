@@ -31,6 +31,7 @@ public class ChuterShooterIOReal implements ChuterShooterIO {
         }
 
         REVUtils.ifOk(shooterMotor, shooterEncoder::getVelocity, (value) -> inputs.shooterVelocityRadPerSec = value);
+        REVUtils.ifOk(shooterMotor, shooterMotor::getAppliedOutput, (value) -> inputs.appliedOutput = value);
 
         // FIXME: Should we be reading this at 50Hz?
         inputs.coralLoading = Sensors.getInstance().getChuteCoralLoadedBeambreak();

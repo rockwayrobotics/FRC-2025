@@ -30,6 +30,7 @@ public class ChuterShooterIOSim implements ChuterShooterIO {
     shooterSim.getAngularVelocityRadPerSec();
 
     inputs.shooterVelocityRadPerSec = shooterSim.getAngularVelocityRadPerSec();
+    inputs.appliedOutput = 12.0 * shooterSpeed;
     inputs.coralLoading = coralLoading;
     inputs.coralReady = coralReady;
   }

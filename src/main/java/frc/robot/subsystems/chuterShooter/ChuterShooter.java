@@ -2,6 +2,8 @@ package frc.robot.subsystems.chuterShooter;
 
 import static edu.wpi.first.units.Units.Seconds;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,6 +27,7 @@ public class ChuterShooter extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+        Logger.processInputs("ChuterShooter", inputs);
         coralLoading = inputs.coralLoading;
         coralReady = inputs.coralReady;
 
