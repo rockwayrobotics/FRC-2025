@@ -16,13 +16,10 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
-import java.security.Timestamp;
-import java.util.EnumSet;
 import java.util.Optional;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.controllers.PPLTVController;
@@ -30,28 +27,20 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.networktables.FloatArraySubscriber;
-import edu.wpi.first.networktables.FloatArrayTopic;
-import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.NetworkTableListener;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -61,7 +50,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.RobotTracker;
-import frc.robot.util.Sensors;
 import frc.robot.util.TimestampSynchronizer;
 import frc.robot.util.Tuner;
 
@@ -76,7 +64,13 @@ public class Drive extends SubsystemBase {
   private Rotation2d rawGyroRotation = new Rotation2d();
   private double lastLeftPositionMeters = 0.0;
   private double lastRightPositionMeters = 0.0;
-  private double scale = 0.7;
+
+  private final Tuner standardDriveTuner = new Tuner("Drive/standardDriveTuner", 0.7, true);
+  private final Tuner slowDriveTuner = new Tuner("Drive/slowDriveTuner", 0.3, true);
+  private final Tuner superSlowDriveTuner = new Tuner("Drive/superSlowDriveTuner", 0.1, true);
+  private final Tuner fastDriveTuner = new Tuner("Drive/fastDriveTuner", 1, true);
+
+  private double scale = standardDriveTuner.get();
   private double rotationScale = 0.76;
 
   private double leftPositionShootTarget = Double.NaN;
@@ -210,6 +204,22 @@ public class Drive extends SubsystemBase {
 
   public double getGyroAngle() {
     return gyroIO.getAngle();
+  }
+
+  public double getStandardDriveTuner() {
+    return standardDriveTuner.get();
+  }
+
+  public double getSlowDriveTuner() {
+    return slowDriveTuner.get();
+  }
+
+  public double getSuperSlowDriveTuner() {
+    return superSlowDriveTuner.get();
+  }
+
+  public double getFastDriveTuner() {
+    return fastDriveTuner.get();
   }
 
   @Override

@@ -128,6 +128,7 @@ public class RobotContainer {
     return simulation;
   }
 
+
   /**
    * Use this method to define your trigger->command mappings. Triggers can be
    * created via the
@@ -145,16 +146,16 @@ public class RobotContainer {
   private void configureBindings() {
     // left bumper -> set drive scale to the tuned drivescale, default to 0.3 when
     // held
-    driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(driveScale.getDouble(0.3))));
-    driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
+    driverController.leftBumper().onTrue(new InstantCommand(() -> drive.setScale(drive.getSlowDriveTuner())));
+    driverController.leftBumper().onFalse(new InstantCommand(() -> drive.setScale(drive.getStandardDriveTuner())));
 
     // right bumper -> set drive scale to 1 when held
-    driverController.rightBumper().onTrue(new InstantCommand(() -> drive.setScale(1)));
-    driverController.rightBumper().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
+    driverController.rightBumper().onTrue(new InstantCommand(() -> drive.setScale(drive.getFastDriveTuner())));
+    driverController.rightBumper().onFalse(new InstantCommand(() -> drive.setScale(drive.getStandardDriveTuner())));
 
     // left trigger -> set drive scale to 0.1 when held
-    driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setScale(0.1)));
-    driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(0.7)));
+    driverController.leftTrigger().onTrue(new InstantCommand(() -> drive.setScale(drive.getSuperSlowDriveTuner())));
+    driverController.leftTrigger().onFalse(new InstantCommand(() -> drive.setScale(drive.getStandardDriveTuner())));
 
     // Rotation scaling if desired
     // driverController.leftTrigger().onTrue(new InstantCommand(() ->
