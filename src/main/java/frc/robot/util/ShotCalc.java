@@ -35,8 +35,13 @@ public class ShotCalc {
   private double wall_angle_rads = 0.0;
 
   private Tuner chuteAngleOffset = new Tuner("ShotCalc/chuteAngleOffset", 0, true); 
+  private Tuner chuteAngleLow = new Tuner("ShotCalc/chuteAngleLow", 70.0, true);
+  private Tuner chuteAngleHigh = new Tuner("ShotCalc/chuteAngleHigh", 90.0, true);
+  private Tuner shotSpeedLow = new Tuner("ShotCalc/shotSpeedLow", 0.2, true);
+  private Tuner shotSpeedHigh = new Tuner("ShotCalc/shotSpeedHigh", 0.25, true);
 
   InterpolatingDoubleTreeMap chuteAngleTable = new InterpolatingDoubleTreeMap();
+  InterpolatingDoubleTreeMap shooterSpeedTable = new InterpolatingDoubleTreeMap();
 
   public ShotCalc(double pos, double dist, ReefBar bar, ToFSensorLocation tof) {
     this.pos = pos;
@@ -82,10 +87,15 @@ public class ShotCalc {
     
     // Docs don't say what this does with values outside the edges of the
     // table so we're being explicit about the 0..100 and 500... range.
-    chuteAngleTable.put(0.0, 70.0);
-    chuteAngleTable.put(100.0, 70.0);
-    chuteAngleTable.put(500.0, 90.0);
-    chuteAngleTable.put(999.0, 90.0);
+    chuteAngleTable.put(0.0, chuteAngleLow.get());
+    chuteAngleTable.put(100.0, chuteAngleLow.get());
+    chuteAngleTable.put(500.0, chuteAngleHigh.get());
+    chuteAngleTable.put(999.0, chuteAngleHigh.get());
+
+    shooterSpeedTable.put(0.0, shotSpeedLow.get());
+    shooterSpeedTable.put(100.0, shotSpeedLow.get());
+    shooterSpeedTable.put(500.0, shotSpeedHigh.get());
+    shooterSpeedTable.put(999.0, shotSpeedHigh.get());
   }
 
   // Do the math, and report back with a tuple containing the
@@ -134,7 +144,9 @@ public class ShotCalc {
   }
 
   public double getShooterSpeed() {
-    return 0.2;
+    double speed = shooterSpeedTable.get(this.dist_to_target);
+    Logger.recordOutput("/ShotCalc/shooterSpeed", speed);
+    return speed;
   }
 
   // In radians... adjusted to be negative on the right, postive on the left
