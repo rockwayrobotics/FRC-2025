@@ -37,8 +37,8 @@ public final class Constants {
   }
 
   public static final class Field {
-    public static final double REEF_CORNER_TO_NEAR_POST_METERS = 0.3061;
-    public static final double REEF_CORNER_TO_FAR_POST_METERS = 0.6347;
+    public static final double REEF_CORNER_TO_NEAR_POST_METERS = 0.3061 + 0.008;
+    public static final double REEF_CORNER_TO_FAR_POST_METERS = 0.3286 + REEF_CORNER_TO_NEAR_POST_METERS;
   }
 
   public static final class Gamepads {
