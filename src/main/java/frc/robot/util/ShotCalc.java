@@ -85,17 +85,13 @@ public class ShotCalc {
         break;
     }
     
-    // Docs don't say what this does with values outside the edges of the
-    // table so we're being explicit about the 0..100 and 500... range.
-    chuteAngleTable.put(0.0, chuteAngleLow.get());
+    // The Java source shows this clamps the output to the upper or lower value
+    // when the input is beyond the bounds.
     chuteAngleTable.put(100.0, chuteAngleLow.get());
     chuteAngleTable.put(500.0, chuteAngleHigh.get());
-    chuteAngleTable.put(999.0, chuteAngleHigh.get());
 
-    shooterSpeedTable.put(0.0, shotSpeedLow.get());
     shooterSpeedTable.put(100.0, shotSpeedLow.get());
     shooterSpeedTable.put(500.0, shotSpeedHigh.get());
-    shooterSpeedTable.put(999.0, shotSpeedHigh.get());
   }
 
   // Do the math, and report back with a tuple containing the
