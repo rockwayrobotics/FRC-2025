@@ -1,5 +1,9 @@
 package frc.robot;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -67,6 +71,9 @@ public class RobotContainer {
   // Set up a camera publisher so I can publish value of camera to NetworkTables
   private final NetworkTableEntry cameraPublisher = nt.getEntry("/CameraPublisher/PiCam/selected");
 
+  // Periodically send the robot's timestamp to the pi
+  private final UdpTimeSend timeSend;
+
   // Simulation only
   protected WorldSimulation simulation = null;
 
@@ -124,6 +131,14 @@ public class RobotContainer {
     // autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
+
+    UdpTimeSend timeSend = null;
+    try {
+      timeSend = new UdpTimeSend(new InetSocketAddress(InetAddress.getByAddress(new byte[] {10, 80, 89, 11}), 3000), 1);
+    } catch (UnknownHostException e) {
+      System.out.println("specifying an invalid IP address to send timestamps - this will probably crash, fix this bug");
+    }
+    this.timeSend = timeSend;
 
     configureBindings();
 
@@ -478,5 +493,9 @@ public class RobotContainer {
 
   public void home() {
     superstructure.home();
+  }
+
+  public void sendTimeToPiPeriodic() {
+    timeSend.periodic();
   }
 }

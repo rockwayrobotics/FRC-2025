@@ -111,6 +111,8 @@ public class Robot extends LoggedRobot {
 
     // Back to normal priority
     Threads.setCurrentThreadPriority(false, 10);
+
+    m_robotContainer.sendTimeToPiPeriodic();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
