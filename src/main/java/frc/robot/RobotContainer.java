@@ -114,11 +114,14 @@ public class RobotContainer {
 
     // Left and right with auto-shoot on L2 on near center
     autoChooser.addOption("leftNearCenterAutoL2", AutoPaths.leftNearCenterAutoL2(drive, superstructure, chuterShooter));
-    autoChooser.addOption("rightNearCenterAutoL2", AutoPaths.rightNearCenterAutoL2(drive, superstructure, chuterShooter));
+    autoChooser.addOption("rightNearCenterAutoL2",
+        AutoPaths.rightNearCenterAutoL2(drive, superstructure, chuterShooter));
 
     // INCREDIBLY SUS may GO KABOOM
-    autoChooser.addOption("algae grab" , AutoPaths.grabTroughAlgaeL3(drive, superstructure));
-    autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
+    autoChooser.addOption("algae grab", AutoPaths.grabTroughAlgaeL3(drive, superstructure));
+    autoChooser.addOption("centerFarCenterL3Left", AutoPaths.centerFarCenterAlgaeL3(drive, superstructure, chuterShooter, false));
+    autoChooser.addOption("centerFarCenterL3Right", AutoPaths.centerFarCenterAlgaeL3(drive, superstructure, chuterShooter, true));
+    // autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
@@ -129,7 +132,6 @@ public class RobotContainer {
   public WorldSimulation getWorldSimulation() {
     return simulation;
   }
-
 
   /**
    * Use this method to define your trigger->command mappings. Triggers can be
@@ -191,10 +193,8 @@ public class RobotContainer {
     // driverController.rightBumper().onFalse(new InstantCommand(() -> drive.set(0,
     // 0)));
 
-    driverController.a()
-        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
-    driverController.b()
-        .whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.FAR, chuterShooter));
+    driverController.a().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
+    driverController.b().whileTrue(ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.FAR, chuterShooter));
     driverController.x().whileTrue(new DriveStraight(0.45, drive));
     driverController.y().whileTrue(ScoreCommandsOnlyDrive.rampDownSpeed(drive, 1, 3));
 

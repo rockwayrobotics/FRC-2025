@@ -64,6 +64,45 @@ public class DriveCommands {
         });
   }
 
+  public static Command blendScoreSpeedToDefault(DoubleSupplier left_y, DoubleSupplier right_x, Drive drive) {
+    double durationSeconds = 1;
+    Timer timer = new Timer();
+
+    Command command = new Command() {
+      private double initialSpeed = 0;
+
+      public void initialize() {
+        initialSpeed = (drive.getLeftVelocityMetersPerSec() + drive.getRightVelocityMetersPerSec()) / 2;
+        timer.restart();
+      }
+
+      public void execute() {
+        double speed;
+        double rotation;
+        double rotate_clockwise = right_x.getAsDouble() * Constants.Gamepads.JOY_ROTATE_SCALE;
+        double speed_forward = left_y.getAsDouble() * Constants.Gamepads.JOY_SPEED_SCALE;
+
+        if (Math.abs(speed_forward) < 0.01) {
+          speed = 0;
+        } else {
+          speed = speed_forward;
+        }
+
+        if (Math.abs(rotate_clockwise) < 0.01) {
+          rotation = 0;
+        } else {
+          rotation = rotate_clockwise;
+        }
+
+        var blendedSpeed = MathUtil.interpolate(initialSpeed, speed, timer.get() / durationSeconds);
+        drive.set(blendedSpeed, rotation);
+
+      }
+    }.withTimeout(durationSeconds);
+    command.addRequirements(drive);
+    return command;
+  }
+
   /** Measures the velocity feedforward constants for the drive. */
   public static Command feedforwardCharacterization(Drive drive) {
     List<Double> velocitySamples = new LinkedList<>();
