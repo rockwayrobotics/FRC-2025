@@ -17,7 +17,7 @@ def udp_watcher(udp_trec):
         data, addr = sock.recvfrom(1024)
         if len(data) == 8:
             now = time.monotonic()
-            ts = struct.unpack("<Q", data[0:8])
+            ts = struct.unpack("<Q", data[0:8])[0]
             udp_trec.append([now, ts / 1e6])
             print([now, ts / 1e6])
 
