@@ -236,13 +236,10 @@ public final class Constants {
   public static final class Digital {
     public static final int CHUTE_SHOOT_CORAL_BEAMBREAK = 0;
     public static final int CHUTE_LOAD_CORAL_BEAMBREAK = 1;
+    public static final int ALGAE_DISTANCE_SENSOR = 2;
     public static final int ALGAE_HOME_LIMIT_SWITCH = 5;
     public static final int ELEVATOR_HOME_BEAMBREAK = 6;
     public static final int CHUTE_HOME_LIMIT_SWITCH = 7;
-  }
-
-  public static final class Analog {
-    public static final int ALGAE_DISTANCE_SENSOR = 3;
   }
 
   public static final class PathPlanner {

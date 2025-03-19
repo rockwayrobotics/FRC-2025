@@ -7,7 +7,6 @@ public interface GrabberIO {
   public static class GrabberIOInputs {
     public double wristAngleRadians = 0;
     public double wristVelocityRadPerSec = 0;
-    public double algaeDistance = 0;
     public boolean home = false;
   }
 

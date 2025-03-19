@@ -92,7 +92,6 @@ public class GrabberIOReal implements GrabberIO {
   public void updateInputs(GrabberIOInputs inputs) {
     REVUtils.ifOk(wristMotor, wristEncoder::getPosition, (value) -> inputs.wristAngleRadians = value);
     REVUtils.ifOk(wristMotor, wristEncoder::getVelocity, (value) -> inputs.wristVelocityRadPerSec = value);
-    inputs.algaeDistance = Sensors.getInstance().getGrabberAcquiredDistance();
     inputs.home = Sensors.getInstance().getGrabberHomeSwitch();
   }
 
