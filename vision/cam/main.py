@@ -227,14 +227,15 @@ def main():
                 elif inCornerMode:
                     isRecordingChute = True
 
-                if isRecordingChute:
+                if isRecordingChute and chuteImage is not None:
                     chuteStream.add_frame(chuteImage)
 
             if driver_cam is chute_cam:
                 dashboard_arr = chuteImage
             else:
                 dashboard_arr = cv2.resize(arr0 if driver_cam is fore_cam else arr1, (320, 240))
-            source.putFrame(dashboard_arr)
+            if dashboard_arr is not None:
+                source.putFrame(dashboard_arr)
 
             if not fore_cam.fake:
                 aprilDetector.detect(arr0)
