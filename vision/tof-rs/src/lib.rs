@@ -276,10 +276,12 @@ impl TofSensor {
             .priority(ThreadPriority::Max)
             .spawn(move |_| {
                 // Worker thread implementation
-                if let Err(e) = reading_loop(sensor, thread_is_running.clone(), overflow_flag, &sender){
-                  eprintln!("Error: {e:?}");
-                  let text = format!("{e:?}");
-                  sender.try_send(SensorResult::ThreadExit(Some(text)));
+                if let Err(e) =
+                    reading_loop(sensor, thread_is_running.clone(), overflow_flag, &sender)
+                {
+                    eprintln!("Error: {e:?}");
+                    let text = format!("{e:?}");
+                    let _ = sender.try_send(SensorResult::ThreadExit(Some(text)));
                 }
 
                 // Always mark as not running when thread exits
@@ -389,7 +391,7 @@ fn reading_loop(
     sensor: Arc<Mutex<VL53L1X<I2cdev>>>,
     is_running: Arc<AtomicBool>,
     overflow_flag: Arc<Mutex<bool>>,
-    sender: Sender<SensorResult>,
+    sender: &Sender<SensorResult>,
 ) -> Result<(), String> {
     // Retrieve timing parameters so we know how long to wait.
     let timing_budget = {
