@@ -532,7 +532,8 @@ public class AutoPaths {
     Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
     Pose2d algaePrepare = new Pose2d(6.1, yCenter, Rotation2d.fromDegrees(180.00));
     Pose2d algaeLoad = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
-    Pose2d scorePrep = new Pose2d(6.0, yCenter + (backupRight ? 2.0 : -2.0), Rotation2d.fromDegrees(backupRight ? -90 : 90));
+    Pose2d scorePrep = new Pose2d(6.0, yCenter + (backupRight ? 2.0 : -2.0),
+        Rotation2d.fromDegrees(backupRight ? -90 : 90));
     Trajectory algaePrepareTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), algaePrepare,
         config);
     Trajectory algaeLoadTrajectory = TrajectoryGenerator.generateTrajectory(algaePrepare, List.of(), algaeLoad,
@@ -540,17 +541,12 @@ public class AutoPaths {
     Trajectory backupTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaeLoad, algaePrepare, scorePrep),
         reversedConfig);
 
-    double delaySeconds = 10;
+    double delaySeconds = 5;
     var command = Commands.sequence(
         runTrajectory(algaePrepareTrajectory, drive),
 
         Commands.runOnce(() -> drive.stop()),
         Commands.waitSeconds(delaySeconds),
-        Commands.run(() -> {
-          chuterShooter.startShooting();
-        }).withTimeout(1).finallyDo(() -> {
-          chuterShooter.stopShooting();
-        }),
 
         // Raise elevator, get grabbers into position
         runTrajectory(algaeLoadTrajectory, drive),
@@ -558,11 +554,6 @@ public class AutoPaths {
 
         Commands.runOnce(() -> drive.stop()),
         Commands.waitSeconds(delaySeconds),
-        Commands.run(() -> {
-          chuterShooter.startShooting();
-        }).withTimeout(1).finallyDo(() -> {
-          chuterShooter.stopShooting();
-        }),
 
         Commands.parallel(
             runTrajectory(backupTrajectory, drive),
@@ -577,11 +568,6 @@ public class AutoPaths {
 
         Commands.runOnce(() -> drive.stop()),
         Commands.waitSeconds(delaySeconds),
-        Commands.run(() -> {
-          chuterShooter.startShooting();
-        }).withTimeout(1).finallyDo(() -> {
-          chuterShooter.stopShooting();
-        }),
 
         ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
     command.addRequirements(drive, superstructure, chuterShooter);
