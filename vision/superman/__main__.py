@@ -14,10 +14,14 @@ def parse_args():
                         help="Enable debug logging")
     parser.add_argument("--radio", action="store_true",
                         help="Enable WiFi radio control")
-    parser.add_argument("--on-delay", type=float, default=5.0,
-                        help="Delay (in minutes) before re-enabling WiFi after FMS disconnection (default: 5)")
+    parser.add_argument("--on-delay", type=int, default=300,
+                        help="Delay (in seconds) before re-enabling WiFi after FMS disconnection (default: %(default)s)")
     parser.add_argument("--led", action="store_true",
                         help="Enable LED control to indicate WiFi status")
+    parser.add_argument("--serve-nt", action="store_true",
+                        help="Serve NetworkTables for testing")
+    parser.add_argument("--mock-commands", action="store_true",
+                        help="Don't execute actual system commands when in testing mode")
     
     return parser.parse_args()
 
