@@ -6,7 +6,7 @@ After=network.target
 User=user
 Group=user
 WorkingDirectory=/home/user/stable/vision
-ExecStart=/home/user/env3.11/bin/python -m superman --radio --led
+ExecStart=/home/user/env3.11/bin/python -m superman --led --radio --on-delay 180
 # add --debug for more verbose logging
 Restart=on-failure
 RestartSec=5s
