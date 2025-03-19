@@ -130,7 +130,7 @@ public class ChuteIOReal implements ChuteIO {
     pivotMotor.set(0);
 
     Runnable finishHoming = () -> {
-      pivotEncoder.setPosition(Units.degreesToRadians(-90));
+      pivotEncoder.setPosition(Units.degreesToRadians(-86.6));
       updateParams(true);
       promise.complete(true);
     };
