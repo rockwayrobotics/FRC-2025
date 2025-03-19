@@ -276,7 +276,11 @@ impl TofSensor {
             .priority(ThreadPriority::Max)
             .spawn(move |_| {
                 // Worker thread implementation
-                let _ = reading_loop(sensor, thread_is_running.clone(), overflow_flag, sender);
+                if let Err(e) = reading_loop(sensor, thread_is_running.clone(), overflow_flag, &sender){
+                  eprintln!("Error: {e:?}");
+                  let text = format!("{e:?}");
+                  sender.try_send(SensorResult::ThreadExit(Some(text)));
+                }
 
                 // Always mark as not running when thread exits
                 thread_is_running.store(false, Ordering::SeqCst);
