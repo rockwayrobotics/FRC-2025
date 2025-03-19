@@ -30,6 +30,7 @@ import frc.robot.RobotTracker;
 import frc.robot.subsystems.chuterShooter.ChuterShooter;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.util.Sensors;
 import frc.robot.util.TrajectoryUtils;
 import frc.robot.util.Tuner;
 
@@ -541,21 +542,38 @@ public class AutoPaths {
     Trajectory backupTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaeLoad, algaePrepare, scorePrep),
         reversedConfig);
 
-    double delaySeconds = 5;
     var command = Commands.sequence(
-        runTrajectory(algaePrepareTrajectory, drive),
+        Commands.parallel(
+            runTrajectory(algaePrepareTrajectory, drive),
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  return algaePrepare.getTranslation()
+                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 0.5;
+                }),
+                Commands.runOnce(() -> {
+                  // Raise the elevator and grabber when we are within 0.5m of our ready position
+                  superstructure.gotoAlgaeSetpoint(AlgaeLevel.L2);
+                }))),
 
-        Commands.runOnce(() -> drive.stop()),
-        Commands.waitSeconds(delaySeconds),
+        Commands.waitUntil(() -> {
+          return superstructure.isElevatorAtGoal() && superstructure.isGrabberWristAtGoal();
+        }),
+        Commands.runOnce(() -> {
+          superstructure.setGrabberMotor(-1);
+        }),
 
-        // Raise elevator, get grabbers into position
         runTrajectory(algaeLoadTrajectory, drive),
-        // In parallel? Spin grabber motors with optimistic timeout
 
         Commands.runOnce(() -> drive.stop()),
-        Commands.waitSeconds(delaySeconds),
+        Commands.race(
+            Commands.waitSeconds(0.5),
+            Commands.waitUntil(() -> Sensors.getInstance().getGrabberAcquired())),
+        Commands.waitSeconds(0.5),
 
         Commands.parallel(
+            Commands.runOnce(() -> {
+              superstructure.setGrabberMotor(0);
+            }),
             runTrajectory(backupTrajectory, drive),
             Commands.sequence(
                 Commands.waitUntil(() -> {
@@ -566,8 +584,7 @@ public class AutoPaths {
                   superstructure.gotoSetpoint(CoralLevel.L3, backupRight ? Side.LEFT : Side.RIGHT);
                 }))),
 
-        Commands.runOnce(() -> drive.stop()),
-        Commands.waitSeconds(delaySeconds),
+        Commands.waitSeconds(0.5),
 
         ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
     command.addRequirements(drive, superstructure, chuterShooter);

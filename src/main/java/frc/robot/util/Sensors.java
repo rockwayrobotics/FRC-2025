@@ -2,14 +2,13 @@ package frc.robot.util;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.AsynchronousInterrupt;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.Constants;
 
 public class Sensors {
-  private AnalogInput grabberAcquiredDistanceSensor = new AnalogInput(
-      Constants.Analog.ALGAE_DISTANCE_SENSOR);
+  private DigitalInput grabberAcquiredSensor = new DigitalInput(
+      Constants.Digital.ALGAE_DISTANCE_SENSOR);
   private DigitalInput grabberHomeSwitch = new DigitalInput(
       Constants.Digital.ALGAE_HOME_LIMIT_SWITCH);
   private DigitalInput chuteHomeSwitch = new DigitalInput(Constants.Digital.CHUTE_HOME_LIMIT_SWITCH);
@@ -37,9 +36,7 @@ public class Sensors {
   }
 
   public void updateNT() {
-    Logger.recordOutput("Grabber/distance_mm", getGrabberAcquiredDistance());
-    Logger.recordOutput("Grabber/acquired_bool",
-        getGrabberAcquiredDistance() > Constants.Grabber.ALGAE_DISTANCE_SENSOR_ACQUIRED_VOLTS);
+    Logger.recordOutput("Grabber/acquired", getGrabberAcquired());
     Logger.recordOutput("Grabber/home_sw", getGrabberHomeSwitch());
     Logger.recordOutput("Chute/home_sw", getChuteHomeSwitch());
     Logger.recordOutput("Chute/loaded_sw", getChuteCoralLoadedBeambreak());
@@ -48,13 +45,10 @@ public class Sensors {
   }
 
   /**
-   * @return the distance from the algae acquired distance sensor, in mm (FIXME:
-   *         rn its in volts)
+   * @return true if something close to algae grabber
    */
-  public double getGrabberAcquiredDistance() {
-    // TODO: Calibrate this and convert from voltage to mm.
-    // 40 to 300 mm
-    return grabberAcquiredDistanceSensor.getVoltage();
+  public boolean getGrabberAcquired() {
+    return grabberAcquiredSensor.get();
   }
 
   /** @return true if the grabber home limit switch is pressed. */
