@@ -3,9 +3,9 @@ package frc.robot.commands;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.List;
-import edu.wpi.first.math.Vector;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.LTVUnicycleController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -244,6 +244,8 @@ public class AutoPaths {
     return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure, chuterShooter);
   }
 
+
+
   public static Command leftNearCenterTrough(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 7.050; // 1 m from wall
@@ -430,6 +432,54 @@ public class AutoPaths {
         Commands.runOnce(() -> {
           superstructure.setElevatorGoalHeightMillimeters(20);
         }));
+  }
+
+  public static Command rightFarRightAlgaeL3(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter){
+    // Center of the reef = (4.489,4.026)
+
+    Pose2d startPose = new Pose2d(7.464, 1.000, Rotation2d.fromDegrees(180));
+    Pose2d algaePrepare = new Pose2d(5.2945, 5.4212, Rotation2d.fromDegrees(240));
+    Pose2d algaeLoad = new Pose2d(5.1945, 5.248, Rotation2d.fromDegrees(240));
+    Pose2d scorePrep = new Pose2d(1,1, Rotation2d.fromDegrees(330));
+
+    Trajectory algaePrepareTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), algaePrepare,
+        config);
+    Trajectory algaeLoadTrajectory = TrajectoryGenerator.generateTrajectory(algaePrepare, List.of(), algaeLoad,
+        config);
+    Trajectory backupTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaeLoad, algaePrepare, scorePrep),
+        reversedConfig);
+
+    double delaySeconds = 5;
+    var command = Commands.sequence(
+        runTrajectory(algaePrepareTrajectory, drive),
+
+        Commands.runOnce(() -> drive.stop()),
+        Commands.waitSeconds(delaySeconds),
+
+        // Raise elevator, get grabbers into position
+        runTrajectory(algaeLoadTrajectory, drive),
+        // In parallel? Spin grabber motors with optimistic timeout
+
+        Commands.runOnce(() -> drive.stop()),
+        Commands.waitSeconds(delaySeconds),
+
+        Commands.parallel(
+            runTrajectory(backupTrajectory, drive),
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  return scorePrep.getTranslation()
+                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 0.5;
+                }),
+                Commands.runOnce(() -> {
+                  superstructure.gotoSetpoint(CoralLevel.L3, Side.RIGHT);
+                }))),
+
+        Commands.runOnce(() -> drive.stop()),
+        Commands.waitSeconds(delaySeconds),
+
+        ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
+    command.addRequirements(drive, superstructure, chuterShooter);
+    return command;
   }
 
   public static Command leftNearAutoL2(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
