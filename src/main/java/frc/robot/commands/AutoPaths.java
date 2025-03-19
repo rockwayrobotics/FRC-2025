@@ -525,6 +525,69 @@ public class AutoPaths {
     return command;
   }
 
+  public static Command centerFarCenterAlgaeL3(Drive drive, Superstructure superstructure,
+      ChuterShooter chuterShooter, boolean backupRight) {
+    // Centered in front of far center reef wall
+    double yCenter = 4.026;
+    Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
+    Pose2d algaePrepare = new Pose2d(6.1, yCenter, Rotation2d.fromDegrees(180.00));
+    Pose2d algaeLoad = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
+    Pose2d scorePrep = new Pose2d(6.0, yCenter + (backupRight ? 2.0 : -2.0), Rotation2d.fromDegrees(backupRight ? -90 : 90));
+    Trajectory algaePrepareTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), algaePrepare,
+        config);
+    Trajectory algaeLoadTrajectory = TrajectoryGenerator.generateTrajectory(algaePrepare, List.of(), algaeLoad,
+        config);
+    Trajectory backupTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaeLoad, algaePrepare, scorePrep),
+        reversedConfig);
+
+    double delaySeconds = 10;
+    var command = Commands.sequence(
+        runTrajectory(algaePrepareTrajectory, drive),
+
+        Commands.runOnce(() -> drive.stop()),
+        Commands.waitSeconds(delaySeconds),
+        Commands.run(() -> {
+          chuterShooter.startShooting();
+        }).withTimeout(1).finallyDo(() -> {
+          chuterShooter.stopShooting();
+        }),
+
+        // Raise elevator, get grabbers into position
+        runTrajectory(algaeLoadTrajectory, drive),
+        // In parallel? Spin grabber motors with optimistic timeout
+
+        Commands.runOnce(() -> drive.stop()),
+        Commands.waitSeconds(delaySeconds),
+        Commands.run(() -> {
+          chuterShooter.startShooting();
+        }).withTimeout(1).finallyDo(() -> {
+          chuterShooter.stopShooting();
+        }),
+
+        Commands.parallel(
+            runTrajectory(backupTrajectory, drive),
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  return scorePrep.getTranslation()
+                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 0.5;
+                }),
+                Commands.runOnce(() -> {
+                  superstructure.gotoSetpoint(CoralLevel.L3, backupRight ? Side.LEFT : Side.RIGHT);
+                }))),
+
+        Commands.runOnce(() -> drive.stop()),
+        Commands.waitSeconds(delaySeconds),
+        Commands.run(() -> {
+          chuterShooter.startShooting();
+        }).withTimeout(1).finallyDo(() -> {
+          chuterShooter.stopShooting();
+        }),
+
+        ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
+    command.addRequirements(drive, superstructure, chuterShooter);
+    return command;
+  }
+
   public static Command leftFarFancy(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 7.050; // 1 m from wall
