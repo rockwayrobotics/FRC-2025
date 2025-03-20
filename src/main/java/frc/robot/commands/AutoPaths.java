@@ -71,6 +71,10 @@ public class AutoPaths {
       .setKinematics(RobotTracker.getInstance().getDriveKinematics())
       .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration));
 
+  private static final TrajectoryConfig slightlyFasterConfig = new TrajectoryConfig(trajectoryMaxVelocity, 1)
+      .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+      .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration));
+
   // The reverse trajectory config that applies to most autos
   private static final TrajectoryConfig reversedConfig = new TrajectoryConfig(trajectoryMaxVelocity,
       trajectoryMaxAcceleration)
@@ -459,7 +463,7 @@ public class AutoPaths {
     Pose2d flippedScorePrep = TrajectoryUtils.rotatePose180(scorePrep);
 
     Trajectory algaePrepareTrajectory = TrajectoryGenerator.generateTrajectory(List.of(startPose, algaePrepare),
-        config);
+        slightlyFasterConfig);
     Trajectory algaeLoadTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaePrepare, algaeLoad),
         config);
     Trajectory backupTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaeLoad, algaePrepare, scorePrep),
@@ -476,7 +480,7 @@ public class AutoPaths {
                 }),
                 Commands.runOnce(() -> {
                   // Raise the elevator and grabber when we are within 0.5m of our ready position
-                  superstructure.gotoAlgaeSetpoint(AlgaeLevel.L2);
+                  superstructure.gotoAlgaeSetpoint(AlgaeLevel.L3);
                 }))),
 
         Commands.waitUntil(() -> {
