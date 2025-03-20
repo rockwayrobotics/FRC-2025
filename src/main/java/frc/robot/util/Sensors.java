@@ -48,7 +48,7 @@ public class Sensors {
    * @return true if something close to algae grabber
    */
   public boolean getGrabberAcquired() {
-    return grabberAcquiredSensor.get();
+    return !grabberAcquiredSensor.get();
   }
 
   /** @return true if the grabber home limit switch is pressed. */
