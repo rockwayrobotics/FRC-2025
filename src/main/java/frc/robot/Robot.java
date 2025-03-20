@@ -109,6 +109,10 @@ public class Robot extends LoggedRobot {
     // Push updates of sensor state to NetworkTables no matter what
     Sensors.getInstance().updateNT();
 
+    var freeMemory = Runtime.getRuntime().freeMemory();
+    Logger.recordOutput("Java/FreeMemory", freeMemory);
+    Logger.recordOutput("Java/UsedMemory", Runtime.getRuntime().totalMemory() - freeMemory);
+
     // Back to normal priority
     Threads.setCurrentThreadPriority(false, 10);
 

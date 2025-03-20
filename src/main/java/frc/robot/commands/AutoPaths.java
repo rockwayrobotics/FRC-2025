@@ -244,8 +244,6 @@ public class AutoPaths {
     return runTroughTrajectory(trajectory, Side.LEFT, drive, superstructure, chuterShooter);
   }
 
-
-
   public static Command leftNearCenterTrough(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     double start_pose_x = 7.464;
     double start_pose_y = 7.050; // 1 m from wall
@@ -434,48 +432,87 @@ public class AutoPaths {
         }));
   }
 
-  public static Command rightFarRightAlgaeL3(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter){
+  public static Command rightFarRightAlgaeL3(Drive drive, Superstructure superstructure, ChuterShooter chuterShooter) {
     // Center of the reef = (4.489,4.026)
-
+    // Start 1m from wall at our usual spot on right
     Pose2d startPose = new Pose2d(7.464, 1.000, Rotation2d.fromDegrees(180));
-    Pose2d algaePrepare = new Pose2d(5.2945, 5.4212, Rotation2d.fromDegrees(240));
-    Pose2d algaeLoad = new Pose2d(5.1945, 5.248, Rotation2d.fromDegrees(240));
-    Pose2d scorePrep = new Pose2d(1,1, Rotation2d.fromDegrees(330));
+    // Move to 1.611m away from reef center, pointed at tag 20
+    Pose2d algaePrepare = new Pose2d(5.2945, 8.05 - 5.4212, Rotation2d.fromDegrees(120));
+    Pose2d flippedAlgaePrepare = TrajectoryUtils.rotatePose180(algaePrepare);
+    // Move to 1.411m away from reef center, pointed at tag 20, which should be
+    // basically touching wall
+    Pose2d algaeLoad = new Pose2d(5.1945, 8.05 - 5.248, Rotation2d.fromDegrees(120));
+    // Robot width is 0.41m, and the distance from wall to line is 0.178m, so aim to
+    // have
+    // robot center 0.588m from wall.
+    // The point 0.588 out from the AprilTag is (4.905 + 0.294, 4.745 + 0.5092) =
+    // (5.199, 5.2542).
+    // However, we want to be parallel to the wall, about the wall length away (so
+    // we can see the corner)
+    // The wall length is 0.96m, but we can't seem to turn accurately in that
+    // distance.
+    // (5.199 - 0.96 cos(30deg), 5.2542 + 0.96 sin(30deg)) = (4.3676, 5.7342)
+    // Try 1.5m?
+    double distanceFromTag = 1.5;
+    Pose2d scorePrep = new Pose2d(5.199 - distanceFromTag * Math.cos(Units.degreesToRadians(30)),
+        8.05 - (5.2542 + distanceFromTag * Math.sin(Units.degreesToRadians(30))), Rotation2d.fromDegrees(30));
+    Pose2d flippedScorePrep = TrajectoryUtils.rotatePose180(scorePrep);
 
-    Trajectory algaePrepareTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), algaePrepare,
+    Trajectory algaePrepareTrajectory = TrajectoryGenerator.generateTrajectory(List.of(startPose, algaePrepare),
         config);
-    Trajectory algaeLoadTrajectory = TrajectoryGenerator.generateTrajectory(algaePrepare, List.of(), algaeLoad,
+    Trajectory algaeLoadTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaePrepare, algaeLoad),
         config);
     Trajectory backupTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaeLoad, algaePrepare, scorePrep),
         reversedConfig);
 
-    double delaySeconds = 5;
     var command = Commands.sequence(
-        runTrajectory(algaePrepareTrajectory, drive),
+        Commands.parallel(
+            runTrajectory(algaePrepareTrajectory, drive),
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  var robotPose = (RobotTracker.getInstance().getEstimatedPose().getTranslation());
+                  return algaePrepare.getTranslation().getDistance(robotPose) < 0.5
+                      || flippedAlgaePrepare.getTranslation().getDistance(robotPose) < 0.5;
+                }),
+                Commands.runOnce(() -> {
+                  // Raise the elevator and grabber when we are within 0.5m of our ready position
+                  superstructure.gotoAlgaeSetpoint(AlgaeLevel.L2);
+                }))),
 
-        Commands.runOnce(() -> drive.stop()),
-        Commands.waitSeconds(delaySeconds),
+        Commands.waitUntil(() -> {
+          return superstructure.isElevatorAtGoal() &&
+              superstructure.isGrabberWristAtGoal();
+        }),
 
-        // Raise elevator, get grabbers into position
+        Commands.runOnce(() -> {
+          superstructure.setGrabberMotor(-1);
+        }),
+
         runTrajectory(algaeLoadTrajectory, drive),
-        // In parallel? Spin grabber motors with optimistic timeout
 
         Commands.runOnce(() -> drive.stop()),
-        Commands.waitSeconds(delaySeconds),
+
+        Commands.race(
+            Commands.waitSeconds(0.5),
+            Commands.waitUntil(() -> Sensors.getInstance().getGrabberAcquired())),
+        Commands.waitSeconds(0.5),
 
         Commands.parallel(
+            Commands.runOnce(() -> {
+              superstructure.setGrabberMotor(0);
+            }),
             runTrajectory(backupTrajectory, drive),
             Commands.sequence(
                 Commands.waitUntil(() -> {
-                  return scorePrep.getTranslation()
-                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 0.5;
+                  var robotPose = (RobotTracker.getInstance().getEstimatedPose().getTranslation());
+                  return scorePrep.getTranslation().getDistance(robotPose) < 0.5
+                      || flippedScorePrep.getTranslation().getDistance(robotPose) < 0.5;
                 }),
                 Commands.runOnce(() -> {
                   superstructure.gotoSetpoint(CoralLevel.L3, Side.RIGHT);
                 }))),
 
-        Commands.runOnce(() -> drive.stop()),
-        Commands.waitSeconds(delaySeconds),
+        Commands.waitSeconds(0.5),
 
         ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
     command.addRequirements(drive, superstructure, chuterShooter);
@@ -511,6 +548,7 @@ public class AutoPaths {
     // 1 m from wall
     Pose2d startPose = new Pose2d(7.464, 1.0, Rotation2d.fromDegrees(180));
     Pose2d endPose = new Pose2d(5.2085, 2.1432, Rotation2d.fromDegrees(150));
+    Pose2d flippedEndPose = TrajectoryUtils.rotatePose180(endPose);
     Trajectory approachAutoScoreTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), endPose,
         autoScoreConfig);
 
@@ -519,8 +557,9 @@ public class AutoPaths {
             runTrajectory(approachAutoScoreTrajectory, drive),
             Commands.sequence(
                 Commands.waitUntil(() -> {
-                  return endPose.getTranslation()
-                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 1.0;
+                  var robotPose = (RobotTracker.getInstance().getEstimatedPose().getTranslation());
+                  return endPose.getTranslation().getDistance(robotPose) < 1.0
+                      || flippedEndPose.getTranslation().getDistance(robotPose) < 1.0;
                 }),
                 Commands.runOnce(() -> {
                   superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
@@ -534,6 +573,7 @@ public class AutoPaths {
     // 1 m from wall
     Pose2d startPose = new Pose2d(7.464, 1.0, Rotation2d.fromDegrees(180));
     Pose2d endPose = new Pose2d(2.9, 3, Rotation2d.fromDegrees(90));
+    Pose2d flippedEndPose = TrajectoryUtils.rotatePose180(endPose);
     Trajectory approachAutoScoreTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), endPose,
         autoScoreConfig);
 
@@ -542,8 +582,9 @@ public class AutoPaths {
             runTrajectory(approachAutoScoreTrajectory, drive),
             Commands.sequence(
                 Commands.waitUntil(() -> {
-                  return endPose.getTranslation()
-                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 1.0;
+                  var robotPose = (RobotTracker.getInstance().getEstimatedPose().getTranslation());
+                  return endPose.getTranslation().getDistance(robotPose) < 1.0
+                      || flippedEndPose.getTranslation().getDistance(robotPose) < 1.0;
                 }),
                 Commands.runOnce(() -> {
                   superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
@@ -557,6 +598,7 @@ public class AutoPaths {
     // 1 m from wall
     Pose2d startPose = new Pose2d(7.464, 7.05, Rotation2d.fromDegrees(180));
     Pose2d endPose = new Pose2d(3.05, 5.2, Rotation2d.fromDegrees(-90));
+    Pose2d flippedEndPose = TrajectoryUtils.rotatePose180(endPose);
     Trajectory approachAutoScoreTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), endPose,
         autoScoreConfig);
 
@@ -565,8 +607,9 @@ public class AutoPaths {
             runTrajectory(approachAutoScoreTrajectory, drive),
             Commands.sequence(
                 Commands.waitUntil(() -> {
-                  return endPose.getTranslation()
-                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 1.0;
+                  var robotPose = (RobotTracker.getInstance().getEstimatedPose().getTranslation());
+                  return endPose.getTranslation().getDistance(robotPose) < 1.0
+                      || flippedEndPose.getTranslation().getDistance(robotPose) < 1.0;
                 }),
                 Commands.runOnce(() -> {
                   superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT);
@@ -582,9 +625,11 @@ public class AutoPaths {
     double yCenter = 4.026;
     Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
     Pose2d algaePrepare = new Pose2d(6.1, yCenter, Rotation2d.fromDegrees(180.00));
+    Pose2d flippedAlgaePrepare = TrajectoryUtils.rotatePose180(algaePrepare);
     Pose2d algaeLoad = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
     Pose2d scorePrep = new Pose2d(6.0, yCenter + (backupRight ? 2.0 : -2.0),
         Rotation2d.fromDegrees(backupRight ? -90 : 90));
+    Pose2d flippedScorePrep = TrajectoryUtils.rotatePose180(scorePrep);
     Trajectory algaePrepareTrajectory = TrajectoryGenerator.generateTrajectory(startPose, List.of(), algaePrepare,
         config);
     Trajectory algaeLoadTrajectory = TrajectoryGenerator.generateTrajectory(algaePrepare, List.of(), algaeLoad,
@@ -597,8 +642,9 @@ public class AutoPaths {
             runTrajectory(algaePrepareTrajectory, drive),
             Commands.sequence(
                 Commands.waitUntil(() -> {
-                  return algaePrepare.getTranslation()
-                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 0.5;
+                  var robotPose = (RobotTracker.getInstance().getEstimatedPose().getTranslation());
+                  return algaePrepare.getTranslation().getDistance(robotPose) < 0.5
+                      || flippedAlgaePrepare.getTranslation().getDistance(robotPose) < 0.5;
                 }),
                 Commands.runOnce(() -> {
                   // Raise the elevator and grabber when we are within 0.5m of our ready position
@@ -627,8 +673,9 @@ public class AutoPaths {
             runTrajectory(backupTrajectory, drive),
             Commands.sequence(
                 Commands.waitUntil(() -> {
-                  return scorePrep.getTranslation()
-                      .getDistance(RobotTracker.getInstance().getEstimatedPose().getTranslation()) < 0.5;
+                  var robotPose = (RobotTracker.getInstance().getEstimatedPose().getTranslation());
+                  return scorePrep.getTranslation().getDistance(robotPose) < 0.5
+                      || flippedScorePrep.getTranslation().getDistance(robotPose) < 0.5;
                 }),
                 Commands.runOnce(() -> {
                   superstructure.gotoSetpoint(CoralLevel.L3, backupRight ? Side.LEFT : Side.RIGHT);

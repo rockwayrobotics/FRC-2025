@@ -92,10 +92,6 @@ public final class Constants {
     // 90 degrees is the other limit, facing flat to port
     public static final double PIVOT_INITIAL_ANGLE_RADS = Units.degreesToRadians(-90.0);
 
-    public static final double PIVOT_TROUGH = Units.degreesToRadians(-60);
-    public static final double PIVOT_L2 = Units.degreesToRadians(-60);
-    public static final double PIVOT_L3 = Units.degreesToRadians(-60);
-    public static final double PIVOT_LOAD = Units.degreesToRadians(-60);
     public static final double PIVOT_FLAT = Units.degreesToRadians(-90);
 
     public static final double PIVOT_GEAR_RATIO = 45; // 60/12 and 9:1 planetary
@@ -153,15 +149,6 @@ public final class Constants {
   }
 
   public static final class Elevator {
-    // Predefined heights in millimeters
-    public static final double TROUGH_HEIGHT = 1000.0;
-    public static final double L2_HEIGHT = 1000.0;
-    public static final double L3_HEIGHT = 1000.0;
-    public static final double LOAD_HEIGHT = 1000.0;
-    public static final double ALGAE_L2_HEIGHT = 1000.0;
-    public static final double ALGAE_L3_HEIGHT = 1000.0;
-    public static final double CLIMB_HEIGHT = 0.0;
-
     public static final double GEAR_RATIO = 2;
 
     public static final double ELEVATOR_CONVERSION_FACTOR = 26.3472615411;
