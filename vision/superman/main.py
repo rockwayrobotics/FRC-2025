@@ -217,7 +217,7 @@ class ResetService:
     
     async def reset_service(self, service_name):
         """Reset a system service"""
-        cmd = ["sudo", "systemctl", "restart", f"{service_name}.service"]
+        cmd = ["systemctl", "restart", f"{service_name}.service"]
         self.log.info(f"Executing: {' '.join(cmd)}")
         
         # Update status in test mode
@@ -266,10 +266,10 @@ class ResetService:
     async def handle_wifi(self, disable=True):
         """Enable or disable WiFi radio"""
         if disable:
-            cmd = ["sudo", "rfkill", "block", "wifi"]
+            cmd = ["rfkill", "block", "wifi"]
             state_msg = "disabled"
         else:
-            cmd = ["sudo", "rfkill", "unblock", "wifi"]
+            cmd = ["rfkill", "unblock", "wifi"]
             state_msg = "enabled"
         
         # Update status in test mode
