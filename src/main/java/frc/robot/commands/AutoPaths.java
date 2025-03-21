@@ -50,8 +50,8 @@ public class AutoPaths {
   private static final double trajectoryMaxCentripetalAcceleration = 0.5;
 
   static final Tuner stabilizeDelayTuner = new Tuner("TroughStabilizeWaitSeconds", 0.3, true);
-  static final Tuner troughShooterSpeedTuner = new Tuner("TroughShootSpeed", 0.1, true);
-  static final Tuner troughDriveSpeedTuner = new Tuner("TroughDriveSpeedMetersPerSec", 0.2, true);
+  static final Tuner troughShooterSpeedTuner = new Tuner("TroughShootSpeed", 0.13, true);
+  static final Tuner troughDriveSpeedTuner = new Tuner("TroughDriveSpeedMetersPerSec", 0, true);
   static final Tuner troughTimeTuner = new Tuner("TroughDurationSeconds", 5, true);
   static final Tuner dumpDistanceTuner = new Tuner("DumpDistanceTuner", 1.68, true);
 

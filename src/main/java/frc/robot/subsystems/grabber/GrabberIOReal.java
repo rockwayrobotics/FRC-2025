@@ -25,16 +25,16 @@ public class GrabberIOReal implements GrabberIO {
   protected final SparkMax wristMotor = new SparkMax(Constants.CAN.GRABBER_WRIST_MOTOR, MotorType.kBrushless);
   protected final SparkClosedLoopController controller = wristMotor.getClosedLoopController();
 
-  final Tuner wristFeedforwardkS = new Tuner("Grabber/wrist_feedforward_Ks", 0, true);
-  final Tuner wristFeedforwardkG = new Tuner("Grabber/wrist_feedforward_Kg", 0, true);
-  final Tuner wristPID_P = new Tuner("Grabber/wrist_Kp", 0, true);
-  final Tuner wristPID_D = new Tuner("Grabber/wrist_Kd", 0, true);
-  final Tuner wristMaxNormalizedSpeed = new Tuner("Grabber/wrist_normalized_speed_max", 0.1, true);
-  final Tuner wristMinNormalizedSpeed = new Tuner("Grabber/wrist_normalized_speed_min", -0.1, true);
+  final Tuner wristFeedforwardkS = new Tuner("Grabber/wrist_feedforward_Ks", 0.13, true);
+  final Tuner wristFeedforwardkG = new Tuner("Grabber/wrist_feedforward_Kg", -0.16, true);
+  final Tuner wristPID_P = new Tuner("Grabber/wrist_Kp", 0.5, true);
+  final Tuner wristPID_D = new Tuner("Grabber/wrist_Kd", 0.1, true);
+  final Tuner wristMaxNormalizedSpeed = new Tuner("Grabber/wrist_normalized_speed_max", 1, true);
+  final Tuner wristMinNormalizedSpeed = new Tuner("Grabber/wrist_normalized_speed_min", -1, true);
   final Tuner wristSoftLimitMinAngleRads = new Tuner("Grabber/wrist_soft_limit_min_angle_rads",
-      Units.degreesToRadians(-20), true);
+      Units.degreesToRadians(-90), true);
   final Tuner wristSoftLimitMaxAngleRads = new Tuner("Grabber/wrist_soft_limit_max_angle_rads",
-      Units.degreesToRadians(0), true);
+      Units.degreesToRadians(40), true);
 
   protected ArmFeedforward wristFeedforward = new ArmFeedforward(wristFeedforwardkS.get(),
       wristFeedforwardkG.get(), 0);
