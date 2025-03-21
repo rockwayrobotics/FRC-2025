@@ -26,7 +26,7 @@ import frc.robot.subsystems.superstructure.Superstructure;
 
 public class ScoreCommandsOnlyDrive {
   public static class ScoreCommandState {
-    public double requestCornerTimestamp = 0;
+    public double requestCornerTimestamp = 4_000_000_000d;
     public AtomicReference<Float> cornerTimestamp = new AtomicReference<>();
     public AtomicReference<Float> cornerDistanceMm = new AtomicReference<>();
     public AtomicReference<Double> distanceTimestamp = new AtomicReference<>();
@@ -40,7 +40,7 @@ public class ScoreCommandsOnlyDrive {
     }
 
     public void reset() {
-      requestCornerTimestamp = 0;
+      requestCornerTimestamp = 4_000_000_000d;
       cornerTimestamp.set(0f);
       cornerDistanceMm.set(0f);
       distanceTimestamp.set(0d);
