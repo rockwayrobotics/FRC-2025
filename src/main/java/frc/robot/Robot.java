@@ -60,7 +60,12 @@ public class Robot extends LoggedRobot {
 
     AutoLogOutputManager.addObject(RobotTracker.getInstance());
 
-    Logger.start();
+    try {
+      Logger.start();
+    } catch (Exception e) {
+      System.out.println("Unable to start logger");
+      e.printStackTrace(System.out);
+    }
 
   }
 
