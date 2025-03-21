@@ -1,6 +1,10 @@
 [Unit]
 Description=NetworkTables Time Logger
 After=network.target
+After=autofs.service
+After=mnt-auto-ssd.mount
+Requires=autofs.service
+Requires=mnt-auto-ssd.mount
 
 [Service]
 User=user
