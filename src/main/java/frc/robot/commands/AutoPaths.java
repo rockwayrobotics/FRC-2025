@@ -52,6 +52,7 @@ public class AutoPaths {
   static final Tuner troughShooterSpeedTuner = new Tuner("TroughShootSpeed", 0.1, true);
   static final Tuner troughDriveSpeedTuner = new Tuner("TroughDriveSpeedMetersPerSec", 0.2, true);
   static final Tuner troughTimeTuner = new Tuner("TroughDurationSeconds", 5, true);
+  static final Tuner dumpDistanceTuner = new Tuner("DumpDistanceTuner", 1.68, true);
 
   static final Tuner algaeRotateSpeed = new Tuner("AlgaeRotateSpeed", 0.5, true);
   static final Tuner algaeDriveSpeed = new Tuner("AlgaeDriveSpeed", 1, true);
@@ -626,7 +627,7 @@ public class AutoPaths {
   public static Command centerFarCenterDump(Drive drive, Superstructure superstructure) {
     double yCenter = 4.026;
     Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
-    Pose2d algaeDump = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
+    Pose2d algaeDump = new Pose2d(7.58 - dumpDistanceTuner.get(), yCenter, Rotation2d.fromDegrees(180.00));
     Trajectory algaeDumpTrajectory = TrajectoryGenerator.generateTrajectory(List.of(startPose, algaeDump),
         config);
     var command = Commands.sequence(
