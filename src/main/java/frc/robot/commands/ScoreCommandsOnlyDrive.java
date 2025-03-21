@@ -12,6 +12,7 @@ import edu.wpi.first.networktables.FloatArrayTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
@@ -25,6 +26,7 @@ import frc.robot.subsystems.superstructure.Superstructure;
 
 public class ScoreCommandsOnlyDrive {
   public static class ScoreCommandState {
+    public double requestCornerTimestamp = 4_000_000_000d;
     public AtomicReference<Float> cornerTimestamp = new AtomicReference<>();
     public AtomicReference<Float> cornerDistanceMm = new AtomicReference<>();
     public AtomicReference<Double> distanceTimestamp = new AtomicReference<>();
@@ -38,6 +40,7 @@ public class ScoreCommandsOnlyDrive {
     }
 
     public void reset() {
+      requestCornerTimestamp = 4_000_000_000d;
       cornerTimestamp.set(0f);
       cornerDistanceMm.set(0f);
       distanceTimestamp.set(0d);
@@ -51,7 +54,7 @@ public class ScoreCommandsOnlyDrive {
   static final Tuner chuteTofDistanceMeters = new Tuner("Score/chute_tof_distance_meters", 0.26, true);
   static final Tuner scoringSpeedMetersPerSecond = new Tuner("Score/scoring_speed_meters_per_sec", 0.45, true);
   static final Tuner scoringChuterShooterSpeed = new Tuner("Score/scoring_chuter_shooter_speed", 0.2, true);
-  static final Tuner earlyShotMillimeterTuner = new Tuner("Score/early_shot_mm", 50, true);
+  static final Tuner earlyShotMillimeterTuner = new Tuner("Score/early_shot_mm", 120, true);
   static final Tuner angleProportionalTuner = new Tuner("Score/angle_proportional_early_shot", 0, true);
   static final Tuner speedProportionalTuner = new Tuner("Score/speed_proportional_early_shot", 0, true);
 
@@ -134,7 +137,6 @@ public class ScoreCommandsOnlyDrive {
       float[] results = networkTableEvent.valueData.value.getFloatArray();
       commandState.cornerTimestamp.set(results[0]);
       commandState.cornerDistanceMm.set(results[1]);
-      System.out.println("Received results from Pi: " + results[0] + ", " + results[1]);
       commandState.isValid = true;
     });
 
@@ -158,11 +160,12 @@ public class ScoreCommandsOnlyDrive {
                 Commands.race(
                     Commands.waitSeconds(2),
                     Commands.waitUntil(() -> {
-                      return Math.abs(drive.getLeftVelocityMetersPerSec() - scoringSpeedMetersPerSecond.get()) < 0.03;
+                      return Math.abs(drive.getLeftVelocityMetersPerSec() - scoringSpeedMetersPerSecond.get()) < 0.1;
                     })),
                 Commands.runOnce(() -> {
                   var speed = drive.getLeftVelocityMetersPerSec();
                   System.out.println("Sending start to Pi with speed: " + speed);
+                  commandState.requestCornerTimestamp = Timer.getFPGATimestamp();
                   tofTopic.set("corner");
                   // FIXME: Check that this left/right is correct
                   if (superstructure.chute.getPivotGoalRads() > 0) {
@@ -171,7 +174,7 @@ public class ScoreCommandsOnlyDrive {
                     sensorLocation.set(Constants.ToFSensorLocation.FRONT_RIGHT);
                   }
                 }),
-                Commands.waitUntil(() -> commandState.isValid),
+                Commands.waitUntil(() -> commandState.isValid && commandState.cornerTimestamp.get() > commandState.requestCornerTimestamp),
                 Commands.runOnce(() -> {
                   Optional<Double> leftEncoderDistance = drive
                       .getLeftPositionAtTime(commandState.cornerTimestamp.get());

@@ -205,7 +205,7 @@ class ResetService:
                             self.tof_reset_count_pub.set(count + 1)
 
                         
-                elif topic_name == "/AdvantageKit/FMSAttached":
+                elif topic_name == "/AdvantageKit/DriverStation/FMSAttached":
                     fms_attached = event.data.value.getBoolean()
                     if fms_attached != self.fms_attached:
                         self.fms_attached = fms_attached
