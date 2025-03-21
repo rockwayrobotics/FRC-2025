@@ -66,7 +66,7 @@ class ResetService:
         self.pi_reboot_pub.set(False)
         
         # FMS connection topic
-        fms_topic = self.nt.getBooleanTopic("/AdvantageKit/FMSAttached")
+        fms_topic = self.nt.getBooleanTopic("/AdvantageKit/DriverStation/FMSAttached")
         self.fms_sub = fms_topic.subscribe(False)
         
         if self.args.serve_nt:

@@ -1,11 +1,14 @@
+#!/usr/bin/env python3
+'''NT time sync research utility.'''
+
 import datetime as dt
+import socket
+import struct
+import threading
 import time
 
 import ntcore
 import wpiutil
-import threading
-import socket
-import struct
 import wpiutil.log as wlog
 
 
@@ -80,4 +83,11 @@ def main():
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--debug", action="store_true")
+
+    args = parser.parse_args()
+
     main()
