@@ -123,6 +123,7 @@ public class RobotContainer {
     autoChooser.addOption("leftNearCenterAutoL2", AutoPaths.leftNearCenterAutoL2(drive, superstructure, chuterShooter));
     autoChooser.addOption("rightNearCenterAutoL2",
         AutoPaths.rightNearCenterAutoL2(drive, superstructure, chuterShooter));
+    autoChooser.addOption("centerDump", AutoPaths.centerFarCenterDump(drive, superstructure));
 
     // INCREDIBLY SUS may GO KABOOM
     autoChooser.addOption("algae grab", AutoPaths.grabTroughAlgaeL3(drive, superstructure));

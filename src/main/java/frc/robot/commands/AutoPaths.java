@@ -623,6 +623,38 @@ public class AutoPaths {
     return command;
   }
 
+  public static Command centerFarCenterDump(Drive drive, Superstructure superstructure) {
+    double yCenter = 4.026;
+    Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
+    Pose2d algaeDump = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
+    Trajectory algaeDumpTrajectory = TrajectoryGenerator.generateTrajectory(List.of(startPose, algaeDump),
+        config);
+    var command = Commands.sequence(
+      runTrajectory(algaeDumpTrajectory, drive),
+      Commands.runOnce(() -> {
+        drive.stop();
+        superstructure.setElevatorGoalHeightMillimeters(300);
+        superstructure.setWristGoalRads(Units.degreesToRadians(0));
+      }),
+      Commands.waitSeconds(1),
+      Commands.run(() -> {
+        superstructure.setGrabberMotor(1);
+      }).withTimeout(1),
+      Commands.runOnce(() -> {
+        superstructure.setGrabberMotor(0);
+      }),
+      Commands.waitSeconds(2),
+      Commands.run(() -> {
+        drive.set(-0.2, 0);
+      }).withTimeout(1),
+      Commands.runOnce(() -> {
+        drive.stop();
+      })
+    );
+    command.addRequirements(drive, superstructure);
+    return command;
+  }
+
   public static Command centerFarCenterAlgaeL3(Drive drive, Superstructure superstructure,
       ChuterShooter chuterShooter, boolean backupRight) {
     // Centered in front of far center reef wall
