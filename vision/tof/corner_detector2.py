@@ -40,7 +40,7 @@ class CornerDetector:
         self.corner_dist = 0
         self.timing = np.zeros(50)
         self.timing_index = 0
-        self.last_slope_difference = 0
+        self.last_slope_difference = None
         self.stored_corner_timestamp = None
         self.stored_corner_angle = None
         self.stored_corner_dist = 0
@@ -122,7 +122,7 @@ class CornerDetector:
             and second_regression.slope - first_regression.slope > self.slope_threshold
         ):
             slope_difference = second_regression.slope - first_regression.slope
-            if slope_difference <= self.last_slope_difference:
+            if self.last_slope_difference is not None and slope_difference <= self.last_slope_difference:
                 # The best corner is found when the slope difference is maximized
                 self.corner_timestamp = self.stored_corner_timestamp
                 self.corner_dist = self.stored_corner_dist
