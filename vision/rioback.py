@@ -245,7 +245,7 @@ class RioBackup:
             self.stats["failed_files"] += 1
             return False
     
-    async def list_wpilog_files(self, remote_dir="/home/lvuser/logs"):
+    async def list_wpilog_files(self, remote_dir="/U/logs"):
         """List all .wpilog files in the specified remote directory."""
         try:
             files = await self.sftp.listdir(remote_dir)
@@ -283,7 +283,7 @@ class RioBackup:
         files_to_backup = []
         
         for filename in wpilog_files:
-            remote_path = f"/home/lvuser/logs/{filename}"
+            remote_path = f"/U/logs/{filename}"
             index_key = f"logs/{filename}"
             
             if await self.is_file_changed(remote_path, index_key):
@@ -311,7 +311,7 @@ class RioBackup:
         
         # Copy each file that needs backing up
         for filename in files_to_backup:
-            remote_path = f"/home/lvuser/logs/{filename}"
+            remote_path = f"/U/logs/{filename}"
             local_path = logs_dir / filename
             index_key = f"logs/{filename}"
             
@@ -465,8 +465,8 @@ async def main():
     parser.add_argument("--user", default="lvuser", help="SSH username")
     parser.add_argument("--backup-dir", default="./backups", help="Backup directory")
     parser.add_argument("--interval", type=int, help="Run continuously with specified interval (seconds)")
-    parser.add_argument("--retries", type=int, default=3, help="Maximum connection retry attempts")
-    parser.add_argument("--retry-delay", type=int, default=5, help="Delay between retry attempts (seconds)")
+    parser.add_argument("--retries", type=int, default=3, help="Maximum connection retry attempts (default %(default)s)")
+    parser.add_argument("--retry-delay", type=int, default=5, help="Delay between retry attempts (default %(default)ss")
     parser.add_argument("-v", "--verbose", action="count", default=0, help="Increase verbosity")
     args = parser.parse_args()
     
