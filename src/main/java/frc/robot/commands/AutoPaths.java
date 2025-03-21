@@ -642,7 +642,7 @@ public class AutoPaths {
       runTrajectory(algaeDumpTrajectory.get(), drive),
       Commands.runOnce(() -> {
         drive.stop();
-        superstructure.setElevatorGoalHeightMillimeters(300);
+        superstructure.setElevatorGoalHeightMillimeters(400);
         superstructure.setWristGoalRads(Units.degreesToRadians(0));
       }),
       Commands.run(() -> {
