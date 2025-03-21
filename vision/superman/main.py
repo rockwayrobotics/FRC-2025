@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+
+# pylint: disable=invalid-name,trailing-whitespace,missing-module-docstring
+# pylint: disable=missing-function-docstring,missing-class-docstring,no-member
+# pylint: disable=consider-using-with,too-few-public-methods,unused-import
+# pylint: disable=too-many-locals,line-too-long,too-many-positional-arguments
+# pylint: disable=too-many-arguments,broad-exception-caught,redundant-keyword-arg
+# pylint: disable=too-many-nested-blocks,logging-fstring-interpolation
+
 import asyncio
 import logging
 import subprocess
@@ -51,6 +60,11 @@ class ResetService:
         self.tof_reset_pub = tof_reset_topic.publish()
         self.tof_reset_pub.set(False)
         
+        pi_reboot_topic = self.nt.getBooleanTopic("/Pi/reboot")
+        self.pi_reboot_sub = pi_reboot_topic.subscribe(False)
+        self.pi_reboot_pub = pi_reboot_topic.publish()
+        self.pi_reboot_pub.set(False)
+        
         # FMS connection topic
         fms_topic = self.nt.getBooleanTopic("/AdvantageKit/FMSAttached")
         self.fms_sub = fms_topic.subscribe(False)
@@ -71,6 +85,10 @@ class ResetService:
         )
         self.poller.addListener(
             self.tof_reset_sub, 
+            ntcore.EventFlags.kValueAll
+        )
+        self.poller.addListener(
+            self.pi_reboot_sub, 
             ntcore.EventFlags.kValueAll
         )
         self.poller.addListener(
@@ -165,6 +183,14 @@ class ResetService:
                             count = ntcore.Value.getInteger(self.nt.getEntry("/Pi/superman/cam_reset_count").getValue())
                             self.cam_reset_count_pub.set(count + 1)
                         
+                elif topic_name == "/Pi/reboot":
+                    if event.data.value.getBoolean():
+                        self.log.info("Pi reboot requested")
+                        # Schedule the task
+                        asyncio.run_coroutine_threadsafe(self.reboot_pi(), loop)
+                        # Reset the flag
+                        self.pi_reboot_pub.set(False)
+
                 elif topic_name == "/Pi/tof_reset":
                     if event.data.value.getBoolean():
                         self.log.info("TOF reset requested")
@@ -177,6 +203,7 @@ class ResetService:
                         if self.args.serve_nt and hasattr(self, 'tof_reset_count_pub'):
                             count = ntcore.Value.getInteger(self.nt.getEntry("/Pi/superman/tof_reset_count").getValue())
                             self.tof_reset_count_pub.set(count + 1)
+
                         
                 elif topic_name == "/AdvantageKit/FMSAttached":
                     fms_attached = event.data.value.getBoolean()
@@ -262,6 +289,50 @@ class ResetService:
             # Update status in test mode
             if self.args.serve_nt and hasattr(self, 'status_pub'):
                 self.status_pub.set(f"Error restarting {service_name} service")
+    
+    async def reboot_pi(self):
+        """Reboot the pi"""
+        cmd = ["systemctl", "reboot"]
+        self.log.info(f"Executing: {' '.join(cmd)}")
+        
+        # In test mode, don't actually restart services
+        if self.args.serve_nt and self.args.mock_commands:
+            self.log.info("MOCK: Would reboot now")
+            await asyncio.sleep(1)  # Simulate service restart time
+            
+            if self.args.serve_nt and hasattr(self, 'status_pub'):
+                self.status_pub.set("Pi rebooting (mock)")
+            return
+        
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            _stdout, stderr = await proc.communicate()
+            
+            if proc.returncode != 0:
+                self.log.error(f"Reboot failed with code {proc.returncode}")
+                if stderr:
+                    self.log.error(f"Error: {stderr.decode().strip()}")
+                
+                # Update status in test mode
+                if self.args.serve_nt and hasattr(self, 'status_pub'):
+                    self.status_pub.set("Failed to reboot")
+            else:
+                self.log.info("Rebooting now")
+                
+                # Update status in test mode
+                if self.args.serve_nt and hasattr(self, 'status_pub'):
+                    self.status_pub.set("Rebooting")
+                
+        except Exception as e:
+            self.log.error(f"Error rebooting: {e}")
+            
+            # Update status in test mode
+            if self.args.serve_nt and hasattr(self, 'status_pub'):
+                self.status_pub.set("Error rebooting")
     
     async def handle_wifi(self, disable=True):
         """Enable or disable WiFi radio"""
