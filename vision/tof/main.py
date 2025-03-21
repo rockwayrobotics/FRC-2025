@@ -356,6 +356,7 @@ class TofMain:
                     val = event.data.value.getString()
                     self.saw_corner = False
                     self.tof_mode = val
+                    self.cd.reset() # only find corners from this point on
                     self.log.info('tof mode: %s', val)
 
             # pause to avoid busy cpu, as we're not yet using full NT listeners
