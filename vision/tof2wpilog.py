@@ -74,6 +74,7 @@ def parse_log_file(input_file, args):
     corner_entry = DoubleLogEntry(dlog, "/Pi/corner")
     chute_mode_entry = StringLogEntry(dlog, "/Pi/chute_mode")
     tof_mode_entry = StringLogEntry(dlog, "/Pi/tof_mode")
+    window_entry = StringLogEntry(dlog, "/Pi/dist_window")
     
     # Read the log file
     with open(input_file, 'r', encoding='utf-8') as f:
@@ -97,7 +98,7 @@ def parse_log_file(input_file, args):
     pending_cd_corner = None
     
     # Process each line
-    for line in lines:
+    for (index, line) in enumerate(lines):
         # Extract wall clock time from the beginning of the line
         wall_time_match = re.match(r'(\d+:\d+:\d+\.\d+)', line)
         if not wall_time_match:
@@ -188,7 +189,26 @@ def parse_log_file(input_file, args):
                 
                 # Output TOF corner point (reset to zero)
                 corner_entry.append(0.0, int(tof_mono_time * 1_000_000))
-                
+
+                if args.show_window:
+                    window_counter = 0
+                    # Read backwards up to twice the window size looking for distance values
+                    for i in range(1, args.window_size * 2):
+                        prev = lines[index - i]
+                        prev_dist_match = re.search(r'INFO:tof: dist,(\d+\.\d+),\s*(\d+)', prev)
+                        if prev_dist_match:
+                            prev_mono_time = float(prev_dist_match.group(1))
+                            distance = float(prev_dist_match.group(2))
+                            if not args.all_dists:
+                                # If we aren't logging all distances, log the distances in the window
+                                dist_entry.append(distance, int(prev_mono_time * 1_000_000))
+                            window_counter += 1
+                            if window_counter >= args.window_size:
+                                window_entry.append("Window", int(prev_mono_time * 1_000_000))
+                                break
+                    
+                    window_entry.append("N/A", int(tof_mono_time * 1_000_000))
+
                 if args.verbose:
                     print(f"{wall_time_str}: Processed corner pair - CD at {cd_mono_time} with value {corner_value}, TOF at {tof_mono_time}")
                 
@@ -215,6 +235,8 @@ def main():
                         help='Include all distance readings, not just those in corner mode')
     parser.add_argument('files', nargs='+', help='Input log file(s)')
     parser.add_argument('-v', '--verbose', action='store_true', help='Print verbose output')
+    parser.add_argument('-w', '--show-window', action='store_true')
+    parser.add_argument('--window-size', type=int, default=25)
     args = parser.parse_args()
     
     for input_file in args.files:
