@@ -3,6 +3,7 @@ package frc.robot.commands;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -49,8 +50,8 @@ public class AutoPaths {
   private static final double trajectoryMaxCentripetalAcceleration = 0.5;
 
   static final Tuner stabilizeDelayTuner = new Tuner("TroughStabilizeWaitSeconds", 0.3, true);
-  static final Tuner troughShooterSpeedTuner = new Tuner("TroughShootSpeed", 0.1, true);
-  static final Tuner troughDriveSpeedTuner = new Tuner("TroughDriveSpeedMetersPerSec", 0.2, true);
+  static final Tuner troughShooterSpeedTuner = new Tuner("TroughShootSpeed", 0.13, true);
+  static final Tuner troughDriveSpeedTuner = new Tuner("TroughDriveSpeedMetersPerSec", 0, true);
   static final Tuner troughTimeTuner = new Tuner("TroughDurationSeconds", 5, true);
   static final Tuner dumpDistanceTuner = new Tuner("DumpDistanceTuner", 1.68, true);
 
@@ -628,23 +629,34 @@ public class AutoPaths {
     double yCenter = 4.026;
     Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
     Pose2d algaeDump = new Pose2d(7.58 - dumpDistanceTuner.get(), yCenter, Rotation2d.fromDegrees(180.00));
-    Trajectory algaeDumpTrajectory = TrajectoryGenerator.generateTrajectory(List.of(startPose, algaeDump),
-        config);
+    AtomicReference<Trajectory> algaeDumpTrajectory = new AtomicReference<>();
+    algaeDumpTrajectory.set(TrajectoryGenerator.generateTrajectory(List.of(startPose, algaeDump),
+        config));
+    dumpDistanceTuner.addListener((event) -> {
+      double distance = event.valueData.value.getDouble();
+      Pose2d newAlgaeDump = new Pose2d(7.58 - distance, yCenter, Rotation2d.fromDegrees(180.00));
+      algaeDumpTrajectory.set(TrajectoryGenerator.generateTrajectory(List.of(startPose, newAlgaeDump),
+        config));
+    });
     var command = Commands.sequence(
-      runTrajectory(algaeDumpTrajectory, drive),
+      runTrajectory(algaeDumpTrajectory.get(), drive),
       Commands.runOnce(() -> {
         drive.stop();
-        superstructure.setElevatorGoalHeightMillimeters(300);
+        superstructure.setElevatorGoalHeightMillimeters(400);
         superstructure.setWristGoalRads(Units.degreesToRadians(0));
       }),
-      Commands.waitSeconds(1),
+      Commands.run(() -> {
+        drive.stop();
+      }).withTimeout(1),
       Commands.run(() -> {
         superstructure.setGrabberMotor(1);
       }).withTimeout(1),
       Commands.runOnce(() -> {
         superstructure.setGrabberMotor(0);
       }),
-      Commands.waitSeconds(2),
+      Commands.run(() -> {
+        drive.stop();
+      }).withTimeout(2),
       Commands.run(() -> {
         drive.set(-0.2, 0);
       }).withTimeout(1),

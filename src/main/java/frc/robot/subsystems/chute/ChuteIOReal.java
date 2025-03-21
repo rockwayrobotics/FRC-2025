@@ -41,8 +41,8 @@ public class ChuteIOReal implements ChuteIO {
   final Tuner pivotFeedforwardkG = new Tuner("Chute/pivot_feedforward_Kg", -0.125, true);
   final Tuner pivotPID_P = new Tuner("Chute/pivot_Kp", 0.3, true);
   final Tuner pivotPID_D = new Tuner("Chute/pivot_Kd", 0, true);
-  final Tuner pivotMaxNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_max", 0.3, true);
-  final Tuner pivotMinNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_min", -0.3, true);
+  final Tuner pivotMaxNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_max", 0.4, true);
+  final Tuner pivotMinNormalizedSpeed = new Tuner("Chute/pivot_normalized_speed_min", -0.4, true);
   final Tuner pivotSoftLimitMinAngleRads = new Tuner("Chute/pivot_soft_limit_min_angle_rads",
       Units.degreesToRadians(-90), true);
   final Tuner pivotSoftLimitMaxAngleRads = new Tuner("Chute/pivot_soft_limit_max_angle_rads",
