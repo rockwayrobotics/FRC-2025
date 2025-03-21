@@ -452,7 +452,7 @@ class RioBackup:
             
             # Close connections
             if self.sftp:
-                self.sftp.close()
+                self.sftp.exit()
             if self.conn:
                 self.conn.close()
                 self.logger.debug("SSH connection closed")
