@@ -51,7 +51,7 @@ public class ScoreCommandsOnlyDrive {
   static final Tuner chuteTofDistanceMeters = new Tuner("Score/chute_tof_distance_meters", 0.26, true);
   static final Tuner scoringSpeedMetersPerSecond = new Tuner("Score/scoring_speed_meters_per_sec", 0.45, true);
   static final Tuner scoringChuterShooterSpeed = new Tuner("Score/scoring_chuter_shooter_speed", 0.2, true);
-  static final Tuner earlyShotMillimeterTuner = new Tuner("Score/early_shot_mm", 50, true);
+  static final Tuner earlyShotMillimeterTuner = new Tuner("Score/early_shot_mm", 120, true);
   static final Tuner angleProportionalTuner = new Tuner("Score/angle_proportional_early_shot", 0, true);
   static final Tuner speedProportionalTuner = new Tuner("Score/speed_proportional_early_shot", 0, true);
 
