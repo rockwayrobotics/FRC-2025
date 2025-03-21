@@ -457,7 +457,7 @@ public class AutoPaths {
     // distance.
     // (5.199 - 0.96 cos(30deg), 5.2542 + 0.96 sin(30deg)) = (4.3676, 5.7342)
     // Try 1.5m?
-    double distanceFromTag = 1.5;
+    double distanceFromTag = 1.2;
     Pose2d scorePrep = new Pose2d(5.199 - distanceFromTag * Math.cos(Units.degreesToRadians(30)),
         8.05 - (5.2542 + distanceFromTag * Math.sin(Units.degreesToRadians(30))), Rotation2d.fromDegrees(30));
     Pose2d flippedScorePrep = TrajectoryUtils.rotatePose180(scorePrep);
@@ -499,7 +499,7 @@ public class AutoPaths {
         Commands.race(
             Commands.waitSeconds(0.5),
             Commands.waitUntil(() -> Sensors.getInstance().getGrabberAcquired())),
-        Commands.waitSeconds(0.5),
+        Commands.waitSeconds(0.1),
 
         Commands.parallel(
             Commands.runOnce(() -> {
@@ -516,7 +516,7 @@ public class AutoPaths {
                   superstructure.gotoSetpoint(CoralLevel.L3, Side.RIGHT);
                 }))),
 
-        Commands.waitSeconds(0.5),
+        // Commands.waitSeconds(0.5),
 
         ScoreCommandsOnlyDrive.score(drive, superstructure, ReefBar.NEAR, chuterShooter));
     command.addRequirements(drive, superstructure, chuterShooter);
