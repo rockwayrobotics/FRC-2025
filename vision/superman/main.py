@@ -1,45 +1,407 @@
 #!/usr/bin/env python3
 
-# pylint: disable=invalid-name,trailing-whitespace,missing-module-docstring
-# pylint: disable=missing-function-docstring,missing-class-docstring,no-member
-# pylint: disable=consider-using-with,too-few-public-methods,unused-import
-# pylint: disable=too-many-locals,line-too-long,too-many-positional-arguments
-# pylint: disable=too-many-arguments,broad-exception-caught,redundant-keyword-arg
-# pylint: disable=too-many-nested-blocks,logging-fstring-interpolation
-
 import asyncio
 import logging
 import subprocess
 import time
-import threading
 from pathlib import Path
 
 import ntcore
+
+# NetworkTables topic constants
+TOPIC_CAM_RESET = "/Pi/cam_reset"
+TOPIC_TOF_RESET = "/Pi/tof_reset"
+TOPIC_PI_REBOOT = "/Pi/reboot"
+TOPIC_FMS_ATTACHED = "/AdvantageKit/DriverStation/FMSAttached"
+
+# Test mode topic constants
+TOPIC_STATUS = "/Pi/superman/status"
+TOPIC_WIFI_STATUS = "/Pi/superman/wifi_status"
+TOPIC_LED_STATUS = "/Pi/superman/led_status"
+TOPIC_WIFI_TIMER = "/Pi/superman/wifi_timer"
+TOPIC_CAM_RESET_COUNT = "/Pi/superman/cam_reset_count"
+TOPIC_TOF_RESET_COUNT = "/Pi/superman/tof_reset_count"
+
+
+class AsyncTimer:
+    """Asyncio-compatible timer with time tracking and cancellation support"""
+    def __init__(self, logger=None):
+        self.log = logger or logging.getLogger('AsyncTimer')
+        self.task = None
+        self.start_time = None
+        self.duration = 0
+        self.callback = None
+        self.name = None
+        
+    async def start(self, seconds, callback, name=None):
+        """Start a timer with the specified duration and callback"""
+        # Cancel any existing timer
+        if self.is_active():
+            self.log.info(f"Cancelling existing timer: {self.name}")
+            self.cancel()
+            
+        self.name = name or "timer"
+        self.start_time = time.monotonic()
+        self.duration = seconds
+        self.callback = callback
+        
+        self.log.info(f"Starting {self.name} for {seconds}s")
+        
+        # Create task
+        self.task = asyncio.create_task(self._run())
+        return self.task
+        
+    async def _run(self):
+        """Run the timer and execute callback when complete"""
+        try:
+            await asyncio.sleep(self.duration)
+            self.log.info(f"{self.name} completed after {self.duration}s")
+            if self.callback:
+                await self.callback()
+        except asyncio.CancelledError:
+            self.log.info(f"{self.name} was cancelled")
+            raise
+        finally:
+            # Clear state if we completed normally
+            if not self.task.cancelled():
+                self.clear()
+    
+    def get_remaining(self):
+        """Get remaining time in seconds, or 0 if timer is not active"""
+        if not self.is_active():
+            return 0
+        elapsed = time.monotonic() - self.start_time
+        return max(0, self.duration - elapsed)
+    
+    def is_active(self):
+        """Check if timer is currently active"""
+        return self.task is not None and not self.task.done()
+    
+    def cancel(self):
+        """Cancel the timer if active"""
+        if self.is_active():
+            self.task.cancel()
+            self.clear()
+            return True
+        return False
+    
+    def clear(self):
+        """Clear timer state"""
+        self.start_time = None
+        self.duration = 0
+        self.callback = None
+
+
+class DummyPublisher:
+    """No-op publisher for when we don't need to publish"""
+    def set(self, *args, **kwargs):
+        pass
+
+
+class CmdRunner:
+    """Execute commands with proper logging and error handling"""
+    def __init__(self, logger, test_mode=False, mock=False, status_pub=None):
+        self.log = logger
+        self.test_mode = test_mode
+        self.mock = mock
+        self.status_pub = status_pub or DummyPublisher()
+        
+    async def run(self, cmd, desc, ok_msg=None, err_msg=None, mock_delay=1.0):
+        """Execute a command with proper handling for real and test modes"""
+        self.log.info(f"Running: {' '.join(cmd)}")
+        
+        # Update status
+        self.status_pub.set(desc)
+        
+        # In test mode with mock commands, don't actually run
+        if self.test_mode and self.mock:
+            self.log.info(f"MOCK: Would run {' '.join(cmd)}")
+            await asyncio.sleep(mock_delay)
+            
+            if ok_msg:
+                self.status_pub.set(ok_msg)
+            return True
+        
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            _, stderr = await proc.communicate()
+            
+            if proc.returncode != 0:
+                self.log.error(f"Command failed with code {proc.returncode}")
+                if stderr:
+                    self.log.error(f"Error: {stderr.decode().strip()}")
+                
+                if err_msg:
+                    self.status_pub.set(err_msg)
+                return False
+            else:
+                self.log.info("Command executed successfully")
+                
+                if ok_msg:
+                    self.status_pub.set(ok_msg)
+                return True
+                
+        except Exception as e:
+            self.log.error(f"Error executing command: {e}")
+            
+            if err_msg:
+                self.status_pub.set(err_msg)
+            return False
+
+
+class LEDControl:
+    """Control the Raspberry Pi LED"""
+    def __init__(self, logger, led_path="/sys/class/leds/ACT"):
+        self.log = logger
+        self.led_path = Path(led_path)
+        self.orig_trigger = None
+        self.orig_brightness = None
+        
+    async def save_state(self):
+        """Save the original LED state"""
+        try:
+            # Read current trigger
+            trigger_path = self.led_path / "trigger"
+            if trigger_path.exists():
+                with open(trigger_path, 'r') as f:
+                    content = f.read()
+                    for line in content.split():
+                        if line.startswith('[') and line.endswith(']'):
+                            self.orig_trigger = line[1:-1]
+                            break
+            
+            # Read current brightness
+            brightness_path = self.led_path / "brightness"
+            if brightness_path.exists():
+                with open(brightness_path, 'r') as f:
+                    self.orig_brightness = f.read().strip()
+                    
+            self.log.info(f"Saved LED state: trigger={self.orig_trigger}")
+            return True
+        except Exception as e:
+            self.log.error(f"Error saving LED state: {e}")
+            return False
+    
+    async def restore_state(self):
+        """Restore the original LED state"""
+        try:
+            if self.orig_trigger:
+                with open(self.led_path / "trigger", 'w') as f:
+                    f.write(self.orig_trigger)
+            
+            if self.orig_brightness:
+                with open(self.led_path / "brightness", 'w') as f:
+                    f.write(self.orig_brightness)
+                        
+            self.log.info("Restored original LED state")
+            return True
+        except Exception as e:
+            self.log.error(f"Error restoring LED state: {e}")
+            return False
+    
+    async def set_flash(self, on_ms=500, off_ms=500):
+        """Set LED to flashing mode"""
+        try:
+            trigger_path = self.led_path / "trigger"
+            if not trigger_path.exists():
+                self.log.error("LED trigger path not found")
+                return False
+                
+            # Set LED to timer mode for flashing
+            with open(trigger_path, 'w') as f:
+                f.write("timer")
+                
+            # Configure timer delay
+            with open(self.led_path / "delay_on", 'w') as f:
+                f.write(str(on_ms))
+                
+            with open(self.led_path / "delay_off", 'w') as f:
+                f.write(str(off_ms))
+            
+            self.log.info(f"Set LED to flash mode")
+            return True
+        except Exception as e:
+            self.log.error(f"Error setting LED to flash: {e}")
+            return False
+    
+    async def set_default(self):
+        """Set LED to default mode"""
+        try:
+            with open(self.led_path / "trigger", 'w') as f:
+                f.write("mmc0")  # Default for Pi
+            
+            self.log.info("Set LED to default mode")
+            return True
+        except Exception as e:
+            self.log.error(f"Error setting LED to default: {e}")
+            return False
+
+
+class WiFiMgr:
+    """Manage WiFi radio state"""
+    def __init__(self, logger, cmd_runner):
+        self.log = logger
+        self.cmd = cmd_runner
+        self.is_off = False
+        self.timer = AsyncTimer(logger)
+        
+    async def set_state(self, disable=True):
+        """Enable or disable WiFi radio"""
+        if disable:
+            cmd = ["rfkill", "block", "wifi"]
+            state = "disabled"
+        else:
+            cmd = ["rfkill", "unblock", "wifi"]
+            state = "enabled"
+        
+        result = await self.cmd.run(
+            cmd,
+            f"WiFi being {state}",
+            ok_msg=f"WiFi {state}",
+            err_msg=f"Failed to set WiFi {state}"
+        )
+        
+        if result:
+            self.is_off = disable
+            
+        return result
+    
+    async def schedule_enable(self, delay_sec):
+        """Schedule WiFi to be re-enabled after delay"""
+        # Simply start a new timer with our enable function as callback
+        await self.timer.start(delay_sec, self._wifi_enable, "WiFi re-enable")
+    
+    async def _wifi_enable(self):
+        """Re-enable WiFi (callback for timer)"""
+        self.log.info("Re-enabling WiFi")
+        await self.set_state(disable=False)
+    
+    def cancel_enable(self):
+        """Cancel any pending re-enable task"""
+        return self.timer.cancel()
+
+
+class TopicMgr:
+    """Manage NT topics with consistent error handling"""
+    def __init__(self, nt_instance, test_mode=False):
+        self.nt = nt_instance
+        self.topics = {}
+        self.listeners = {}
+        self.test_mode = test_mode
+        
+    def create(self, name, type_name, init_val=None, publish=True):
+        """Create a topic with publisher and subscriber"""
+        try:
+            if type_name == "bool":
+                topic = self.nt.getBooleanTopic(name)
+                default = False if init_val is None else init_val
+            elif type_name == "str":
+                topic = self.nt.getStringTopic(name)
+                default = "" if init_val is None else init_val
+            elif type_name == "int":
+                topic = self.nt.getIntegerTopic(name)
+                default = 0 if init_val is None else init_val
+            else:
+                raise ValueError(f"Unknown topic type: {type_name}")
+                
+            sub = topic.subscribe(default)
+            
+            # Only create real publisher if needed
+            if publish and self.test_mode:
+                pub = topic.publish()
+                pub.set(default)
+            else:
+                pub = DummyPublisher()
+            
+            self.topics[name] = {
+                'topic': topic,
+                'sub': sub,
+                'pub': pub,
+                'type': type_name
+            }
+            
+            return sub, pub
+        except Exception as e:
+            logging.error(f"Error creating topic {name}: {e}")
+            return None, None
+    
+    def add_callback(self, topic_name, callback, event_flags=ntcore.EventFlags.kValueAll):
+        """Add a callback function for a topic change"""
+        try:
+            listener = self.nt.addListener(
+                [topic_name],
+                event_flags,
+                callback
+            )
+            self.listeners[topic_name] = listener
+            return listener
+        except Exception as e:
+            logging.error(f"Error adding callback for {topic_name}: {e}")
+            return None
+            
+    def get_pub(self, name):
+        """Get publisher for a topic"""
+        return self.topics.get(name, {}).get('pub', DummyPublisher())
+        
+    def get_sub(self, name):
+        """Get subscriber for a topic"""
+        return self.topics.get(name, {}).get('sub')
+        
+    def remove_all_listeners(self):
+        """Remove all registered listeners"""
+        for listener in self.listeners.values():
+            try:
+                self.nt.removeListener(listener)
+            except Exception:
+                pass
+        self.listeners.clear()
+
 
 class ResetService:
     def __init__(self, args):
         self.args = args
         self.log = logging.getLogger("superman")
         self.running = True
-        
-        # For LED control
-        self.led_control_enabled = hasattr(args, 'led') and args.led
-        self.led_path = Path("/sys/class/leds/ACT")
-        self.original_trigger = None
-        self.original_brightness = None
-        
-        # FMS and WiFi state tracking
         self.fms_attached = False
-        self.wifi_turned_off = False
-        self.wifi_reenable_task = None
+        self.event_loop = None
+        self.event_queue = asyncio.Queue()
         
         # Set up NetworkTables
-        self.nt_setup()
-    
-    def nt_setup(self):
-        """Initialize NetworkTables and set up listeners"""
         self.nt = ntcore.NetworkTableInstance.getDefault()
+        self.topic_mgr = TopicMgr(self.nt, test_mode=args.serve_nt)
         
+        # Initialize NT
+        self.setup_nt()
+        
+        # Create other components
+        status_pub = self.topic_mgr.get_pub(TOPIC_STATUS)
+        self.cmd = CmdRunner(
+            self.log, 
+            test_mode=self.args.serve_nt,
+            mock=self.args.mock_commands,
+            status_pub=status_pub
+        )
+        
+        # Create LED controller if enabled
+        self.led = LEDControl(self.log) if self.args.led else None
+            
+        # Create WiFi manager
+        self.wifi = WiFiMgr(self.log, self.cmd)
+        
+        # Set up topic -> handler mapping
+        self.handlers = {
+            TOPIC_CAM_RESET: self._handle_cam_reset,
+            TOPIC_TOF_RESET: self._handle_tof_reset,
+            TOPIC_PI_REBOOT: self._handle_reboot,
+            TOPIC_FMS_ATTACHED: self._handle_fms_state
+        }
+    
+    def setup_nt(self):
+        """Set up NetworkTables and create topics"""
         # Set up NT server or client
         if self.args.serve_nt:
             self.log.info("Starting NetworkTables server for testing")
@@ -49,491 +411,238 @@ class ResetService:
             self.nt.setServerTeam(8089)
             self.nt.startClient4("superman")
         
-        # Create subscribers and publishers for reset topics
-        cam_reset_topic = self.nt.getBooleanTopic("/Pi/cam_reset")
-        self.cam_reset_sub = cam_reset_topic.subscribe(False)
-        self.cam_reset_pub = cam_reset_topic.publish()
-        self.cam_reset_pub.set(False)
+        # Create required topics
+        self.cam_reset_sub, self.cam_reset_pub = self.topic_mgr.create(
+            TOPIC_CAM_RESET, "bool", False)
+        self.tof_reset_sub, self.tof_reset_pub = self.topic_mgr.create(
+            TOPIC_TOF_RESET, "bool", False)
+        self.reboot_sub, self.reboot_pub = self.topic_mgr.create(
+            TOPIC_PI_REBOOT, "bool", False)
+        self.fms_sub, self.fms_pub = self.topic_mgr.create(
+            TOPIC_FMS_ATTACHED, "bool", False)
         
-        tof_reset_topic = self.nt.getBooleanTopic("/Pi/tof_reset")
-        self.tof_reset_sub = tof_reset_topic.subscribe(False)
-        self.tof_reset_pub = tof_reset_topic.publish()
-        self.tof_reset_pub.set(False)
-        
-        pi_reboot_topic = self.nt.getBooleanTopic("/Pi/reboot")
-        self.pi_reboot_sub = pi_reboot_topic.subscribe(False)
-        self.pi_reboot_pub = pi_reboot_topic.publish()
-        self.pi_reboot_pub.set(False)
-        
-        # FMS connection topic
-        fms_topic = self.nt.getBooleanTopic("/AdvantageKit/DriverStation/FMSAttached")
-        self.fms_sub = fms_topic.subscribe(False)
-        
+        # Create test topics if needed
         if self.args.serve_nt:
-            # In server mode, also publish the FMS value for testing
-            self.fms_pub = fms_topic.publish()
-            self.fms_pub.set(False)
-            
-            # Create additional test topics if serving NT
             self.create_test_topics()
-        
-        # Create a poller to get notifications
-        self.poller = ntcore.NetworkTableListenerPoller(self.nt)
-        self.poller.addListener(
-            self.cam_reset_sub, 
-            ntcore.EventFlags.kValueAll
-        )
-        self.poller.addListener(
-            self.tof_reset_sub, 
-            ntcore.EventFlags.kValueAll
-        )
-        self.poller.addListener(
-            self.pi_reboot_sub, 
-            ntcore.EventFlags.kValueAll
-        )
-        self.poller.addListener(
-            self.fms_sub, 
-            ntcore.EventFlags.kValueAll
-        )
     
     def create_test_topics(self):
         """Create additional topics for testing purposes"""
         self.log.info("Creating test topics")
         
-        # Create status topics to show what's happening
-        status_topic = self.nt.getStringTopic("/Pi/superman/status")
-        self.status_pub = status_topic.publish()
-        self.status_pub.set("Initialized")
-        
-        wifi_status_topic = self.nt.getStringTopic("/Pi/superman/wifi_status")
-        self.wifi_status_pub = wifi_status_topic.publish()
-        self.wifi_status_pub.set("Enabled")
-        
-        # Create topic to show LED state
-        led_status_topic = self.nt.getStringTopic("/Pi/superman/led_status")
-        self.led_status_pub = led_status_topic.publish()
-        self.led_status_pub.set("Default")
-        
-        # Create timer countdown topic for WiFi re-enable delay
-        timer_topic = self.nt.getIntegerTopic("/Pi/superman/wifi_timer")
-        self.timer_pub = timer_topic.publish()
-        self.timer_pub.set(0)  # time remaining
-        
-        # Create command count topics to track reset commands
-        cam_reset_count_topic = self.nt.getIntegerTopic("/Pi/superman/cam_reset_count")
-        self.cam_reset_count_pub = cam_reset_count_topic.publish()
-        self.cam_reset_count_pub.set(0)
-        
-        tof_reset_count_topic = self.nt.getIntegerTopic("/Pi/superman/tof_reset_count")
-        self.tof_reset_count_pub = tof_reset_count_topic.publish()
-        self.tof_reset_count_pub.set(0)
-        
-    async def run(self):
-        """Main run loop"""
-        self.log.info("Reset service starting")
-        
-        # Save original LED state if needed
-        if self.led_control_enabled:
-            await self.save_led_state()
-        
-        # Start NT polling thread
-        loop = asyncio.get_event_loop()
-        nt_thread = threading.Thread(target=self.nt_listener_thread, args=(loop,), daemon=True)
-        nt_thread.start()
-        
+        _, self.status_pub = self.topic_mgr.create(TOPIC_STATUS, "str", "Initialized")
+        _, self.wifi_status_pub = self.topic_mgr.create(TOPIC_WIFI_STATUS, "str", "Enabled")
+        _, self.led_status_pub = self.topic_mgr.create(TOPIC_LED_STATUS, "str", "Default")
+        _, self.timer_pub = self.topic_mgr.create(TOPIC_WIFI_TIMER, "int", 0)
+        _, self.cam_reset_count_pub = self.topic_mgr.create(TOPIC_CAM_RESET_COUNT, "int", 0)
+        _, self.tof_reset_count_pub = self.topic_mgr.create(TOPIC_TOF_RESET_COUNT, "int", 0)
+    
+    def on_topic_change(self, event):
+        """Callback for NT topic changes - queues events for async processing"""
         try:
-            # Main loop - just keep running until stopped
-            while self.running:
-                # In server mode, periodically update test topics
-                if self.args.serve_nt and hasattr(self, 'timer_pub') and self.wifi_reenable_task is not None:
-                    if not self.wifi_reenable_task.done() and self.wifi_reenable_start_time is not None:
-                        elapsed = time.monotonic() - self.wifi_reenable_start_time
-                        self.timer_pub.set(max(int(round(self.wifi_reenable_duration - elapsed)), 0))
-                
-                await asyncio.sleep(1)
-        finally:
-            # Cleanup
-            self.log.info("Superman service shutting down")
-            self.running = False
-            if self.led_control_enabled:
-                await self.restore_led_state()
+            # Add event to asyncio queue to be processed in main loop
+            asyncio.run_coroutine_threadsafe(
+                self.event_queue.put(event),
+                self.event_loop
+            )
+        except Exception as e:
+            self.log.error(f"Error queueing event: {e}")
     
-    def nt_listener_thread(self, loop):
-        """Thread that listens for NetworkTable events"""
-        self.log.info("NT listener thread started")
-       
-        while self.running:
-            # Poll for events
-            events = self.poller.readQueue()
-            for event in events:
-                # Get topic name
-                topic_name = event.data.topic.getName()
-                
-                # Handle different topics
-                if topic_name == "/Pi/cam_reset":
-                    if event.data.value.getBoolean():
-                        self.log.info("Camera reset requested")
-                        # Schedule the reset task
-                        asyncio.run_coroutine_threadsafe(self.reset_service("cam"), loop)
-                        # Reset the flag
-                        self.cam_reset_pub.set(False)
-                        
-                        # Update count in test mode
-                        if self.args.serve_nt and hasattr(self, 'cam_reset_count_pub'):
-                            count = ntcore.Value.getInteger(self.nt.getEntry("/Pi/superman/cam_reset_count").getValue())
-                            self.cam_reset_count_pub.set(count + 1)
-                        
-                elif topic_name == "/Pi/reboot":
-                    if event.data.value.getBoolean():
-                        self.log.info("Pi reboot requested")
-                        # Schedule the task
-                        asyncio.run_coroutine_threadsafe(self.reboot_pi(), loop)
-                        # Reset the flag
-                        self.pi_reboot_pub.set(False)
-
-                elif topic_name == "/Pi/tof_reset":
-                    if event.data.value.getBoolean():
-                        self.log.info("TOF reset requested")
-                        # Schedule the reset task
-                        asyncio.run_coroutine_threadsafe(self.reset_service("tof"), loop)
-                        # Reset the flag
-                        self.tof_reset_pub.set(False)
-                        
-                        # Update count in test mode
-                        if self.args.serve_nt and hasattr(self, 'tof_reset_count_pub'):
-                            count = ntcore.Value.getInteger(self.nt.getEntry("/Pi/superman/tof_reset_count").getValue())
-                            self.tof_reset_count_pub.set(count + 1)
-
-                        
-                elif topic_name == "/AdvantageKit/DriverStation/FMSAttached":
-                    fms_attached = event.data.value.getBoolean()
-                    if fms_attached != self.fms_attached:
-                        self.fms_attached = fms_attached
-                        self.log.info(f"FMS attached state changed to: {fms_attached}")
-                        
-                        if self.args.radio:
-                            # Handle WiFi state changes
-                            if fms_attached:
-                                # If FMS is attached again, cancel any pending re-enable timer
-                                if self.wifi_reenable_task and not self.wifi_reenable_task.done():
-                                    self.log.info("Cancelling WiFi re-enable due to FMS reconnection")
-                                    self.wifi_reenable_task.cancel()
-                                    self.wifi_reenable_task = None
-                                    self.wifi_reenable_start_time = None
+    def setup_listeners(self):
+        """Set up event listeners for topics"""
+        for topic in self.handlers.keys():
+            self.topic_mgr.add_callback(topic, self.on_topic_change)
+        self.log.info("NT event listeners registered")
     
-                                    # Reset timer display in test mode
-                                    if self.args.serve_nt and hasattr(self, 'timer_pub'):
-                                        self.timer_pub.set(0)
-                                                    
-                                # Turn off WiFi immediately
-                                asyncio.run_coroutine_threadsafe(self.handle_wifi(disable=True), loop)
-                            else:
-                                # Schedule delayed WiFi re-enable
-                                asyncio.run_coroutine_threadsafe(self.schedule_wifi_reenable(), loop)
-                        
-                        if self.led_control_enabled:
-                            # Update LED state based on FMS connection
-                            asyncio.run_coroutine_threadsafe(self.update_led(), loop)
-                            
-                        # Update status in test mode
-                        if self.args.serve_nt and hasattr(self, 'status_pub'):
-                            self.status_pub.set(f"FMS {'Connected' if fms_attached else 'Disconnected'}")
+    async def _handle_cam_reset(self, value):
+        """Handle camera reset events"""
+        if value.getBoolean():
+            self.log.info("Camera reset requested")
+            await self.reset_service("cam")
+            self.cam_reset_pub.set(False)
             
-            # Small sleep to avoid spinning
-            time.sleep(0.05)
+            # Update count in test mode
+            if self.args.serve_nt:
+                try:
+                    count = self.topic_mgr.get_sub(TOPIC_CAM_RESET_COUNT).get()
+                    self.topic_mgr.get_pub(TOPIC_CAM_RESET_COUNT).set(count + 1)
+                except Exception:
+                    pass
+    
+    async def _handle_tof_reset(self, value):
+        """Handle TOF reset events"""
+        if value.getBoolean():
+            self.log.info("TOF reset requested")
+            await self.reset_service("tof")
+            self.tof_reset_pub.set(False)
+            
+            # Update count in test mode
+            if self.args.serve_nt:
+                try:
+                    count = self.topic_mgr.get_sub(TOPIC_TOF_RESET_COUNT).get()
+                    self.topic_mgr.get_pub(TOPIC_TOF_RESET_COUNT).set(count + 1)
+                except Exception:
+                    pass
+    
+    async def _handle_reboot(self, value):
+        """Handle reboot events"""
+        if value.getBoolean():
+            self.log.info("Pi reboot requested")
+            await self.reboot_pi()
+            self.reboot_pub.set(False)
+    
+    async def _handle_fms_state(self, value):
+        """Handle FMS state changes"""
+        fms = value.getBoolean()
+        if fms != self.fms_attached:
+            self.fms_attached = fms
+            self.log.info(f"FMS attached changed to: {fms}")
+            
+            if self.args.radio:
+                # Handle WiFi state changes
+                if fms:
+                    # If FMS is attached, cancel any pending re-enable
+                    self.wifi.cancel_enable()
+                    
+                    # Reset timer display in test mode
+                    self.topic_mgr.get_pub(TOPIC_WIFI_TIMER).set(0)
+                                            
+                    # Turn off WiFi immediately
+                    await self.wifi.set_state(disable=True)
+                else:
+                    # Schedule delayed WiFi re-enable
+                    await self.wifi.schedule_enable(self.args.on_delay)
+            
+            # Update LED state based on FMS connection
+            if self.led:
+                await self.update_led()
+                
+            # Update status in test mode
+            status = f"FMS {'Connected' if fms else 'Disconnected'}"
+            self.topic_mgr.get_pub(TOPIC_STATUS).set(status)
     
     async def reset_service(self, service_name):
         """Reset a system service"""
         cmd = ["systemctl", "restart", f"{service_name}.service"]
-        self.log.info(f"Executing: {' '.join(cmd)}")
-        
-        # Update status in test mode
-        if self.args.serve_nt and hasattr(self, 'status_pub'):
-            self.status_pub.set(f"Restarting {service_name} service")
-        
-        # In test mode, don't actually restart services
-        if self.args.serve_nt and self.args.mock_commands:
-            self.log.info(f"MOCK: Would restart {service_name} service")
-            await asyncio.sleep(1)  # Simulate service restart time
-            
-            if self.args.serve_nt and hasattr(self, 'status_pub'):
-                self.status_pub.set(f"{service_name.capitalize()} service restarted")
-            return
-        
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await proc.communicate()
-            
-            if proc.returncode != 0:
-                self.log.error(f"Service restart failed with code {proc.returncode}")
-                if stderr:
-                    self.log.error(f"Error: {stderr.decode().strip()}")
-                
-                # Update status in test mode
-                if self.args.serve_nt and hasattr(self, 'status_pub'):
-                    self.status_pub.set(f"Failed to restart {service_name} service")
-            else:
-                self.log.info(f"Service {service_name} restarted successfully")
-                
-                # Update status in test mode
-                if self.args.serve_nt and hasattr(self, 'status_pub'):
-                    self.status_pub.set(f"{service_name.capitalize()} service restarted")
-                
-        except Exception as e:
-            self.log.error(f"Error restarting service: {e}")
-            
-            # Update status in test mode
-            if self.args.serve_nt and hasattr(self, 'status_pub'):
-                self.status_pub.set(f"Error restarting {service_name} service")
+        return await self.cmd.run(
+            cmd,
+            f"Restarting {service_name} service",
+            ok_msg=f"{service_name.capitalize()} service restarted",
+            err_msg=f"Failed to restart {service_name} service"
+        )
     
     async def reboot_pi(self):
         """Reboot the pi"""
         cmd = ["systemctl", "reboot"]
-        self.log.info(f"Executing: {' '.join(cmd)}")
-        
-        # In test mode, don't actually restart services
-        if self.args.serve_nt and self.args.mock_commands:
-            self.log.info("MOCK: Would reboot now")
-            await asyncio.sleep(1)  # Simulate service restart time
-            
-            if self.args.serve_nt and hasattr(self, 'status_pub'):
-                self.status_pub.set("Pi rebooting (mock)")
-            return
-        
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            _stdout, stderr = await proc.communicate()
-            
-            if proc.returncode != 0:
-                self.log.error(f"Reboot failed with code {proc.returncode}")
-                if stderr:
-                    self.log.error(f"Error: {stderr.decode().strip()}")
-                
-                # Update status in test mode
-                if self.args.serve_nt and hasattr(self, 'status_pub'):
-                    self.status_pub.set("Failed to reboot")
-            else:
-                self.log.info("Rebooting now")
-                
-                # Update status in test mode
-                if self.args.serve_nt and hasattr(self, 'status_pub'):
-                    self.status_pub.set("Rebooting")
-                
-        except Exception as e:
-            self.log.error(f"Error rebooting: {e}")
-            
-            # Update status in test mode
-            if self.args.serve_nt and hasattr(self, 'status_pub'):
-                self.status_pub.set("Error rebooting")
-    
-    async def handle_wifi(self, disable=True):
-        """Enable or disable WiFi radio"""
-        if disable:
-            cmd = ["rfkill", "block", "wifi"]
-            state_msg = "disabled"
-        else:
-            cmd = ["rfkill", "unblock", "wifi"]
-            state_msg = "enabled"
-        
-        # Update status in test mode
-        if self.args.serve_nt:
-            if hasattr(self, 'status_pub'):
-                self.status_pub.set(f"WiFi being {state_msg}")
-            if hasattr(self, 'wifi_status_pub'):
-                self.wifi_status_pub.set(state_msg.capitalize())
-        
-        # In test mode, don't actually change WiFi state
-        if self.args.serve_nt and self.args.mock_commands:
-            self.log.info(f"MOCK: Would set WiFi to {state_msg}")
-            self.wifi_turned_off = disable
-            
-            # Update LED if enabled
-            if self.led_control_enabled:
-                await self.update_led()
-            return
-            
-        try:
-            self.log.info(f"Setting WiFi radio {state_msg}")
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await proc.communicate()
-            
-            if proc.returncode != 0:
-                self.log.error(f"WiFi {state_msg} failed with code {proc.returncode}")
-                if stderr:
-                    self.log.error(f"Error: {stderr.decode().strip()}")
-                
-                # Update status in test mode
-                if self.args.serve_nt and hasattr(self, 'status_pub'):
-                    self.status_pub.set(f"Failed to set WiFi {state_msg}")
-            else:
-                self.wifi_turned_off = disable
-                self.log.info(f"WiFi radio {state_msg}")
-                
-                # Update status in test mode
-                if self.args.serve_nt and hasattr(self, 'status_pub'):
-                    self.status_pub.set(f"WiFi {state_msg}")
-                
-                # Update LED if enabled
-                if self.led_control_enabled:
-                    await self.update_led()
-                    
-        except Exception as e:
-            self.log.error(f"Error setting WiFi state: {e}")
-            
-            # Update status in test mode
-            if self.args.serve_nt and hasattr(self, 'status_pub'):
-                self.status_pub.set(f"Error setting WiFi {state_msg}")
-    
-    async def schedule_wifi_reenable(self):
-        """Schedule WiFi to be re-enabled after delay"""
-        # Cancel any existing task
-        if self.wifi_reenable_task and not self.wifi_reenable_task.done():
-            self.log.info("Cancelling previous WiFi re-enable task")
-            self.wifi_reenable_task.cancel()
-        
-        delay_sec = self.args.on_delay
-        self.log.info(f"Scheduling WiFi to be re-enabled after {delay_sec} minutes")
-
-        # Store start time and duration for tracking
-        self.wifi_reenable_start_time = time.monotonic()
-        self.wifi_reenable_duration = delay_sec
-        
-        # Update status in test mode
-        if self.args.serve_nt: 
-            if hasattr(self, 'status_pub'):
-                self.status_pub.set(f"WiFi re-enable scheduled in {delay_sec} minutes")
-            if hasattr(self, 'timer_pub'):
-                self.timer_pub.set(delay_sec)
-        
-        # Create new task
-        self.wifi_reenable_task = asyncio.create_task(self.delayed_wifi_enable(delay_sec))
-    
-    async def delayed_wifi_enable(self, delay_sec):
-        """Wait for specified delay then re-enable WiFi"""
-        try:
-            await asyncio.sleep(delay_sec)
-            self.log.info(f"Delay completed, re-enabling WiFi")
-            
-            # Update status in test mode
-            if self.args.serve_nt and hasattr(self, 'status_pub'):
-                self.status_pub.set(f"WiFi re-enable timer completed")
-            
-            if hasattr(self, 'timer_pub'):
-                self.timer_pub.set(0)
-
-            await self.handle_wifi(disable=False)
-        except asyncio.CancelledError:
-            self.log.info("WiFi re-enable task was cancelled")
-    
-    async def save_led_state(self):
-        """Save the original LED state"""
-        try:
-            # Read current trigger
-            trigger_path = self.led_path / "trigger"
-            if trigger_path.exists():
-                with open(trigger_path, 'r') as f:
-                    content = f.read()
-                    # The current trigger is marked with [brackets]
-                    for line in content.split():
-                        if line.startswith('[') and line.endswith(']'):
-                            self.original_trigger = line[1:-1]
-                            break
-            
-            # Read current brightness
-            brightness_path = self.led_path / "brightness"
-            if brightness_path.exists():
-                with open(brightness_path, 'r') as f:
-                    self.original_brightness = f.read().strip()
-                    
-            self.log.info(f"Saved original LED state: trigger={self.original_trigger}, brightness={self.original_brightness}")
-        except Exception as e:
-            self.log.error(f"Error saving LED state: {e}")
-    
-    async def restore_led_state(self):
-        """Restore the original LED state"""
-        try:
-            if self.original_trigger:
-                trigger_path = self.led_path / "trigger"
-                if trigger_path.exists():
-                    with open(trigger_path, 'w') as f:
-                        f.write(self.original_trigger)
-            
-            if self.original_brightness:
-                brightness_path = self.led_path / "brightness"
-                if brightness_path.exists():
-                    with open(brightness_path, 'w') as f:
-                        f.write(self.original_brightness)
-                        
-            self.log.info("Restored original LED state")
-            
-            # Update status in test mode
-            if self.args.serve_nt and hasattr(self, 'led_status_pub'):
-                self.led_status_pub.set("Original")
-        except Exception as e:
-            self.log.error(f"Error restoring LED state: {e}")
+        return await self.cmd.run(
+            cmd,
+            "Rebooting Pi",
+            ok_msg="Pi rebooting",
+            err_msg="Failed to reboot Pi"
+        )
     
     async def update_led(self):
-        """Update LED state based on current system status"""
-        if not self.led_control_enabled:
-            return
-        
-        # In test mode, just update status but don't touch LED
-        if self.args.serve_nt and self.args.mock_commands:
-            if hasattr(self, 'led_status_pub'):
-                self.led_status_pub.set("Flashing" if self.wifi_turned_off else "Default")
+        """Update LED based on current WiFi state"""
+        if not self.led:
             return
             
         try:
-            trigger_path = self.led_path / "trigger"
-            if not trigger_path.exists():
-                self.log.error("LED trigger path does not exist")
-                return
-                
-            # If WiFi is off (due to FMS), set flashing LED
-            if self.wifi_turned_off:
-                # Set LED to timer mode for flashing
-                with open(trigger_path, 'w') as f:
-                    f.write("timer")
-                    
-                # Configure timer delay (in ms)
-                delay_on_path = self.led_path / "delay_on"
-                if delay_on_path.exists():
-                    with open(delay_on_path, 'w') as f:
-                        f.write("500")  # 500ms on
-                        
-                delay_off_path = self.led_path / "delay_off"
-                if delay_off_path.exists():
-                    with open(delay_off_path, 'w') as f:
-                        f.write("500")  # 500ms off
-                
-                self.log.info("Set LED to flash mode (WiFi disabled)")
-                
-                # Update status in test mode
-                if self.args.serve_nt and hasattr(self, 'led_status_pub'):
-                    self.led_status_pub.set("Flashing")
+            if self.wifi.is_off:
+                await self.led.set_flash()
+                self.topic_mgr.get_pub(TOPIC_LED_STATUS).set("Flashing")
             else:
-                # Return to default LED behavior
-                with open(trigger_path, 'w') as f:
-                    f.write("mmc0")  # Default activity trigger for Pi5
+                await self.led.set_default()
+                self.topic_mgr.get_pub(TOPIC_LED_STATUS).set("Default")
+        except Exception as e:
+            self.log.error(f"Error updating LED: {e}")
+    
+    async def run(self):
+        """Main run loop"""
+        self.log.info("Reset service starting")
+        self.event_loop = asyncio.get_running_loop()
+        
+        # Save original LED state if needed
+        if self.led:
+            await self.led.save_state()
+        
+        # Set up NT event listeners
+        self.setup_listeners()
+        
+        try:
+            # Main loop - process events from queue and update timer
+            while self.running:
+                # Process events from queue with timeout
+                try:
+                    # Wait for an event with timeout so we can also update the timer
+                    event = await asyncio.wait_for(self.event_queue.get(), 1.0)
+                    
+                    # Process the event
+                    topic = event.data.topic.getName()
+                    if topic in self.handlers:
+                        try:
+                            await self.handlers[topic](event.data.value)
+                        except Exception as e:
+                            self.log.error(f"Error handling {topic}: {e}")
+                    
+                    # Mark as done
+                    self.event_queue.task_done()
+                    
+                except asyncio.TimeoutError:
+                    # This is expected - lets us check timer below
+                    pass
                 
-                self.log.info("Set LED to default mode")
-                
-                # Update status in test mode
-                if self.args.serve_nt and hasattr(self, 'led_status_pub'):
-                    self.led_status_pub.set("Default")
+                # Update timer in test mode
+                if self.args.serve_nt and self.wifi.timer.is_active():
+                    remain = int(round(self.wifi.timer.get_remaining()))
+                    self.topic_mgr.get_pub(TOPIC_WIFI_TIMER).set(remain)
                 
         except Exception as e:
-            self.log.error(f"Error updating LED state: {e}")
+            self.log.error(f"Error in main loop: {e}")
+        finally:
+            # Cleanup
+            self.log.info("Reset service shutting down")
+            self.running = False
+            self.topic_mgr.remove_all_listeners()
+            if self.led:
+                await self.led.restore_state()
 
+
+async def main():
+    """Main entry point"""
+    args = parse_args()
+    
+    # Configure logging
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s.%(msecs)03d:%(levelname)5s:%(name)s: %(message)s",
+        datefmt="%H:%M:%S"
+    )
+    
+    # Create and run the service
+    service = ResetService(args)
+    await service.run()
+
+
+def parse_args():
+    """Parse command line arguments"""
+    import argparse
+    parser = argparse.ArgumentParser(description="Supervisory Manager")
+    
+    parser.add_argument("-d", "--debug", action="store_true", 
+                        help="Enable debug logging")
+    parser.add_argument("--radio", action="store_true",
+                        help="Enable WiFi radio control")
+    parser.add_argument("--on-delay", type=int, default=300,
+                        help="Delay (seconds) before re-enabling WiFi (default: %(default)s)")
+    parser.add_argument("--led", action="store_true",
+                        help="Enable LED control to indicate WiFi status")
+    parser.add_argument("--serve-nt", action="store_true",
+                        help="Serve NetworkTables for testing")
+    parser.add_argument("--mock-commands", action="store_true",
+                        help="Don't execute actual system commands when testing")
+    
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
