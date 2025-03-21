@@ -3,6 +3,7 @@ package frc.robot.commands;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -628,23 +629,34 @@ public class AutoPaths {
     double yCenter = 4.026;
     Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
     Pose2d algaeDump = new Pose2d(7.58 - dumpDistanceTuner.get(), yCenter, Rotation2d.fromDegrees(180.00));
-    Trajectory algaeDumpTrajectory = TrajectoryGenerator.generateTrajectory(List.of(startPose, algaeDump),
-        config);
+    AtomicReference<Trajectory> algaeDumpTrajectory = new AtomicReference<>();
+    algaeDumpTrajectory.set(TrajectoryGenerator.generateTrajectory(List.of(startPose, algaeDump),
+        config));
+    dumpDistanceTuner.addListener((event) -> {
+      double distance = event.valueData.value.getDouble();
+      Pose2d newAlgaeDump = new Pose2d(7.58 - distance, yCenter, Rotation2d.fromDegrees(180.00));
+      algaeDumpTrajectory.set(TrajectoryGenerator.generateTrajectory(List.of(startPose, newAlgaeDump),
+        config));
+    });
     var command = Commands.sequence(
-      runTrajectory(algaeDumpTrajectory, drive),
+      runTrajectory(algaeDumpTrajectory.get(), drive),
       Commands.runOnce(() -> {
         drive.stop();
         superstructure.setElevatorGoalHeightMillimeters(300);
         superstructure.setWristGoalRads(Units.degreesToRadians(0));
       }),
-      Commands.waitSeconds(1),
+      Commands.run(() -> {
+        drive.stop();
+      }).withTimeout(1),
       Commands.run(() -> {
         superstructure.setGrabberMotor(1);
       }).withTimeout(1),
       Commands.runOnce(() -> {
         superstructure.setGrabberMotor(0);
       }),
-      Commands.waitSeconds(2),
+      Commands.run(() -> {
+        drive.stop();
+      }).withTimeout(2),
       Commands.run(() -> {
         drive.set(-0.2, 0);
       }).withTimeout(1),
