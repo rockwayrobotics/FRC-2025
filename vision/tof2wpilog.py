@@ -8,8 +8,6 @@
 # pylint: disable=too-many-arguments,broad-exception-caught,redundant-keyword-arg
 # pylint: disable=too-many-nested-blocks
 
-#!/usr/bin/env python3
-
 import argparse
 import re
 import os
