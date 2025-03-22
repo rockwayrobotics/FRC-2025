@@ -237,10 +237,18 @@ def main():
             if dashboard_arr is not None:
                 source.putFrame(dashboard_arr)
 
-            if not fore_cam.fake:
-                aprilDetector.detect(arr0)
-            if not aft_cam.fake:
-                aprilDetector.detect(arr1)
+            try:
+                if not fore_cam.fake:
+                    aprilDetector.detect(arr0)
+                if not aft_cam.fake:
+                    aprilDetector.detect(arr1)
+            except KeyError:
+                # FIXME: this is a temporary fix to avoid a problem
+                # when an unrecognized tag id is found.  In some testing
+                # we saw what the detector claimed was tag 126, which
+                # then caused a keyerror and crash.
+                # Do a better fix.
+                pass
 
             key = console.get_key()
 
