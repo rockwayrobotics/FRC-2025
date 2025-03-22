@@ -40,13 +40,19 @@ public class TunableSetpoints {
       true);
 
   // Barge Algae:
-  private final Tuner barge_prepare_elevator_height_mm = new Tuner("Scoring/Algae/Barge/prepare_elevator_height_mm", 200, true);
-  private final Tuner barge_prepare_wrist_angle_rads = new Tuner("Scoring/Algae/Barge/prepare_wrist_angle_rads", -0.8, true);
-  private final Tuner barge_shoot_elevator_height_mm = new Tuner("Scoring/Algae/Barge/shoot_elevator_height_mm", 1100, true);
-  private final Tuner barge_shoot_wrist_angle_rads = new Tuner("Scoring/Algae/Barge/shoot_wrist_angle_rads", -1.3, true);
-  private final Tuner barge_shoot_elevator_speed = new Tuner("Scoring/Algae/Barge/shoot_elevator_speed", 0.85, true);
-  private final Tuner barge_when_shoot_elevator_height_mm = new Tuner("Scoring/Algae/Barge/when_shoot_elevator_height_mm", 750, true);
-  private final Tuner barge_when_wrist_angle_height_mm = new Tuner("Scoring/Algae/Barge/when_wrist_angle_height_mm", 250, true);
+  private final Tuner barge_prepare_elevator_height_mm = new Tuner("Scoring/Algae/Barge/prepare_elevator_height_mm",
+      200, true);
+  private final Tuner barge_prepare_wrist_angle_rads = new Tuner("Scoring/Algae/Barge/prepare_wrist_angle_rads", -0.8,
+      true);
+  private final Tuner barge_shoot_elevator_height_mm = new Tuner("Scoring/Algae/Barge/shoot_elevator_height_mm", 1200,
+      true);
+  private final Tuner barge_shoot_wrist_angle_rads = new Tuner("Scoring/Algae/Barge/shoot_wrist_angle_rads", -1.3,
+      true);
+  private final Tuner barge_shoot_elevator_speed = new Tuner("Scoring/Algae/Barge/shoot_elevator_speed", 0.95, true);
+  private final Tuner barge_when_shoot_elevator_height_mm = new Tuner(
+      "Scoring/Algae/Barge/when_shoot_elevator_height_mm", 890, true);
+  private final Tuner barge_when_wrist_angle_height_mm = new Tuner("Scoring/Algae/Barge/when_wrist_angle_height_mm",
+      250, true);
 
   public double intake_elevator_height_mm() {
     return intake_elevator_height_mm.get();
