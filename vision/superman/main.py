@@ -266,7 +266,15 @@ class WiFiMgr:
         )
         
         if result:
-            self.is_off = disable
+            cmd = ["nmcli", "con", "up", "Team8089"]
+            result = await self.cmd.run(
+                cmd,
+                f"Connecting to Team8089",
+                ok_msg=f"WiFi reconnected (?)",
+                err_msg=f"Failed to reconnect to hotspot"
+            )
+            if result:
+                self.is_off = disable
             
         return result
     
