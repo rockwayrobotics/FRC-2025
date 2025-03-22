@@ -100,6 +100,7 @@ class CV2Cam:
             name = (path / 'name').read_text().strip()
             print(path, name)
             if name == 'USB 2.0 PC Cam':
+            # if name == 'gspca main driver':
                 if (path / 'index').read_text().strip() == '0':
                     return int(str(path).rsplit('video', 1)[1])
         raise IndexError('USB cam not found')
