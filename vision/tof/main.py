@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+'''TOF Sensor reader'''
+
+# pylint: disable=unused-import,attribute-defined-outside-init,protected-access
+# pylint: disable=broad-exception-caught,missing-function-docstring
 
 import datetime
 import logging
-import math
 from pathlib import Path
 import sys
 import signal
@@ -88,7 +91,7 @@ class SensorManager:
                     except Exception as ex:
                         if not warned or warned is not ex.__class__:
                             warned = ex.__class__
-                            self.log.error(f"Error: {ex}")
+                            self.log.error("Error: %s", ex)
 
                         time.sleep(0.2)
                         continue
@@ -103,13 +106,13 @@ class SensorManager:
 
                     if reading is None:
                         running = False
-                        self.log.warn("DEACTIVATED")
+                        self.log.warning("DEACTIVATED")
                         continue
 
                 except Exception as ex:
                     if not warned:
                         warned = True
-                        self.log.error(f"Error: {ex}")
+                        self.log.error("Error: %s", ex)
 
                     running = False
                     continue
@@ -123,7 +126,7 @@ class SensorManager:
                     if callback is not None:
                         callback(ts, distance, status, delta)
 
-                    time.sleep(0.01)  # Small sleep to prevent CPU spinning
+                    time.sleep(0.001)  # Small sleep to prevent CPU spinning
                     # (although the new Rust code should block us anyway
                     # so in theory this is no longer required)
 
@@ -301,7 +304,6 @@ class TofMain:
         self.dist_pub.set(dist_mm)
         if flush:
             self.nt.flush()
-    
 
     # Map of modes to GPIO pin indices [5, 14]
     MODE_MAP = {
@@ -321,7 +323,7 @@ class TofMain:
 
         def reader():
             self.mgr.read(self.args.timing, self.args.inter, callback=self.on_reading)
-        thread = threading.Thread(target=reader).start()
+        threading.Thread(target=reader, daemon=True).start()
 
         loop_ts = time.monotonic()
         while self.running:
@@ -365,12 +367,11 @@ class TofMain:
             now = time.monotonic()
             elapsed = now - loop_ts
             if elapsed > 0.075:
-                self.log.warn('long loop time %.3fs', elapsed)
+                self.log.warning('long loop time %.3fs', elapsed)
             loop_ts = now
-            
 
     def shutdown(self):
-        self.log.warn('shutting down')
+        self.log.warning('shutting down')
         self.running = False
         self.mgr.shutdown()
         self.nt.stopClient()
