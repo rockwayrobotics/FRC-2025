@@ -3,8 +3,6 @@ package frc.robot.subsystems.elevator;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
-import com.revrobotics.spark.config.MAXMotionConfig.MAXMotionPositionMode;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 
@@ -20,6 +18,7 @@ import java.util.function.DoubleSupplier;
 
 import frc.robot.Constants;
 import frc.robot.util.REVUtils;
+import frc.robot.util.Sensors;
 import frc.robot.util.Tuner;
 
 public class ElevatorIOReal implements ElevatorIO {
@@ -31,12 +30,13 @@ public class ElevatorIOReal implements ElevatorIO {
   final Tuner elevatorFeedforwardkG = new Tuner("Elevator/feedforward_Kg", 0.4, true);
   final Tuner elevatorFeedforwardkV = new Tuner("Elevator/feedforward_Kv", 0.01427, true);
   final Tuner elevatorPID_P = new Tuner("Elevator/Kp", 0.00136, true);
-  final Tuner elevatorPID_I = new Tuner("Elevator/Ki", 0, true);
+  final Tuner elevatorPID_I = new Tuner("Elevator/KI", 0, true);
   final Tuner elevatorPID_D = new Tuner("Elevator/Kd", 0.005, true);
-  final Tuner elevatorMaxSpeedMmPerSecond = new Tuner("Elevator/speed_max_mm_per_second", 100, true);
-  final Tuner elevatorMaxAccelerationMmPerSecond2 = new Tuner("Elevator/accel_max_mm_per_second2", 100, true);
+  final Tuner elevatorMaxNormalizedSpeed = new Tuner("Elevator/normalized_speed_max", 0.6, true);
+  final Tuner elevatorMinNormalizedSpeed = new Tuner("Elevator/normalized_speed_min", -0.5, true);
   final Tuner elevatorSoftLimitMin = new Tuner("Elevator/soft_limit_min_mm", 20, true);
   final Tuner elevatorSoftLimitMax = new Tuner("Elevator/soft_limit_max_mm", 1200, true);
+  final Tuner elevatorRampRate = new Tuner("Elevator/ramp_rate_s", 1, true);
 
   protected final RelativeEncoder encoder = motorMain.getEncoder();
   protected final SparkClosedLoopController controller = motorMain.getClosedLoopController();
@@ -59,10 +59,11 @@ public class ElevatorIOReal implements ElevatorIO {
     elevatorPID_P.addListener((_e) -> updateParams(false));
     elevatorPID_I.addListener((_e) -> updateParams(false));
     elevatorPID_D.addListener((_e) -> updateParams(false));
-    elevatorMaxSpeedMmPerSecond.addListener((_e) -> updateParams(false));
-    elevatorMaxAccelerationMmPerSecond2.addListener((_e) -> updateParams(false));
+    elevatorMaxNormalizedSpeed.addListener((_e) -> updateParams(false));
+    elevatorMinNormalizedSpeed.addListener((_e) -> updateParams(false));
     elevatorSoftLimitMin.addListener((_e) -> updateParams(false));
     elevatorSoftLimitMax.addListener((_e) -> updateParams(false));
+    elevatorRampRate.addListener((_e) -> updateParams(false));
   }
 
   @Override
@@ -88,7 +89,7 @@ public class ElevatorIOReal implements ElevatorIO {
   public void moveTowardsGoal(double goalHeightMillimeters, double currentHeightMillimeters) {
     var velocity = SPEED_MM_PER_SEC * Math.signum(goalHeightMillimeters - currentHeightMillimeters);
     var ff = feedforward.calculate(velocity);
-    controller.setReference(goalHeightMillimeters, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, ff);
+    controller.setReference(goalHeightMillimeters, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff);
   }
 
   public void setVoltage(double volts) {
@@ -101,13 +102,13 @@ public class ElevatorIOReal implements ElevatorIO {
   }
 
   @Override
-  public void setMaxSpeedTuner(double speedMmPerSecond) {
-    elevatorMaxSpeedMmPerSecond.set(speedMmPerSecond);
+  public void setMaxNormalizedSpeedTuner(double speed) {
+    elevatorMaxNormalizedSpeed.set(speed);
   }
 
   @Override
-  public double getMaxSpeedTuner() {
-    return elevatorMaxSpeedMmPerSecond.get();
+  public double getMaxNormalizedSpeedTuner() {
+    return elevatorMaxNormalizedSpeed.get();
   }
 
   public void updateParams(boolean resetSafe) {
@@ -127,11 +128,9 @@ public class ElevatorIOReal implements ElevatorIO {
         .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
     // No ff term here because we want position control not velocity
-    config.closedLoop.pidf(elevatorPID_P.get(), elevatorPID_I.get(), elevatorPID_D.get(), 0).feedbackSensor(FeedbackSensor.kPrimaryEncoder);
-    config.closedLoop.maxMotion
-      .maxVelocity(elevatorMaxSpeedMmPerSecond.get())
-      .maxAcceleration(elevatorMaxAccelerationMmPerSecond2.get())
-      .allowedClosedLoopError(10000);
+    config.closedLoop.pidf(elevatorPID_P.get(), elevatorPID_I.get(), elevatorPID_D.get(), 0);
+    config.closedLoop.outputRange(elevatorMinNormalizedSpeed.get(), elevatorMaxNormalizedSpeed.get());
+    config.closedLoopRampRate(elevatorRampRate.get());
     REVUtils.tryUntilOk(() -> motorMain.configure(config, resetMode, PersistMode.kPersistParameters));
   }
 

@@ -40,13 +40,12 @@ public class Elevator {
     if (DriverStation.isDisabled() || !isHomed) {
       io.stop();
     } else {
-      // io.moveTowardsGoal(goalHeightMillimeters, heightMillimeters);
+      io.moveTowardsGoal(goalHeightMillimeters, heightMillimeters);
     }
   }
 
   public void setGoalHeightMillimeters(double heightMillimeters) {
     goalHeightMillimeters = heightMillimeters;
-    io.moveTowardsGoal(goalHeightMillimeters, heightMillimeters);
   }
 
   public double getHeightMillimeters() {
@@ -66,12 +65,12 @@ public class Elevator {
     io.stop();
   }
 
-  public void setMaxSpeedTuner(double speedMmPerSecond) {
-    io.setMaxSpeedTuner(speedMmPerSecond);
+  public void setMaxNormalizedSpeedTuner(double speed) {
+    io.setMaxNormalizedSpeedTuner(speed);
   }
 
-  public double getMaxSpeedTuner() {
-    return io.getMaxSpeedTuner();
+  public double getMaxNormalizedSpeedTuner() {
+    return io.getMaxNormalizedSpeedTuner();
   }
 
   // public boolean isHomeBeamBroken() {
