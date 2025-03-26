@@ -25,13 +25,17 @@ public class Elevator {
     });
   }
 
-  public void periodic() {
+  public void periodic(double minHeight) {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
     heightMillimeters = inputs.positionMillimeters;
     homeBeamBroken = inputs.homeBeamBroken;
     Logger.recordOutput("Elevator/goal_height_mm", goalHeightMillimeters);
     Logger.recordOutput("Elevator/isHomed", isHomed);
+
+    if (goalHeightMillimeters < minHeight) {
+      goalHeightMillimeters = minHeight;
+    }
 
     if (DriverStation.isDisabled() || !isHomed) {
       io.stop();
