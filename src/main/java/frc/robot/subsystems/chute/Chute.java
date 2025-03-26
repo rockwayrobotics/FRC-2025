@@ -4,8 +4,10 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.util.Interlock;
+import frc.robot.util.Tuner;
 
 public class Chute {
   private final ChuteIO io;
@@ -21,20 +23,16 @@ public class Chute {
     this.io = io;
   }
 
-  public void periodic(double minAngleRads) {
+  public void periodic(boolean safeHeight) {
     io.updateInputs(inputs);
     Logger.processInputs("Chute", inputs);
     Logger.recordOutput("Chute/isHomed", isHomed);
 
     pivotAngleRads = inputs.pivotAngleRadians;
 
-    if (Math.abs(pivotGoalRads) < minAngleRads) {
-      pivotGoalRads = Math.signum(pivotGoalRads) * minAngleRads;
-    }
-
     if (DriverStation.isDisabled() || !isHomed) {
       io.stopPivot();
-    } else {
+    } else if (safeHeight) {
       io.moveTowardsPivotGoal(pivotGoalRads, inputs.pivotAngleRadians);
     }
   }
