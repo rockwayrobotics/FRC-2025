@@ -35,10 +35,10 @@ public interface ElevatorIO {
   public default void zeroEncoder() {
   }
 
-  public default void setMaxNormalizedSpeedTuner(double speed) {
+  public default void setMaxSpeedTuner(double speedMmPerSecond) {
   }
 
-  public default double getMaxNormalizedSpeedTuner() {
+  public default double getMaxSpeedTuner() {
     return 0;
   }
 }

@@ -68,12 +68,12 @@ public class Superstructure extends SubsystemBase {
     return elevator.getHeightMillimeters();
   }
 
-  public void setElevatorMaxSpeed(double speed) {
-    elevator.setMaxNormalizedSpeedTuner(speed);
+  public void setElevatorMaxSpeed(double speedMmPerSecond) {
+    elevator.setMaxSpeedTuner(speedMmPerSecond);
   }
 
   public double getElevatorMaxSpeed() {
-    return elevator.getMaxNormalizedSpeedTuner();
+    return elevator.getMaxSpeedTuner();
   }
 
   public boolean isElevatorAtGoal() {
