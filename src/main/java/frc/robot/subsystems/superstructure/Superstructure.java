@@ -36,14 +36,15 @@ public class Superstructure extends SubsystemBase {
 
   @Override
   public void periodic() {
-    if (elevator.getGoalHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
-      elevator.periodic();
-    } else if ((Math.abs(chute.getPivotAngleRads()) - Units.degreesToRadians(90)) < 0.1) {
-      elevator.periodic();
-    }
+    double minHeight = Math.cos(chute.getPivotAngleRads()) * Constants.Chute.CHUTE_MINIMUM_ELEVATOR_HEIGHT_MM;
+    elevator.periodic(minHeight);
 
-    // FIXME: make this more robust
-    chute.periodic(elevator.getHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM - 50);
+    double elevatorHeightMm = elevator.getHeightMillimeters();
+    if (elevatorHeightMm >= Constants.Chute.CHUTE_MINIMUM_ELEVATOR_HEIGHT_MM) {
+      chute.periodic(0);
+    } else {
+      chute.periodic(Math.acos(elevatorHeightMm / Constants.Chute.CHUTE_MINIMUM_ELEVATOR_HEIGHT_MM));
+    }
 
     grabber.periodic();
   }
@@ -52,7 +53,7 @@ public class Superstructure extends SubsystemBase {
     // FIXME: Check if elevator is homed. If not... do nothing?
     // FIXME done?????: Check chute state, if not safe, move it first? Or do
     // nothing?
-    if (heightMillimeters < Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+    if (heightMillimeters < Constants.Chute.CHUTE_MINIMUM_ELEVATOR_HEIGHT_MM) {
       if (chute.getPivotAngleRads() <= 0) {
         chute.setPivotGoalRads(Units.degreesToRadians(-90));
       } else {
@@ -144,11 +145,11 @@ public class Superstructure extends SubsystemBase {
   }
 
   /**
-   * Schedules a command to shut down the superstructure
+   * Returns a command to shut down the superstructure
    * carefully. This is intended to be used to get ready for climp.
    */
-  public void foldForClimp() {
-    Commands.parallel(
+  public Command foldForClimp() {
+    var command = Commands.parallel(
         Commands.runOnce(() -> grabber.setWristGoalRads(Units.degreesToRadians(-90))),
         Commands.runOnce(
             () -> {
@@ -159,14 +160,15 @@ public class Superstructure extends SubsystemBase {
               }
             }),
         Commands.runOnce(() -> {
-          if (elevator.getGoalHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM + 1) {
-            elevator.setGoalHeightMillimeters(Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM + 1);
+          if (elevator.getGoalHeightMillimeters() > Constants.Chute.CHUTE_MINIMUM_ELEVATOR_HEIGHT_MM + 1) {
+            elevator.setGoalHeightMillimeters(Constants.Chute.CHUTE_MINIMUM_ELEVATOR_HEIGHT_MM + 1);
           }
         }),
         Commands.sequence(
             Commands.waitUntil(() -> Math.abs(chute.getPivotAngleRads()) > Units.degreesToRadians(87)),
-            Commands.runOnce(() -> elevator.setGoalHeightMillimeters(0))))
-        .schedule();
+            Commands.runOnce(() -> elevator.setGoalHeightMillimeters(0))));
+    command.addRequirements(this);
+    return command;
   }
 
   TunableSetpoints setpoints = new TunableSetpoints();

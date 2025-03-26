@@ -25,7 +25,7 @@ public class Elevator {
     });
   }
 
-  public void periodic() {
+  public void periodic(double minHeight) {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
     heightMillimeters = inputs.positionMillimeters;
@@ -33,10 +33,16 @@ public class Elevator {
     Logger.recordOutput("Elevator/goal_height_mm", goalHeightMillimeters);
     Logger.recordOutput("Elevator/isHomed", isHomed);
 
+    double allowedGoalHeightMm = goalHeightMillimeters;
+    if (goalHeightMillimeters < minHeight) {
+      allowedGoalHeightMm = minHeight;
+    }
+
     if (DriverStation.isDisabled() || !isHomed) {
       io.stop();
+      goalHeightMillimeters = allowedGoalHeightMm;
     } else {
-      io.moveTowardsGoal(goalHeightMillimeters, heightMillimeters);
+      io.moveTowardsGoal(allowedGoalHeightMm, heightMillimeters);
     }
   }
 
