@@ -53,6 +53,7 @@ public class PiSimulation {
     cornerPublisher = nt.getFloatArrayTopic(Constants.NT.CORNERS).publish();
     tsDistPublisher = nt.getDoubleArrayTopic(Constants.NT.TS_DIST_MM).publish();
     this.fieldObstacles = fieldObstacles;
+    this.cornerDetector = new CornerDetector(400, 25, 10, 60);
   }
 
   private void simulateReading(Pose2d robotPose, String chuteSide) {
@@ -112,7 +113,7 @@ public class PiSimulation {
         System.out.println("chute: " + value);
         // pos, _, side
         String[] pos_side = value.split("/");
-        String side = pos_side[2];
+        String side = pos_side[1];
         if (!pos_side[0].equals("load")) {
           if (side.equals("right")) {
             side = "left";
