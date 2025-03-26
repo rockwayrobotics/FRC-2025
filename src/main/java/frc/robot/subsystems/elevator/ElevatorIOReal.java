@@ -131,7 +131,7 @@ public class ElevatorIOReal implements ElevatorIO {
     config.closedLoop.maxMotion
       .maxVelocity(elevatorMaxSpeedMmPerSecond.get())
       .maxAcceleration(elevatorMaxAccelerationMmPerSecond2.get())
-      .allowedClosedLoopError(10000);
+      .allowedClosedLoopError(10);
     REVUtils.tryUntilOk(() -> motorMain.configure(config, resetMode, PersistMode.kPersistParameters));
   }
 
