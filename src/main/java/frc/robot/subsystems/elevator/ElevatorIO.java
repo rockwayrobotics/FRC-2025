@@ -2,6 +2,8 @@ package frc.robot.subsystems.elevator;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+
 public interface ElevatorIO {
   @AutoLog
   public static class ElevatorIOInputs {
@@ -23,8 +25,9 @@ public interface ElevatorIO {
    * Command a specific height from the elevator. Up is positive, down is
    * negative.
    */
-  public default void moveTowardsGoal(double goalHeightMillimeters, double currentHeightMillimeters) {
+  public default void moveTowardsGoal(TrapezoidProfile.State state) {
   }
+  //public default void moveTowardsGoal(double goalHeightMillimeters, double currentHeightMillimeters) {
 
   public default void stop() {
   }

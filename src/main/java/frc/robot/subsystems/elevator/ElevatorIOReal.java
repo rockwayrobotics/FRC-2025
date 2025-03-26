@@ -5,6 +5,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -86,10 +87,12 @@ public class ElevatorIOReal implements ElevatorIO {
   }
 
   @Override
-  public void moveTowardsGoal(double goalHeightMillimeters, double currentHeightMillimeters) {
-    var velocity = SPEED_MM_PER_SEC * Math.signum(goalHeightMillimeters - currentHeightMillimeters);
-    var ff = feedforward.calculate(velocity);
-    controller.setReference(goalHeightMillimeters, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff);
+  public void moveTowardsGoal(TrapezoidProfile.State state) {
+    var ff = feedforward.calculate(state.velocity);
+    controller.setReference(state.position, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff);
+    // var velocity = SPEED_MM_PER_SEC * Math.signum(goalHeightMillimeters - currentHeightMillimeters);
+    // var ff = feedforward.calculate(velocity);
+    // controller.setReference(goalHeightMillimeters, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff);
   }
 
   public void setVoltage(double volts) {

@@ -47,6 +47,7 @@ public class Elevator {
 
     double allowedGoalHeightMm = goalHeightMillimeters;
     if (goalHeightMillimeters < minHeight) {
+      Logger.recordOutput("Elevator/restricted_height_mm", minHeight);
       allowedGoalHeightMm = minHeight;
     }
 
@@ -57,7 +58,8 @@ public class Elevator {
       TrapezoidProfile.State nextGoal = motionProfile.calculate(0.02,
           new TrapezoidProfile.State(heightMillimeters, inputs.velocityMillimetersPerSec),
           new TrapezoidProfile.State(goalHeightMillimeters, 0));
-      io.moveTowardsGoal(nextGoal.position, heightMillimeters);
+      Logger.recordOutput("Elevator/trapezoid_goal_mm", nextGoal.position);
+      io.moveTowardsGoal(nextGoal);
     }
   }
 

@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Millimeters;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.Constants;
 
@@ -33,8 +34,8 @@ public class ElevatorIOSim implements ElevatorIO {
   }
 
   @Override
-  public void moveTowardsGoal(double goalHeightMillimeters, double currentHeightMillimeters) {
-    controller.setSetpoint(Meters.convertFrom(goalHeightMillimeters, Millimeters));
+  public void moveTowardsGoal(TrapezoidProfile.State state) {
+    controller.setSetpoint(Meters.convertFrom(state.position, Millimeters));
   }
 
   @Override
