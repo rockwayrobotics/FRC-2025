@@ -738,7 +738,55 @@ public class AutoPaths {
           drive.set(-0.2, 0);
         }).withTimeout(1),
         Commands.runOnce(() -> {
+          superstructure.bargePrepare();
+          drive.stop();
+        }));
+    command.addRequirements(drive, superstructure);
+    return command;
+  }
+
+  public static Command fastCenterFarDumpPlusAlgaeGrripTrajected(Drive drive, Superstructure superstructure) {
+    double yCenter = 4.026;
+    Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
+    Pose2d coralDump = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
+    Trajectory coralDumpTrajectory = TrajectoryGenerator.generateTrajectory(List.of(startPose, coralDump),
+        fasterConfig);
+    Pose2d algaePrepare = new Pose2d(6.2, yCenter, Rotation2d.fromDegrees(180.00));
+    Trajectory backUpTrajectory = TrajectoryGenerator.generateTrajectory(List.of(coralDump, algaePrepare),
+        reversedConfig);
+    Trajectory getAlgaeTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaePrepare, coralDump),
+        fasterConfig);
+    Pose2d bargePrepare = new Pose2d(7.3, 5.3, Rotation2d.fromDegrees(-45));
+    Trajectory gotoBargePrepareTrajectory = TrajectoryGenerator.generateTrajectory(
+        List.of(coralDump, algaePrepare, bargePrepare),
+        config);
+    var command = Commands.sequence(
+        Commands.runOnce(() -> {
+          superstructure.setElevatorGoalHeightMillimeters(400);
+          superstructure.setWristGoalRads(Units.degreesToRadians(0));
+        }),
+        runTrajectory(coralDumpTrajectory, drive),
+        Commands.run(() -> {
+          superstructure.setGrabberMotor(1);
+          drive.stop();
+        }).withTimeout(0.5),
+        Commands.runOnce(() -> {
           superstructure.setGrabberMotor(0);
+        }),
+        Commands.run(() -> {
+          drive.stop();
+        }).withTimeout(0.2),
+        runTrajectory(backUpTrajectory, drive),
+        Commands.runOnce(() -> {
+          superstructure.gotoAlgaeSetpoint(Constants.AlgaeLevel.L2);
+        }).withTimeout(0.2),
+        Commands.parallel(
+            runTrajectory(getAlgaeTrajectory, drive),
+            Commands.runOnce(() -> superstructure.setGrabberMotor(-1))),
+        Commands.parallel(
+            runTrajectory(gotoBargePrepareTrajectory, drive),
+            Commands.waitSeconds(1).finallyDo(() -> superstructure.setGrabberMotor(0))),
+        Commands.runOnce(() -> {
           superstructure.bargePrepare();
           drive.stop();
         }));
