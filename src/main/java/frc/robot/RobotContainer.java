@@ -236,7 +236,7 @@ public class RobotContainer {
     }, superstructure));
 
     new JoystickButton(operator2Controller, 3).whileTrue(Commands.run(() -> {
-      if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINIMUM_ELEVATOR_HEIGHT_MM) {
+      if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
         superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.4);
       }
     }, superstructure)).onFalse(Commands.run(() -> {
@@ -244,7 +244,7 @@ public class RobotContainer {
     }, superstructure));
 
     new JoystickButton(operator2Controller, 8).whileTrue(Commands.run(() -> {
-      if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINIMUM_ELEVATOR_HEIGHT_MM) {
+      if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
         superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.4);
       }
     }, superstructure)).onFalse(Commands.run(() -> {
@@ -345,7 +345,9 @@ public class RobotContainer {
       Sensors.getInstance().overrideChuteHomeSwitch = true;
     }, superstructure));
 
-    new JoystickButton(operator1Controller, 14).onTrue(superstructure.foldForClimp());
+    new JoystickButton(operator1Controller, 14).onTrue(Commands.runOnce(() -> {
+      superstructure.foldForClimp();
+    }, superstructure));
 
     new JoystickButton(operator1Controller, 2).whileTrue(Commands.run(() -> {
       climp.setNormalizedSpeed(1);
