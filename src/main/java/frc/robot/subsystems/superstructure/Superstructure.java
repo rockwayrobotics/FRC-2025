@@ -1,5 +1,7 @@
 package frc.robot.subsystems.superstructure;
 
+import java.util.Optional;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -25,6 +27,9 @@ public class Superstructure extends SubsystemBase {
   protected final StringPublisher chuteModePublisher;
 
   protected final Tuner pivotAngleTweakTuner = new Tuner("Chute/pivot_angle_tweak_deg", 0, true);
+
+  protected TunableSetpoints setpoints = new TunableSetpoints();
+  private Optional<CoralLevel> lastElevatorSetpoint = Optional.empty();
 
   public Superstructure(Elevator elevator, Chute chute, Grabber grabber) {
     this.elevator = elevator;
@@ -109,6 +114,10 @@ public class Superstructure extends SubsystemBase {
     grabber.setGrabberMotor(speed);
   }
 
+  public Optional<CoralLevel> getLastElevatorSetpoint() {
+    return lastElevatorSetpoint;
+  }
+
   /**
    * Schedules the superstructure homing sequence.
    */
@@ -169,15 +178,10 @@ public class Superstructure extends SubsystemBase {
         .schedule();
   }
 
-  TunableSetpoints setpoints = new TunableSetpoints();
-
-  public void gotoElevatorL2() {
-    setElevatorGoalHeightMillimeters(setpoints.L2_elevator_height_mm());
-  }
-
   public void gotoSetpoint(CoralLevel level, Side side) {
     int sideMultiplier = (side == Side.LEFT) ? -1 : 1;
     double pivotAngleTweak = Units.degreesToRadians(MathUtil.clamp(pivotAngleTweakTuner.get(), -10, 10));
+    lastElevatorSetpoint = Optional.of(level);
     switch (level) {
       case L1:
         setChutePivotGoalRads(sideMultiplier * setpoints.L1_chute_pivot_angle_rads() + pivotAngleTweak);
@@ -203,6 +207,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   public void gotoAlgaeSetpoint(AlgaeLevel level) {
+    lastElevatorSetpoint = Optional.empty();
     // Runnable suck = () -> {
     // Commands.run(() -> grabber.setGrabberMotor(-0.75), this).onlyWhile(() ->
     // Sensors.getInstance()

@@ -58,6 +58,9 @@ public class ScoreCommandsOnlyDrive {
   static final Tuner angleProportionalTuner = new Tuner("Score/angle_proportional_early_shot", 0, true);
   static final Tuner speedProportionalTuner = new Tuner("Score/speed_proportional_early_shot", 0, true);
 
+  static final Tuner autoL2ElevatorHeightTuner = new Tuner("Score/L2_height_mm", 765, true);
+  static final Tuner autoL3ElevatorHeightTuner = new Tuner("Score/L3_height_mm", 1160, true);
+
   public static final double SCORING_EPSILON_METERS = 0.25;
 
   /**
@@ -156,6 +159,14 @@ public class ScoreCommandsOnlyDrive {
                 Commands.runOnce(() -> {
                   System.out.println("Speed before wait: " + drive.getLeftVelocityMetersPerSec());
                   commandState.isValid = false;
+                  var lastSetpoint = superstructure.getLastElevatorSetpoint();
+                  lastSetpoint.ifPresent((level) -> {
+                    if (level == CoralLevel.L2) {
+                      superstructure.setElevatorGoalHeightMillimeters(autoL2ElevatorHeightTuner.get());
+                    } else if (level == CoralLevel.L3) {
+                      superstructure.setElevatorGoalHeightMillimeters(autoL3ElevatorHeightTuner.get());
+                    }
+                  });
                 }),
                 Commands.race(
                     Commands.waitSeconds(2),
