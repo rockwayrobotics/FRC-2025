@@ -39,9 +39,7 @@ def import_corner_detector(name=None):
         module = importlib.import_module(module_name)
         return module.CornerDetector
     except ImportError as e:
-        # Log the error for debugging
-        import logging
-        logging.warning(f"Failed to import CornerDetector from {module_name}: {e}")
+        logging.exception(f"Failed to import CornerDetector from {module_name}: {e}")
         raise
 
 
@@ -70,7 +68,7 @@ class CornerExtractor:
             self.cd_class = import_corner_detector(name)
             self.log.info("Successfully imported CornerDetector %s", name)
         except Exception as e:
-            self.log.warning(f"Failed to import CornerDetector: {e}")
+            self.log.exception(f"Failed to import CornerDetector: {e}")
             self.cd_class = None
     
     def extract_blocks(self, wpilog_path):
@@ -432,7 +430,7 @@ class CornerExtractor:
 
             # Compare each block
             for i, (input, expected) in enumerate(zip(blocks, expected_blocks)):
-                self.log.info(f"Block {i+1}:")
+                self.log.info(f"Block {i+1}: {expected.get('tags')}")
                 
                 # Compare timing
                 delta = abs(input["begin"] - expected["begin"])

@@ -9,7 +9,7 @@ class CornerDetector(BaseCornerDetector):
     name = 'v2'
     
     def __init__(
-        self, slope_threshold, large_window=15, small_window=5, flat_slope_threshold=60,
+        self, slope_threshold, large_window=25, small_window=10, flat_slope_threshold=60,
     ):
         # Number of samples in window
         self.large_window = large_window
