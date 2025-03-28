@@ -128,7 +128,7 @@ public class RobotContainer {
     autoChooser.addOption("testingCenterAuto", AutoPaths.fastCenterFarDump(drive, superstructure));
     autoChooser.addOption("fastCenterFarDumpPlusAlgaeGrrip",
         AutoPaths.fastCenterFarDumpPlusAlgaeGrrip(drive, superstructure));
-    autoChooser.addOption("fastCenterFarDumpPlusAlgaeGrripTrajected",
+    autoChooser.addOption("TrajectedfastCenterFarDumpPlusAlgaeGrrip",
         AutoPaths.fastCenterFarDumpPlusAlgaeGrripTrajected(drive, superstructure));
 
     // INCREDIBLY SUS may GO KABOOM
