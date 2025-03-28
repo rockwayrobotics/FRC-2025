@@ -28,12 +28,15 @@ public class ElevatorIOReal implements ElevatorIO {
 
   final Tuner elevatorFeedforwardkS = new Tuner("Elevator/feedforward_Ks", 0.1, true);
   final Tuner elevatorFeedforwardkG = new Tuner("Elevator/feedforward_Kg", 0.4, true);
+  final Tuner elevatorFeedforwardkV = new Tuner("Elevator/feedforward_Kv", 0.01427, true);
   final Tuner elevatorPID_P = new Tuner("Elevator/Kp", 0.00136, true);
+  final Tuner elevatorPID_I = new Tuner("Elevator/KI", 0, true);
   final Tuner elevatorPID_D = new Tuner("Elevator/Kd", 0.005, true);
   final Tuner elevatorMaxNormalizedSpeed = new Tuner("Elevator/normalized_speed_max", 0.6, true);
   final Tuner elevatorMinNormalizedSpeed = new Tuner("Elevator/normalized_speed_min", -0.5, true);
   final Tuner elevatorSoftLimitMin = new Tuner("Elevator/soft_limit_min_mm", 20, true);
   final Tuner elevatorSoftLimitMax = new Tuner("Elevator/soft_limit_max_mm", 1200, true);
+  final Tuner elevatorRampRate = new Tuner("Elevator/ramp_rate_s", 1, true);
 
   protected final RelativeEncoder encoder = motorMain.getEncoder();
   protected final SparkClosedLoopController controller = motorMain.getClosedLoopController();
@@ -52,19 +55,22 @@ public class ElevatorIOReal implements ElevatorIO {
 
     elevatorFeedforwardkS.addListener((_e) -> updateParams(false));
     elevatorFeedforwardkG.addListener((_e) -> updateParams(false));
+    elevatorFeedforwardkV.addListener((_e) -> updateParams(false));
     elevatorPID_P.addListener((_e) -> updateParams(false));
+    elevatorPID_I.addListener((_e) -> updateParams(false));
     elevatorPID_D.addListener((_e) -> updateParams(false));
     elevatorMaxNormalizedSpeed.addListener((_e) -> updateParams(false));
     elevatorMinNormalizedSpeed.addListener((_e) -> updateParams(false));
     elevatorSoftLimitMin.addListener((_e) -> updateParams(false));
     elevatorSoftLimitMax.addListener((_e) -> updateParams(false));
+    elevatorRampRate.addListener((_e) -> updateParams(false));
   }
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
     // inputs.homeBeamBroken = Sensors.getInstance().getElevatorHomeBeambroken();
     // if (inputs.homeBeamBroken) {
-    //   // REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
+    // // REVUtils.tryUntilOk(() -> encoder.setPosition(0.0));
     // }
 
     // FIXME: Measure CAN bus usage with all these queries?
@@ -107,7 +113,8 @@ public class ElevatorIOReal implements ElevatorIO {
 
   public void updateParams(boolean resetSafe) {
     ResetMode resetMode = resetSafe ? ResetMode.kResetSafeParameters : ResetMode.kNoResetSafeParameters;
-    feedforward = new ElevatorFeedforward(elevatorFeedforwardkS.get(), elevatorFeedforwardkG.get(), 0);
+    feedforward = new ElevatorFeedforward(elevatorFeedforwardkS.get(), elevatorFeedforwardkG.get(),
+        elevatorFeedforwardkV.get());
     SparkMaxConfig config = new SparkMaxConfig();
     if (resetSafe) {
       config.idleMode(IdleMode.kBrake).smartCurrentLimit(60).voltageCompensation(12.0).inverted(true);
@@ -121,9 +128,9 @@ public class ElevatorIOReal implements ElevatorIO {
         .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
     // No ff term here because we want position control not velocity
-    config.closedLoop.pidf(elevatorPID_P.get(), 0, elevatorPID_D.get(), 0);
+    config.closedLoop.pidf(elevatorPID_P.get(), elevatorPID_I.get(), elevatorPID_D.get(), 0);
     config.closedLoop.outputRange(elevatorMinNormalizedSpeed.get(), elevatorMaxNormalizedSpeed.get());
-    config.closedLoopRampRate(1);
+    config.closedLoopRampRate(elevatorRampRate.get());
     REVUtils.tryUntilOk(() -> motorMain.configure(config, resetMode, PersistMode.kPersistParameters));
   }
 

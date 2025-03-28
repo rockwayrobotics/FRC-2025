@@ -296,11 +296,10 @@ class WiFiMgr:
 
 class TopicMgr:
     """Manage NT topics with consistent error handling"""
-    def __init__(self, nt_instance, test_mode=False):
+    def __init__(self, nt_instance):
         self.nt = nt_instance
         self.topics = {}
         self.listeners = {}
-        self.test_mode = test_mode
         
     def create(self, name, type_name, init_val=None, publish=True):
         """Create a topic with publisher and subscriber"""
@@ -319,12 +318,13 @@ class TopicMgr:
                 
             sub = topic.subscribe(default)
             
-            # Only create real publisher if needed
-            if publish and self.test_mode:
+            # Create real publisher for anything we "own" since apparently
+            # otherwise the dashboards will never see it.  There's supposed
+            # to be a "weak" default if you subscribe(default) but so far
+            # nobody has seen that work as documented.
+            if publish:
                 pub = topic.publish()
                 pub.set(default)
-            else:
-                pub = DummyPublisher()
             
             self.topics[name] = {
                 'topic': topic,
@@ -381,7 +381,7 @@ class ResetService:
         
         # Set up NetworkTables
         self.nt = ntcore.NetworkTableInstance.getDefault()
-        self.topic_mgr = TopicMgr(self.nt, test_mode=args.serve_nt)
+        self.topic_mgr = TopicMgr(self.nt)
         
         # Initialize NT
         self.setup_nt()
@@ -614,44 +614,3 @@ class ResetService:
             if self.led:
                 await self.led.restore_state()
 
-
-async def main():
-    """Main entry point"""
-    args = parse_args()
-    
-    # Configure logging
-    log_level = logging.DEBUG if args.debug else logging.INFO
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s.%(msecs)03d:%(levelname)5s:%(name)s: %(message)s",
-        datefmt="%H:%M:%S"
-    )
-    
-    # Create and run the service
-    service = ResetService(args)
-    await service.run()
-
-
-def parse_args():
-    """Parse command line arguments"""
-    import argparse
-    parser = argparse.ArgumentParser(description="Supervisory Manager")
-    
-    parser.add_argument("-d", "--debug", action="store_true", 
-                        help="Enable debug logging")
-    parser.add_argument("--radio", action="store_true",
-                        help="Enable WiFi radio control")
-    parser.add_argument("--on-delay", type=int, default=300,
-                        help="Delay (seconds) before re-enabling WiFi (default: %(default)s)")
-    parser.add_argument("--led", action="store_true",
-                        help="Enable LED control to indicate WiFi status")
-    parser.add_argument("--serve-nt", action="store_true",
-                        help="Serve NetworkTables for testing")
-    parser.add_argument("--mock-commands", action="store_true",
-                        help="Don't execute actual system commands when testing")
-    
-    return parser.parse_args()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
