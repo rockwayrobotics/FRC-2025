@@ -126,24 +126,31 @@ public class RobotContainer {
     autoChooser.addOption("centerDump", AutoPaths.centerFarCenterDump(drive, superstructure));
     autoChooser.addOption("SIDE dump", AutoPaths.sideTroughDump(drive, superstructure));
     autoChooser.addOption("testingCenterAuto", AutoPaths.fastCenterFarDump(drive, superstructure));
-    autoChooser.addOption("fastCenterFarDumpPlusAlgaeGrrip", AutoPaths.fastCenterFarDumpPlusAlgaeGrrip(drive, superstructure));
-    autoChooser.addOption("fastCenterFarDumpPlusAlgaeGrripTrajected", AutoPaths.fastCenterFarDumpPlusAlgaeGrripTrajected(drive, superstructure));
+    autoChooser.addOption("fastCenterFarDumpPlusAlgaeGrrip",
+        AutoPaths.fastCenterFarDumpPlusAlgaeGrrip(drive, superstructure));
+    autoChooser.addOption("fastCenterFarDumpPlusAlgaeGrripTrajected",
+        AutoPaths.fastCenterFarDumpPlusAlgaeGrripTrajected(drive, superstructure));
 
     // INCREDIBLY SUS may GO KABOOM
     autoChooser.addOption("algae grab", AutoPaths.grabTroughAlgaeL3(drive, superstructure));
-    autoChooser.addOption("centerFarCenterL3Left", AutoPaths.centerFarCenterAlgaeL3(drive, superstructure, chuterShooter, false));
-    autoChooser.addOption("centerFarCenterL3Right", AutoPaths.centerFarCenterAlgaeL3(drive, superstructure, chuterShooter, true));
+    autoChooser.addOption("centerFarCenterL3Left",
+        AutoPaths.centerFarCenterAlgaeL3(drive, superstructure, chuterShooter, false));
+    autoChooser.addOption("centerFarCenterL3Right",
+        AutoPaths.centerFarCenterAlgaeL3(drive, superstructure, chuterShooter, true));
     autoChooser.addOption("rightFarRightAlgaeL3", AutoPaths.rightFarRightAlgaeL3(drive, superstructure, chuterShooter));
-  
-    // autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive, superstructure, chuterShooter));
+
+    // autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive,
+    // superstructure, chuterShooter));
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
     UdpTimeSend timeSend = null;
     try {
-      timeSend = new UdpTimeSend(new InetSocketAddress(InetAddress.getByAddress(new byte[] {10, 80, 89, 11}), 3000), 1);
+      timeSend = new UdpTimeSend(new InetSocketAddress(InetAddress.getByAddress(new byte[] { 10, 80, 89, 11 }), 3000),
+          1);
     } catch (UnknownHostException e) {
-      System.out.println("specifying an invalid IP address to send timestamps - this will probably crash, fix this bug");
+      System.out
+          .println("specifying an invalid IP address to send timestamps - this will probably crash, fix this bug");
     }
     this.timeSend = timeSend;
 
@@ -241,7 +248,7 @@ public class RobotContainer {
       if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
         superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() + 0.4);
       }
-    }, superstructure)).onFalse(Commands.run(() -> {
+    }, superstructure)).onFalse(Commands.runOnce(() -> {
       superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
     }, superstructure));
 
@@ -249,7 +256,7 @@ public class RobotContainer {
       if (superstructure.getElevatorHeightMillimeters() > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
         superstructure.setChutePivotGoalRads(superstructure.chute.getPivotAngleRads() - 0.4);
       }
-    }, superstructure)).onFalse(Commands.run(() -> {
+    }, superstructure)).onFalse(Commands.runOnce(() -> {
       superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
     }, superstructure));
 
@@ -267,49 +274,49 @@ public class RobotContainer {
 
     new JoystickButton(operator2Controller, 4).whileTrue(Commands.run(() -> {
       climp.setNormalizedSpeed(1);
-    }, climp)).onFalse(Commands.run(() -> {
+    }, climp)).onFalse(Commands.runOnce(() -> {
       climp.setNormalizedSpeed(0);
     }, climp));
 
     new JoystickButton(operator2Controller, 6).whileTrue(Commands.run(() -> {
       climp.setNormalizedSpeed(-1);
-    }, climp)).onFalse(Commands.run(() -> {
+    }, climp)).onFalse(Commands.runOnce(() -> {
       climp.setNormalizedSpeed(0);
     }, climp));
 
     new JoystickButton(operator2Controller, 5).whileTrue(Commands.run(() -> {
       chuterShooter.startShooting();
-    }, chuterShooter)).onFalse(Commands.run(() -> {
+    }, chuterShooter)).onFalse(Commands.runOnce(() -> {
       chuterShooter.setShooterMotor(0);
     }, chuterShooter));
 
     new JoystickButton(operator2Controller, 7).whileTrue(Commands.run(() -> {
       chuterShooter.setShooterMotor(-0.1); // intake
-    }, chuterShooter)).onFalse(Commands.run(() -> {
+    }, chuterShooter)).onFalse(Commands.runOnce(() -> {
       chuterShooter.stopShooting();
     }, chuterShooter));
 
     new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
       superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.5);
-    }, superstructure)).onFalse(Commands.run(() -> {
+    }, superstructure)).onFalse(Commands.runOnce(() -> {
       superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
     }, superstructure));
 
     new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
       superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.5);
-    }, superstructure)).onFalse(Commands.run(() -> {
+    }, superstructure)).onFalse(Commands.runOnce(() -> {
       superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
     }, superstructure));
 
     new POVButton(operator2Controller, 0).whileTrue(Commands.run(() -> {
       superstructure.setGrabberMotor(1);
-    }, superstructure)).onFalse(Commands.run(() -> {
+    }, superstructure)).onFalse(Commands.runOnce(() -> {
       superstructure.setGrabberMotor(0);
     }, superstructure));
 
     new POVButton(operator2Controller, 90).whileTrue(Commands.run(() -> {
       superstructure.setGrabberMotor(-1);
-    }, superstructure)).onFalse(Commands.run(() -> {
+    }, superstructure)).onFalse(Commands.runOnce(() -> {
       superstructure.setGrabberMotor(0);
     }, superstructure));
 
@@ -353,13 +360,13 @@ public class RobotContainer {
 
     new JoystickButton(operator1Controller, 2).whileTrue(Commands.run(() -> {
       climp.setNormalizedSpeed(1);
-    }, climp)).onFalse(Commands.run(() -> {
+    }, climp)).onFalse(Commands.runOnce(() -> {
       climp.setNormalizedSpeed(0);
     }, climp));
 
     new JoystickButton(operator1Controller, 1).whileTrue(Commands.run(() -> {
       climp.setNormalizedSpeed(-1);
-    }, climp)).onFalse(Commands.run(() -> {
+    }, climp)).onFalse(Commands.runOnce(() -> {
       climp.setNormalizedSpeed(0);
     }, climp));
 
@@ -414,9 +421,9 @@ public class RobotContainer {
     }, superstructure));
 
     // new POVButton(operator1Controller, 0).whileTrue(Commands.run(() -> {
-    //   superstructure.setGrabberMotor(1);
+    // superstructure.setGrabberMotor(1);
     // }, superstructure)).onFalse(Commands.run(() -> {
-    //   superstructure.setGrabberMotor(0);
+    // superstructure.setGrabberMotor(0);
     // }, superstructure));
   }
 
