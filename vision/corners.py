@@ -397,7 +397,7 @@ class CornerExtractor:
         
         # Write the TOML file
         with open(toml_path, 'w', encoding='utf-8') as f:
-            toml.dump(toml_data, f)
+            toml.dump(toml_data, f, encoder=toml.TomlNumpyEncoder())
         
         self.log.info(f"Generated TOML file with {len(toml_data['blocks'])} blocks")
         return toml_data
@@ -456,7 +456,7 @@ class CornerExtractor:
                 
                 # Compare corners
                 detected = self.run_corner_detector(input["distances"], self.speed)
-                if detected:
+                if detected and expected_corner:
                     detected_blocks.append(detected)
                     stats['matched'] += 1
                     
@@ -479,11 +479,11 @@ class CornerExtractor:
                     elif expected_angle is not None:
                         self.log.debug(f"    Angle: Not calculated (expected: {expected_angle:.1f}°)")
                 
-                elif not detected["corners"] and expected_corner:
+                elif expected_corner:
                     stats['missed'] += 1
                     self.log.warning(f"  No corner detected (expected at {expected['c_time']:.3f})")
                 
-                elif detected["corners"] and not expected_corner:
+                elif detected:
                     stats['false'] += 1
                     self.log.warning(f"  Corner detected at {detected['corners'][0]['c_time']:.3f} (not expected)")
                 
