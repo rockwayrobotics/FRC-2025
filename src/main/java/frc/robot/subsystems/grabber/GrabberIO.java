@@ -8,6 +8,7 @@ public interface GrabberIO {
     public double wristAngleRadians = 0;
     public double wristVelocityRadPerSec = 0;
     public boolean home = false;
+    public double wristAppliedVolts = 0;
   }
 
   public default void updateInputs(GrabberIOInputs inputs) {}
