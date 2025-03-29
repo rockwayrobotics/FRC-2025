@@ -46,7 +46,8 @@ public class DriveRotate extends Command {
   @Override
   public void end(boolean interrupted) {
     drive.stop();
-    System.out.println("end, moved to " + drive.getGyroAngle());
+    var rotation = RobotTracker.getInstance().getEstimatedPose().getRotation();
+    System.out.println("end, moved to " + rotation.getDegrees());
   }
 
   // Returns true when the command should end.

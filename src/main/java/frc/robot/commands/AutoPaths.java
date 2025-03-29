@@ -87,6 +87,12 @@ public class AutoPaths {
       .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration))
       .setReversed(true);
 
+  private static final TrajectoryConfig fasterReversedConfig = new TrajectoryConfig(trajectoryMaxVelocity,
+      2)
+      .setKinematics(RobotTracker.getInstance().getDriveKinematics())
+      .addConstraint(new CentripetalAccelerationConstraint(trajectoryMaxCentripetalAcceleration))
+      .setReversed(true);
+
   // A slow forward trajectory config
   private static final TrajectoryConfig slowConfig = new TrajectoryConfig(1, 0.2)
       .setKinematics(RobotTracker.getInstance().getDriveKinematics())
@@ -121,11 +127,6 @@ public class AutoPaths {
     }, drive).withTimeout(Seconds.of(15)).finallyDo(() -> {
       drive.stop();
     });
-  }
-
-  public static Command driveRotate(Drive drive, Superstructure superstructure) {
-    var cmd = new DriveRotate(drive, -90);
-    return cmd;
   }
 
   private static Command runTrajectory(Trajectory trajectory, Drive drive) {
@@ -705,7 +706,7 @@ public class AutoPaths {
     return command;
   }
 
-  public static Command fastCenterFarDumpPlusAlgaeGrrip(Drive drive, Superstructure superstructure) {
+  public static Command fastCenterFarDumpPlusAlgaeGrip(Drive drive, Superstructure superstructure) {
     double yCenter = 4.026;
     Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
     Pose2d algaeDump = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
@@ -750,7 +751,7 @@ public class AutoPaths {
     return command;
   }
 
-  public static Command fastCenterFarDumpPlusAlgaeGrripTrajected(Drive drive, Superstructure superstructure) {
+  public static Command fastCenterFarDumpPlusAlgaeGripBargePrepare(Drive drive, Superstructure superstructure) {
     double yCenter = 4.026;
     Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
     Pose2d coralDump = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
@@ -759,40 +760,168 @@ public class AutoPaths {
     Pose2d algaePrepare = new Pose2d(6.2, yCenter, Rotation2d.fromDegrees(180.00));
     Trajectory backUpTrajectory = TrajectoryGenerator.generateTrajectory(List.of(coralDump, algaePrepare),
         reversedConfig);
+    Pose2d backupStart = backUpTrajectory.getInitialPose();
+    Pose2d flippedBackupStart = TrajectoryUtils.rotatePose180(backupStart);
     Trajectory getAlgaeTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaePrepare, coralDump),
         fasterConfig);
-    Pose2d bargePrepare = new Pose2d(7.3, 5.3, Rotation2d.fromDegrees(-45));
+    Pose2d bargePrepare = new Pose2d(7.3, 6.0, Rotation2d.fromDegrees(-45));
     Trajectory gotoBargePrepareTrajectory = TrajectoryGenerator.generateTrajectory(
-        List.of(coralDump, algaePrepare, bargePrepare),
-        config);
+        List.of(algaePrepare, bargePrepare),
+        fasterReversedConfig);
+
     var command = Commands.sequence(
-        Commands.runOnce(() -> {
-          superstructure.setElevatorGoalHeightMillimeters(400);
-          superstructure.setWristGoalRads(Units.degreesToRadians(0));
-        }),
-        runTrajectory(coralDumpTrajectory, drive),
+        Commands.parallel(
+            // Raise the elevator and hold the gripper out (coral is still held)
+            Commands.runOnce(() -> {
+              superstructure.setElevatorGoalHeightMillimeters(400);
+              superstructure.setWristGoalRads(Units.degreesToRadians(0));
+            }),
+            // ... while driving to the reef in front of us
+            runTrajectory(coralDumpTrajectory, drive)),
+        // Stop for a short time and spin to drop coral
         Commands.run(() -> {
           superstructure.setGrabberMotor(1);
           drive.stop();
         }).withTimeout(0.5),
+        // Stop spinning
         Commands.runOnce(() -> {
           superstructure.setGrabberMotor(0);
         }),
+        // and stay stopped for a very short time to let coral bounce off us if
+        // necessary
         Commands.run(() -> {
           drive.stop();
         }).withTimeout(0.2),
-        runTrajectory(backUpTrajectory, drive),
-        Commands.runOnce(() -> {
-          superstructure.gotoAlgaeSetpoint(Constants.AlgaeLevel.L2);
+
+        // Scored coral at this point
+
+        // In parallel backup and drive forwards to the reef
+        Commands.parallel(
+            // Drive sequence
+            Commands.sequence(
+                // Back up ...
+                runTrajectory(backUpTrajectory, drive),
+                // And then go forwards again (starting to spin motors)
+                Commands.parallel(
+                    runTrajectory(getAlgaeTrajectory, drive),
+                    Commands.runOnce(() -> superstructure.setGrabberMotor(-1)))),
+            // Elevator sequence - raise into position when safe to do so
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  // Wait until we are far enough away to raise the elevator
+                  Translation2d robotPosition = RobotTracker.getInstance().getEstimatedPose().getTranslation();
+                  return Math.min(backupStart.getTranslation()
+                      .getDistance(robotPosition),
+                      flippedBackupStart.getTranslation().getDistance(robotPosition)) > 0.2;
+                }),
+                Commands.runOnce(() -> {
+                  superstructure.gotoAlgaeSetpoint(Constants.AlgaeLevel.L2);
+                }))),
+        // Back up so we have the algae at a safe distance
+        // Also stop spinning our grabber and lower our elevator
+        Commands.parallel(
+            runTrajectory(backUpTrajectory, drive),
+            Commands.waitSeconds(1).finallyDo(() -> {
+              superstructure.setGrabberMotor(0);
+              superstructure.bargePrepare();
+            })),
+
+        // Head for our shot position
+        runTrajectory(gotoBargePrepareTrajectory, drive),
+        // Stop to stabilize
+        Commands.run(() -> {
+          drive.stop();
         }).withTimeout(0.2),
-        Commands.parallel(
-            runTrajectory(getAlgaeTrajectory, drive),
-            Commands.runOnce(() -> superstructure.setGrabberMotor(-1))),
-        Commands.parallel(
-            runTrajectory(gotoBargePrepareTrajectory, drive),
-            Commands.waitSeconds(1).finallyDo(() -> superstructure.setGrabberMotor(0))),
+        // Shoot!
         Commands.runOnce(() -> {
-          superstructure.bargePrepare();
+          superstructure.bargeShot();
+        }),
+        // Stop for the remaining auto time
+        Commands.run(() -> {
+          drive.stop();
+        }));
+    command.addRequirements(drive, superstructure);
+    return command;
+  }
+  
+  public static Command fastLeftFarDumpPlusAlgaeGripBargeShot(Drive drive, Superstructure superstructure) {
+    Pose2d startPose = new Pose2d(7.2, 7.3, Rotation2d.fromDegrees(180.00));
+    Pose2d coralDump = new Pose2d(5.194, 5.247, Rotation2d.fromDegrees(240.00));
+    Trajectory coralDumpTrajectory = TrajectoryGenerator.generateTrajectory(List.of(startPose, coralDump),
+        fasterConfig);
+    Pose2d algaePrepare = new Pose2d(5.344, 5.507, Rotation2d.fromDegrees(240.00));
+    Trajectory backUpTrajectory = TrajectoryGenerator.generateTrajectory(List.of(coralDump, algaePrepare),
+        reversedConfig);
+    Pose2d backupStart = backUpTrajectory.getInitialPose();
+    Pose2d flippedBackupStart = TrajectoryUtils.rotatePose180(backupStart);
+    Trajectory getAlgaeTrajectory = TrajectoryGenerator.generateTrajectory(List.of(algaePrepare, coralDump),
+        fasterConfig);
+    Pose2d bargePrepare = new Pose2d(7, 6, Rotation2d.fromDegrees(0));
+    Trajectory gotoBargePrepareTrajectory = TrajectoryGenerator.generateTrajectory(
+        List.of(algaePrepare, bargePrepare),
+        fasterReversedConfig);
+
+    var command = Commands.sequence(
+        Commands.parallel(
+            // Raise the elevator and hold the gripper out (coral is still held)
+            Commands.runOnce(() -> {
+              superstructure.setElevatorGoalHeightMillimeters(400);
+              superstructure.setWristGoalRads(Units.degreesToRadians(0));
+            }),
+            // ... while driving to the reef in front of us
+            runTrajectory(coralDumpTrajectory, drive)),
+        // Stop for a short time and spin to drop coral
+        Commands.run(() -> {
+          superstructure.setGrabberMotor(1);
+          drive.stop();
+        }).withTimeout(0.5),
+        // Stop spinning
+        Commands.runOnce(() -> {
+          superstructure.setGrabberMotor(0);
+        }),
+        // and stay stopped for a very short time to let coral bounce off us if
+        // necessary
+        Commands.run(() -> {
+          drive.stop();
+        }).withTimeout(0.2),
+
+        // Scored coral at this point
+
+        // In parallel backup and drive forwards to the reef
+        Commands.parallel(
+            // Drive sequence
+            Commands.sequence(
+                // Back up ...
+                runTrajectory(backUpTrajectory, drive),
+                // And then go forwards again (starting to spin motors)
+                Commands.parallel(
+                    runTrajectory(getAlgaeTrajectory, drive),
+                    Commands.runOnce(() -> superstructure.setGrabberMotor(-1)))),
+            // Elevator sequence - raise into position when safe to do so
+            Commands.sequence(
+                Commands.waitUntil(() -> {
+                  // Wait until we are far enough away to raise the elevator
+                  Translation2d robotPosition = RobotTracker.getInstance().getEstimatedPose().getTranslation();
+                  return Math.min(backupStart.getTranslation()
+                      .getDistance(robotPosition),
+                      flippedBackupStart.getTranslation().getDistance(robotPosition)) > 0.2;
+                }),
+                Commands.runOnce(() -> {
+                  superstructure.gotoAlgaeSetpoint(Constants.AlgaeLevel.L2);
+                }))),
+        // Back up so we have the algae at a safe distance
+        // Also stop spinning our grabber and lower our elevator
+        Commands.parallel(
+            runTrajectory(backUpTrajectory, drive),
+            Commands.waitSeconds(1).finallyDo(() -> {
+              superstructure.setGrabberMotor(0);
+              superstructure.bargePrepare();
+            })),
+
+        // Head for our shot position
+        runTrajectory(gotoBargePrepareTrajectory, drive),
+        // Stop for the remaining auto time
+        Commands.run(() -> {
           drive.stop();
         }));
     command.addRequirements(drive, superstructure);
