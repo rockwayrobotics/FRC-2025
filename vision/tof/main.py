@@ -401,6 +401,8 @@ class TofMain:
 
         # Brief pause, hoping beyond hope that NT will compare clocks and
         # set the offset during this.
+        # Note: empirically measured it takes only about 5ms for it to
+        # measure the offset after starting the client, so this wait is adequate.
         time.sleep(0.2)
 
         # Rust will use Instant::now() which is time.monotonic(),
@@ -410,6 +412,13 @@ class TofMain:
         # so we need to get that back so we can convert Rust times to
         # ntcore times so that getServerTimeOffset() can be added to
         # convert the times to FPGATimestamp values... sigh.
+        # Note: repeated connections to the robot will produce server time
+        # offset values that vary up and down within a roughly +/-800us
+        # range, so our overall accuracy on any given connection is about
+        # that much.  If we don't care about accuracy beyond roughly 1ms
+        # then we can probably just live with that, ignoring drift.
+        # With fire3 and the one Rio we have roughly 6ppm drift, e.g. we
+        # saw about 35ms drift over roughly a two hour period. Also low.
         now = time.monotonic()
         nt_now = ntcore._now()
         self._nt_offset = nt_now / 1e6 - now
