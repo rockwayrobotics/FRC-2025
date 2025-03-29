@@ -18,6 +18,11 @@ disable = [
   "too-many-locals",
   "too-many-branches",
   "too-many-nested-blocks",
+  "redundant-keyword-arg",
+  "consider-using-f-string",
+  "protected-access",
+  "unspecified-encoding",
+  "consider-using-with",
 
   # We should clean up the code then remove these.
   "missing-class-docstring",
@@ -29,6 +34,8 @@ disable = [
   "trailing-whitespace",
   "trailing-newlines",
   "attribute-defined-outside-init",
+  "unused-import",
+  "multiple-statements",
 ]
 
 [tool.pylint.format]

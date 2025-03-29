@@ -28,7 +28,15 @@ class CornerDetector(BaseCornerDetector):
         self.data = np.zeros((self.BUFFER_SIZE, 2), dtype="f")
         self.speed = 450 # default...
 
+        # This eliminates a weird ~400ms pause on our first corner, which may be from lazy
+        # loading a library related to this routine. Calling it here appears to
+        # move the load up to this point so it won't affect us later.
+        _ = sp.stats.siegelslopes([0], [0])
+
         super().__init__()
+
+        self.log.info('params: st=%.1f, sw=%s, ew=%s, fst=%s',
+            self.slope_threshold, self.start_window, self.end_window, self.flat_slope_threshold)
 
     def reset(self):
         super().reset()
@@ -39,7 +47,7 @@ class CornerDetector(BaseCornerDetector):
         self.corner_angle = None
         self.corner_dist = 0
         # represents a +/- noise value we expect in typical readings
-        self.signal_noise = 7.0
+        self.signal_noise = 10.0
         # represents how many standard deviations we allow 
         self.sigma_threshold = 1.9
         self.recalc_slopes(self.speed)
@@ -110,8 +118,8 @@ class CornerDetector(BaseCornerDetector):
                 self.log.debug('x0 %s, y0 %s', x0, y0)
                 self.log.debug('x1 %s, y1 %s', x1, y1)
 
-            if x0[-1] > 1811.68 and x0[-1] < 1811.8:
-                breakpoint()
+            # if x0[-1] > 1811.68 and x0[-1] < 1811.8:
+            #     breakpoint()
 
             d0 = np.diff(y0)
             d1 = np.diff(y1)
@@ -142,8 +150,6 @@ class CornerDetector(BaseCornerDetector):
             span1 = d1.max() - d1.mean()
 
             if q0 < 3 and q1 < 3:
-                # breakpoint()
-                
                 new_first = sp.stats.siegelslopes(y0, x0)
                 if new_first.slope >= 0:
                     return
@@ -159,6 +165,7 @@ class CornerDetector(BaseCornerDetector):
                     self.corner_timestamp, new_first.slope, new_second.slope,
                     x0[-1], x1[0], new_second.slope - new_first.slope,
                     q0, q1, span1)
+
                 return
         finally:
             self.start_index += 1

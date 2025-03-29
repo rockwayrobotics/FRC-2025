@@ -24,8 +24,8 @@ def import_corner_detector(name=None):
     """Import the CornerDetector class from the tof package."""
     # Map version names to module paths
     module_paths = {
-        'v1': "tof.corner_detector",
-        'v2': "tof.corner_detector2",
+        'v1': "tof.cd1",
+        'v2': "tof.cd2",
         'v3': "tof.cd3",
     }
     
