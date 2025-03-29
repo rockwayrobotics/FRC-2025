@@ -29,6 +29,7 @@ import frc.robot.Constants.CoralLevel;
 import frc.robot.Constants.ReefBar;
 import frc.robot.commands.AutoPaths;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.DriveRotate;
 import frc.robot.commands.DriveStraight;
 import frc.robot.commands.ScoreCommandsOnlyDrive;
 import frc.robot.simulation.WorldSimulation;
@@ -127,9 +128,11 @@ public class RobotContainer {
     autoChooser.addOption("SIDE dump", AutoPaths.sideTroughDump(drive, superstructure));
     autoChooser.addOption("testingCenterAuto", AutoPaths.fastCenterFarDump(drive, superstructure));
     autoChooser.addOption("fastCenterFarDumpPlusAlgaeGrrip",
-        AutoPaths.fastCenterFarDumpPlusAlgaeGrrip(drive, superstructure));
-    autoChooser.addOption("TrajectedfastCenterFarDumpPlusAlgaeGrrip",
-        AutoPaths.fastCenterFarDumpPlusAlgaeGrripTrajected(drive, superstructure));
+        AutoPaths.fastCenterFarDumpPlusAlgaeGrip(drive, superstructure));
+    autoChooser.addOption("fastCenterFarDumpPlusAlgaeGripBargeShot",
+        AutoPaths.fastCenterFarDumpPlusAlgaeGripBargePrepare(drive, superstructure));
+    autoChooser.addOption("fastLeftFarDumpPlusAlgaeGripBargePrep",
+        AutoPaths.fastLeftFarDumpPlusAlgaeGripBargeShot(drive, superstructure));
 
     // INCREDIBLY SUS may GO KABOOM
     autoChooser.addOption("algae grab", AutoPaths.grabTroughAlgaeL3(drive, superstructure));
@@ -138,6 +141,8 @@ public class RobotContainer {
     autoChooser.addOption("centerFarCenterL3Right",
         AutoPaths.centerFarCenterAlgaeL3(drive, superstructure, chuterShooter, true));
     autoChooser.addOption("rightFarRightAlgaeL3", AutoPaths.rightFarRightAlgaeL3(drive, superstructure, chuterShooter));
+
+    autoChooser.addOption("driverotate", new DriveRotate(drive, -90));
 
     // autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive,
     // superstructure, chuterShooter));

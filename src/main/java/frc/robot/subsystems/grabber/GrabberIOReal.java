@@ -7,6 +7,9 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
+
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
@@ -92,6 +95,9 @@ public class GrabberIOReal implements GrabberIO {
   public void updateInputs(GrabberIOInputs inputs) {
     REVUtils.ifOk(wristMotor, wristEncoder::getPosition, (value) -> inputs.wristAngleRadians = value);
     REVUtils.ifOk(wristMotor, wristEncoder::getVelocity, (value) -> inputs.wristVelocityRadPerSec = value);
+    REVUtils.ifOk(wristMotor, new DoubleSupplier[] {
+        wristMotor::getAppliedOutput, wristMotor::getBusVoltage
+    }, (values) -> inputs.wristAppliedVolts = values[0] * values[1]);
     inputs.home = Sensors.getInstance().getGrabberHomeSwitch();
   }
 
