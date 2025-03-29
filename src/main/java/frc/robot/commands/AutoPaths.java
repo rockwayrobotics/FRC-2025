@@ -123,6 +123,11 @@ public class AutoPaths {
     });
   }
 
+  public static Command driveRotate(Drive drive, Superstructure superstructure) {
+    var cmd = new DriveRotate(drive, -90);
+    return cmd;
+  }
+
   private static Command runTrajectory(Trajectory trajectory, Drive drive) {
     LTVUnicycleController ltvController = new LTVUnicycleController(LTV_qelems, LTV_relems, LTV_dt,
         config.getMaxVelocity());

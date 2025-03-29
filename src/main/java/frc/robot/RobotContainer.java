@@ -144,6 +144,9 @@ public class RobotContainer {
 
     dashboard.add("Auto Routine", autoChooser).withSize(2, 1).withPosition(8, 0);
 
+    autoChooser.addOption("driverotate",
+        AutoPaths.driveRotate(drive, superstructure));
+
     UdpTimeSend timeSend = null;
     try {
       timeSend = new UdpTimeSend(new InetSocketAddress(InetAddress.getByAddress(new byte[] { 10, 80, 89, 11 }), 3000),
