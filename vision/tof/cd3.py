@@ -1,6 +1,4 @@
-import logging
 import math
-import time
 
 import numpy as np
 import scipy as sp
@@ -28,6 +26,7 @@ class CornerDetector(BaseCornerDetector):
         self.slope_threshold = slope_threshold
 
         self.data = np.zeros((self.BUFFER_SIZE, 2), dtype="f")
+        self.speed = 450 # default...
 
         super().__init__()
 
@@ -39,6 +38,28 @@ class CornerDetector(BaseCornerDetector):
         self.corner_timestamp = None
         self.corner_angle = None
         self.corner_dist = 0
+        # represents a +/- noise value we expect in typical readings
+        self.signal_noise = 7.0
+        # represents how many standard deviations we allow 
+        self.sigma_threshold = 1.9
+        self.recalc_slopes(self.speed)
+
+    def recalc_slopes(self, speed):
+        changed = speed != self.speed
+        self.speed = speed
+        # what sort of slope do we expected
+        self.target_slope = math.tan(60 * math.pi / 180) * self.speed
+        # this determines a range around the target slope by multiplying and dividing by it
+        # empirical: 20250328-163325 at 1810.549 we had a slope delta of 991
+        # with speed 450 and tolerance 0.8 we rejected this (range 623..974)
+        # so changed to 0.75 (range 584..1039)
+        self.slope_tolerance = 0.75
+        self.slope_diff_min = self.target_slope * self.slope_tolerance
+        self.slope_diff_max = self.target_slope * (1 / self.slope_tolerance)
+        # if changed:
+        #     self.log.debug('speed now %s: recalc slopes: %.0f,%.0f,%.0f',
+        #         self.speed,
+        #         self.target_slope, self.slope_diff_min, self.slope_diff_max)
 
     def shift_buffer(self):
         # According to https://stackoverflow.com/questions/30399534/shift-elements-in-a-numpy-array
@@ -51,6 +72,15 @@ class CornerDetector(BaseCornerDetector):
         self.data = result
 
     def _add_record(self, timestamp, distance, speed=None):
+        if self.debug:
+            self.log.debug('--------------')
+            self.log.debug("add_record %s,%s: %s..%s", timestamp, distance,
+                self.start_index, self.end_index)
+
+        # handle change in speed
+        if abs(speed - self.speed) >= 1.0:
+            self.recalc_slopes(speed)
+            
         if distance > self.MAX_DISTANCE:
             # Reset only if distance is greater than max
             self.reset()
@@ -72,78 +102,42 @@ class CornerDetector(BaseCornerDetector):
             return
 
         try:
-            # # This is sort of wasteful, because we calculate the same linear regression
-            # # multiple times
-            # first_regression = sp.stats.linregress(
-            #     self.data[self.start_index : self.start_index + self.small_window, 0],
-            #     self.data[self.start_index : self.start_index + self.small_window, 1],
-            # )
-
-            # # breakpoint()
-            # self.log.debug("%s: first regression: %s, %s, %s, %s, %s",
-            #     timestamp,
-            #     self.data[self.start_index : self.start_index + self.small_window, 1],
-            #     first_regression.slope,
-            #     first_regression.rvalue**2,
-            #     first_regression.pvalue,
-            #     first_regression.stderr,
-            # )
-
-            # second_regression = sp.stats.linregress(
-            #     self.data[self.end_index - self.small_window : self.end_index, 0],
-            #     self.data[self.end_index - self.small_window : self.end_index, 1],
-            # )
-
-            # self.log.debug("%s: second regression: %s, %s, %s, %s, %s",
-            #     timestamp,
-            #     self.data[self.end_index - self.small_window : self.end_index, 1],
-            #     second_regression.slope,
-            #     second_regression.rvalue**2,
-            #     second_regression.pvalue,
-            #     second_regression.stderr,
-            # )
-            # self.start_index += 1
-
-            # if (
-            #     # rvalues are good for linearity at "large" slopes, but are useless for slopes near 0
-            #     (
-            #         first_regression.rvalue**2 > 0.95
-            #         or abs(first_regression.slope) < self.flat_slope_threshold
-            #     )
-            #     and (
-            #         second_regression.rvalue**2 > 0.95
-            #         or abs(second_regression.slope) < self.flat_slope_threshold
-            #     )
-            #     # The way we are reading the values, we always expect the slope to increase
-            #     and second_regression.slope - first_regression.slope > self.slope_threshold
-            # ):
-
-        
             x0 = self.data[self.start_index : self.start_index + self.start_window, 0]
             y0 = self.data[self.start_index : self.start_index + self.start_window, 1]
             x1 = self.data[self.end_index - self.end_window : self.end_index, 0]
             y1 = self.data[self.end_index - self.end_window : self.end_index, 1]
+            if self.debug:
+                self.log.debug('x0 %s, y0 %s', x0, y0)
+                self.log.debug('x1 %s, y1 %s', x1, y1)
+
+            if x0[-1] > 1811.68 and x0[-1] < 1811.8:
+                breakpoint()
 
             d0 = np.diff(y0)
             d1 = np.diff(y1)
-            # if len(d0) == 0 or len(d1) == 0:
-            #     breakpoint()
 
             s0 = d0.mean() * len(d0) / (x0[-1] - x0[0])
             if s0 >= 0:
+                if self.debug:
+                    self.log.debug('first wall has positive slope!')
                 return
             
             s1 = d1.mean() * len(d1) / (x1[-1] - x1[0])
             sdiff = s1 - s0
-            NOMSLOPE = 780 # based on 450mm/s
-            if sdiff < NOMSLOPE * .80 or sdiff > NOMSLOPE / 0.80:
+
+            if self.debug:
+                self.log.debug("%.3f: dist=%.3f", timestamp, distance)
+            
+            if sdiff < self.slope_diff_min or sdiff > self.slope_diff_max:
                 return
 
-            TOLERANCE = 1.9
-            q0 = np.count_nonzero(np.abs(d0 - d0.mean()) > d0.std() * TOLERANCE)
-            q1 = np.count_nonzero(np.abs(d1 - d1.mean()) > d1.std() * TOLERANCE)
-            NOISE_THRESHOLD = 7.0
-            if d1.max() - d1.mean() > NOISE_THRESHOLD or d1.mean() - d1.min() > NOISE_THRESHOLD:
+            # count how many outliers points we have
+            q0 = np.count_nonzero(np.abs(d0 - d0.mean()) > d0.std() * self.sigma_threshold)
+            q1 = np.count_nonzero(np.abs(d1 - d1.mean()) > d1.std() * self.sigma_threshold)
+
+            # this shouldn't reject the whole thing, just maybe tag individual points as outliers
+            # but for the moment it helps by helping for "rounded corner" points into the window gap
+            if d1.max() - d1.mean() > self.signal_noise or d1.mean() - d1.min() > self.signal_noise:
                 return
             span1 = d1.max() - d1.mean()
 
@@ -159,7 +153,7 @@ class CornerDetector(BaseCornerDetector):
                     new_first, new_second
                 )
                 if speed is not None:
-                    self.corner_angle = math.atan2(new_second.slope, speed * 1000)
+                    self.corner_angle = math.atan2(new_second.slope, speed)
 
                 self.log.info("CORNER: %.3f,%.1f,%.1f gap %s..%s slope-change %.0f q0=%s q1=%s span1=%.1f",
                     self.corner_timestamp, new_first.slope, new_second.slope,

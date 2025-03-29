@@ -94,7 +94,7 @@ class CornerExtractor:
             blocks = []
             current_block = {}
             in_corner_mode = False
-            
+
             # Process records in a single pass
             for record in reader:
                 if record.isStart():
@@ -102,7 +102,7 @@ class CornerExtractor:
                     try:
                         data = record.getStartData()
                         self.log.debug(f"Found entry: {data.name} (ID: {data.entry}, Type: {data.type})")
-                        
+
                         entries[data.entry] = data
                         entry_name_to_id[data.name] = data.entry
                     except TypeError as e:
@@ -137,7 +137,7 @@ class CornerExtractor:
                                 }
                                 num = len(blocks) + 1
                                 self.log.debug(f"Starting corner block {num} at {timestamp:.3f}")
-                            
+
                             elif mode != "corner" and in_corner_mode:
                                 # End the current corner mode block
                                 in_corner_mode = False
@@ -210,7 +210,7 @@ class CornerExtractor:
                     blocks.append(current_block)
                     self.log.info(f"Added final block: {current_block['begin']:.3f}-{current_block['end']:.3f}")
             
-            # Keep only the first corner in each block (as specified in requirements)
+            # Keep only the first corner in each block
             for block in blocks:
                 if len(block["corners"]) > 1:
                     self.log.debug(f"Block {block['begin']:.3f}-{block['end']:.3f} has "
@@ -224,7 +224,7 @@ class CornerExtractor:
             self.log.exception(f"Error extracting corner blocks: {e}")
             return []
     
-    def run_corner_detector(self, distances, speed):
+    def run_corner_detector(self, distances, speed, debug=False):
         """Run the CornerDetector algorithm on a sequence of distance readings.
         
         Args:
@@ -242,6 +242,7 @@ class CornerExtractor:
             # Create a new detector with appropriate settings
             # The params are from tof/main.py - slope_threshold=400
             detector = self.cd_class(400)
+            detector.debug = debug
             
             self.log.debug(f"Running CornerDetector on {len(distances)} distance readings with speed={speed}")
             
@@ -250,7 +251,11 @@ class CornerExtractor:
             
             # Feed each distance reading to the detector
             for point in sorted_distances:
-                detector.add_record(point["time"], point["dist"], speed / 1000)  # Convert to m/s
+                detector.add_record(point["time"], point["dist"], speed)
+
+                # for debugging, to let us exit Pdb more easily
+                if getattr(detector, 'halted', False):
+                    break
                 
                 # Check if a corner was found
                 if detector.found_corner():
@@ -350,7 +355,7 @@ class CornerExtractor:
         toml_data = {
             "metadata": {
                 "generated_at": datetime.now().isoformat(),
-                "speed_mm_s": self.speed,
+                "default_speed": self.speed,
                 "block_count": len(blocks),
             },
             "blocks": []
@@ -416,6 +421,7 @@ class CornerExtractor:
             
             expected_blocks = expected_data.get("blocks", [])
             detected_blocks = []
+            default_speed = expected_data.get('metadata').get('default_speed', self.speed)
             
             if len(blocks) != len(expected_blocks):
                 self.log.warning(f"Number of blocks differs: input={len(blocks)}, toml={len(expected_blocks)}")
@@ -430,7 +436,10 @@ class CornerExtractor:
 
             # Compare each block
             for i, (input, expected) in enumerate(zip(blocks, expected_blocks)):
-                self.log.info(f"Block {i+1}: {expected.get('tags')}")
+                self.log.debug('-' * 40)
+                tags = f" {expected.get('tags')}"
+                times = f" {input['begin']:.3f}..{input['end']:.3f}"
+                self.log.info(f"Block {i+1}:{times}{tags}")
                 
                 # Compare timing
                 delta = abs(input["begin"] - expected["begin"])
@@ -452,8 +461,12 @@ class CornerExtractor:
                     self.log.warning(f'block tagged {text}: cannot do corner detection')
                     continue
                 
+                debug = False
+                # debug = bool(i+1 in {17, 18})
+
                 # Compare corners
-                detected = self.run_corner_detector(input["distances"], self.speed)
+                speed = expected.get('speed', default_speed)
+                detected = self.run_corner_detector(input["distances"], speed, debug=debug)
                 if detected and expected_corner:
                     detected_blocks.append(detected)
                     stats['matched'] += 1
@@ -483,7 +496,7 @@ class CornerExtractor:
                 
                 elif detected:
                     stats['false'] += 1
-                    self.log.warning(f"  Corner detected at {detected['corners'][0]['c_time']:.3f} (not expected)")
+                    self.log.warning(f"  Corner detected at {detected['c_time']:.3f} (not expected)")
                 
                 else:
                     self.log.info("  No corners (as expected)")
@@ -495,7 +508,8 @@ class CornerExtractor:
             self.log.info(f"  Missed corners: {stats['missed']}")
             self.log.info(f"  False positives: {stats['false']}")
             errors = np.array(stats['errors'])
-            self.log.info(f"  c_dist error: mean={errors.mean():.3f} std={errors.std():.3f}")
+            if len(errors) > 0:
+                self.log.info(f"  c_dist error: mean={errors.mean():.3f} std={errors.std():.3f}")
         
         except Exception as e:
             self.log.exception(f"Error comparing corners: {e}")
@@ -504,7 +518,7 @@ class CornerExtractor:
 def main():
     parser = argparse.ArgumentParser(description="Extract corner mode blocks from wpilog files")
     parser.add_argument("wpilog", help="Path to the wpilog file")
-    parser.add_argument("-o", "--output",
+    parser.add_argument("-t", "--toml",
         help="Path to the output TOML file (default: same as wpilog with .toml extension)")
     parser.add_argument("-g", "--generate", action="store_true",
         help="Generate a TOML file with expected corner data")
@@ -524,7 +538,7 @@ def main():
         sys.exit(1)
     
     # Determine the output TOML path
-    toml_path = Path(args.output) if args.output else wpilog_path.with_suffix(".toml")
+    toml_path = Path(args.toml) if args.toml else wpilog_path.with_suffix(".toml")
     
     # Check that the TOML file exists if not generating
     if not args.generate and not toml_path.exists():

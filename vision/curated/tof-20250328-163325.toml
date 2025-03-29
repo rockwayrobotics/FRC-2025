@@ -1,0 +1,353 @@
+[[blocks]]
+id = 1
+begin = 1236.234
+end = 1240.343
+distances = 162
+tags = ""
+c_time = 1236.61
+c_dist = 232
+
+[[blocks]]
+id = 2
+begin = 1250.378
+end = 1253.533999
+distances = 123
+tags = ""
+c_time = 1251.1790609406928
+c_dist = 220.71130923274904
+c_angle = -2.8968930219686904
+
+[[blocks]]
+id = 3
+begin = 1268.281
+end = 1271.087999
+distances = 109
+tags = ""
+c_time = 1269.0921992468054
+c_dist = 227.06179671897553
+c_angle = -5.026366482171272
+
+[[blocks]]
+id = 4
+begin = 1314.028999
+end = 1316.535999
+distances = 97
+tags = ""
+c_time = 1314.47869724242
+c_dist = 218.23753332870547
+c_angle = 1.3761258559214213
+
+[[blocks]]
+id = 5
+begin = 1331.728
+end = 1335.537999
+distances = 148
+tags = ""
+c_time = 1332.1225829756527
+c_dist = 211.1879943755921
+c_angle = -3.677692560321819
+
+[[blocks]]
+id = 6
+begin = 1358.821999
+end = 1361.527
+distances = 107
+tags = ""
+c_time = 1359.703811446579
+c_dist = 167.82259484450333
+c_angle = -2.543357851330628
+
+[[blocks]]
+id = 7
+begin = 1376.895999
+end = 1379.701
+distances = 111
+tags = ""
+c_time = 1377.8874355804498
+c_dist = 100.34937997395173
+c_angle = -1.4735592760058613
+
+[[blocks]]
+id = 8
+begin = 1396.58
+end = 1400.588999
+distances = 158
+tags = ""
+c_time = 1397.8549250047158
+c_dist = 177.5461034520995
+c_angle = -2.368175300921308
+
+[[blocks]]
+id = 9
+begin = 1426.415
+end = 1429.071999
+distances = 104
+tags = ""
+c_time = 1426.9696356708353
+c_dist = 135.1802401249297
+c_angle = -8.886095694385435
+
+[[blocks]]
+id = 10
+begin = 1460.119
+end = 1462.822999
+distances = 107
+tags = ""
+c_time = 1460.3982950846355
+c_dist = 152.0
+c_angle = 0.0
+
+[[blocks]]
+id = 11
+begin = 1522.950999
+end = 1525.257
+distances = 91
+tags = ""
+c_time = 1523.5716419214743
+c_dist = 185.89707462349907
+c_angle = -5.015855807714026
+
+[[blocks]]
+id = 12
+begin = 1535.891999
+end = 1536.995
+distances = 43
+tags = ""
+c_time = 1536.3602353055812
+c_dist = 144.84273027232848
+c_angle = -5.029980768803789
+
+[[blocks]]
+id = 13
+begin = 1537.098999
+end = 1538.903
+distances = 71
+tags = ""
+
+[[blocks]]
+id = 14
+begin = 1546.723999
+end = 1549.632
+distances = 115
+tags = ""
+c_time = 1547.1702510012856
+c_dist = 126.0
+c_angle = 0.0
+
+[[blocks]]
+id = 15
+begin = 1568.397
+end = 1571.702999
+distances = 131
+tags = ""
+c_time = 1569.0840120129947
+c_dist = 217.3426603928674
+c_angle = 7.3226255598659815
+
+[[blocks]]
+id = 16
+begin = 1584.594999
+end = 1588.204
+distances = 142
+tags = ""
+c_time = 1585.2038494023154
+c_dist = 180.15763655421324
+c_angle = -7.534359443048334
+
+[[blocks]]
+id = 17
+begin = 1810.549
+end = 1813.357
+distances = 112
+speed = 450
+tags = ""
+c_time = 1811.696
+c_dist = 140.8
+c_angle = 4.7
+
+[[blocks]]
+id = 18
+begin = 1819.575
+end = 1821.78
+distances = 86
+speed = 600
+tags = ""
+c_time = 1820.3245027078501
+c_dist = 245.44007082330063
+c_angle = -2.667549980647049
+
+[[blocks]]
+id = 19
+begin = 1849.42
+end = 1851.227
+distances = 71
+speed = 600
+tags = ""
+c_time = 1849.7528345411906
+c_dist = 247.90753581095487
+c_angle = -6.9575430676145125
+
+[[blocks]]
+id = 20
+begin = 1867.519999
+end = 1869.774999
+distances = 88
+speed = 600
+tags = ""
+c_time = 1867.7573506810181
+c_dist = 319.78884591162205
+c_angle = -9.096419601811109
+
+[[blocks]]
+id = 21
+begin = 1891.789999
+end = 1893.294
+distances = 59
+speed = 600
+tags = "missed"               # live had enough data, corners.py does not
+c_time = 1891.881
+c_dist = 167.0
+c_angle = -3.0666997112756578
+
+[[blocks]]
+id = 22
+begin = 1904.320999
+end = 1907.327999
+distances = 119
+speed = 600
+tags = ""
+c_time = 1904.7904822518888
+c_dist = 125
+c_angle = -7.375400626234594
+
+[[blocks]]
+id = 23
+begin = 1948.119
+end = 1950.974
+distances = 113
+speed = 600
+tags = ""
+c_time = 1948.9677031408796
+c_dist = 148.80997383780777
+c_angle = 0.359663494769445
+
+[[blocks]]
+id = 24
+begin = 1986.032
+end = 1988.237
+distances = 87
+speed = 600
+tags = "missed"            # live had enough data, corners.py does not
+c_time = 1986.167
+c_dist = 154.0
+c_angle = 8.57060060969881
+
+[[blocks]]
+id = 25
+begin = 2008.513
+end = 2010.816999
+distances = 91
+speed = 600
+c_time = 2008.9341698812864
+c_dist = 165.44360651215538
+c_angle = 10.070964671584134
+
+[[blocks]]
+id = 26
+begin = 2029.231999
+end = 2030.935
+distances = 66
+speed = 600
+tags = "missed"            # live had enough data, corners.py does not
+c_time = 2029.387
+c_dist = 159.0
+c_angle = -4.3975630698954
+
+[[blocks]]
+id = 27
+begin = 2052.230999
+end = 2054.537
+distances = 90
+tags = "missed"     # live had enough data, corners.py does not
+speed = 600
+
+[[blocks]]
+id = 28
+begin = 2060.158999
+end = 2061.463999
+distances = 50
+speed = 600
+tags = "missed"     # live had enough data, corners.py does not
+c_time = 2059.882
+c_dist = 235.0
+
+[[blocks]]
+id = 29
+begin = 2068.335
+end = 2069.937999
+distances = 62
+speed = 600
+tags = ""
+c_time = 2068.69
+c_dist = 105
+c_angle = 3.974794997758815
+
+[[blocks]]
+id = 30
+begin = 2078.860999
+end = 2081.164999
+distances = 89
+speed = 600
+tags = ""
+c_time = 2079.37
+c_dist = 130
+c_angle = 4.3847249768329215
+
+[[blocks]]
+id = 31
+begin = 2090.539999
+end = 2092.143
+distances = 62
+speed = 600
+tags = "missed"             # live had enough data, corners.py does not
+c_time = 2090.7678054108833
+c_dist = 113.81239249790087
+c_angle = 7.750977755812301
+
+[[blocks]]
+id = 32
+begin = 2100.112999
+end = 2102.619999
+distances = 98
+speed = 600
+tags = "missed"             # live had enough data, corners.py does not
+c_time = 2100.541
+c_dist = 143.0
+c_angle = 7.307832352509508
+
+[[blocks]]
+id = 33
+begin = 2116.904999
+end = 2119.061
+distances = 84
+speed = 600
+tags = "missed"             # live had enough data, corners.py does not
+c_time = 2117.217999
+c_dist = 137.0
+c_angle = 6.739272227823271
+
+[[blocks]]
+id = 34
+begin = 2156.221
+end = 2157.426
+distances = 47
+speed = 600
+tags = "missed"               # live had enough data, corners.py does not
+c_time = 2156.327
+c_dist = 240.0
+c_angle = -14.149682841910874
+
+[metadata]
+generated_at = "2025-03-28T18:45:04.944562"
+default_speed = 450.0
+block_count = 34

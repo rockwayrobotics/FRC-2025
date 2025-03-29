@@ -24,8 +24,9 @@ class BaseCornerDetector:
 
     def __init__(self):
         self.log = logging.getLogger('cd')
+        self.debug = False
         self.reset()
-        self.log.debug('initialized')
+        # self.log.debug('initialized')
 
     def reset(self):
         self.timing = np.zeros(50)
@@ -165,7 +166,7 @@ class CornerDetector(BaseCornerDetector):
                 first_regression, second_regression
             )
             if speed is not None:
-                self.corner_angle = math.atan2(second_regression.slope, speed * 1000)
+                self.corner_angle = math.atan2(second_regression.slope, speed)
 
             self.log.info("CORNER: %.3f,%.1f,%.1f",
                 self.corner_timestamp, first_regression.slope, second_regression.slope)

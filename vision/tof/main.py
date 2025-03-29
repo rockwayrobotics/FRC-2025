@@ -160,8 +160,8 @@ def get_args():
     parser.add_argument("--stdout", action="store_true")
     parser.add_argument("--slope", type=float, default=400,
         help="slope threshold (for corner detector) (default %(default)s)")
-    parser.add_argument("--speed", type=float, default=0.45,
-        help="fake speed (for testing, default %(default)s)")
+    parser.add_argument("--speed", type=float, default=450,
+        help="fake speed (mm) (for testing, default %(default)s)")
 
     args = parser.parse_args()
     args.roi = tuple(int(x) for x in args.roi.split(","))

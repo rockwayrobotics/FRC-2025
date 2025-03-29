@@ -132,7 +132,7 @@ class CornerDetector(BaseCornerDetector):
                 first_regression, second_regression
             )
             if speed is not None:
-                self.stored_corner_angle = math.atan2(second_regression.slope, speed * 1000)
+                self.stored_corner_angle = math.atan2(second_regression.slope)
 
     def intersect_walls(self, first, second):
         if abs(first.slope - second.slope) < 1e-6:
