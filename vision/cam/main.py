@@ -17,6 +17,7 @@ import traceback
 from cscore import CvSource, VideoMode, CameraServer, MjpegServer
 
 import cv2
+import numpy as np
 
 from ntcore import NetworkTableInstance, PubSubOptions
 from wpimath.geometry import CoordinateSystem, Transform3d, Translation3d, Rotation3d, Pose3d
@@ -74,7 +75,9 @@ def main():
         nt.setServerTeam(8089)
         nt.startClient4("pi cam")
 
-    source = CvSource("cam", VideoMode.PixelFormat.kBGR, args.res[0], args.res[1], int(args.fps))
+    # Hardcoded to 320x240 to save bandwidth, note cv2.resize on main cameras and native res on USB later
+    source = CvSource("cam", VideoMode.PixelFormat.kBGR, 320, 240, int(args.fps))
+    #source = CvSource("cam", VideoMode.PixelFormat.kBGR, args.res[0], args.res[1], int(args.fps))
     port = 5801
     mjpegServer = MjpegServer("mjpeg", port)
     mjpegServer.setSource(source)
@@ -200,6 +203,8 @@ def main():
             inCornerMode = args.save and tofModeSub.get() == 'corner'
             if driver_cam is chute_cam or inCornerMode:
                 chuteImage = chute_cam.capture_array()
+                # Brighten the chute image further, sort of like gamma
+                chuteImage = np.power(chuteImage.astype(np.float32), 1.2).clip(0,255)
                 if pivotAngleSub.get() < 0:
                     chuteImage = cv2.rotate(chuteImage, cv2.ROTATE_180)
             else:
@@ -218,8 +223,10 @@ def main():
                     isRecording = True
 
                 if isRecording:
-                    for (i, arr) in enumerate([arr0, arr1]):
-                        streams[i].add_frame(arr)
+                    if not fore_cam.fake:
+                        streams[0].add_frame(arr0)
+                    if not aft_cam.fake:
+                        streams[1].add_frame(arr1)
 
                 if isRecordingChute and not inCornerMode:
                     # No longer in corner mode, close the chute stream

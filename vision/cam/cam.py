@@ -91,6 +91,12 @@ class CV2Cam:
         self.cam.set(cv2.CAP_PROP_FPS, self.fps)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+        self.cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # 0 = auto, 1 = manual
+        self.cam.set(cv2.CAP_PROP_EXPOSURE, 5000) # 625 to 5000, default=2500
+        self.cam.set(cv2.CAP_PROP_GAMMA, 4) # 2 was default, 1-4
+        self.cam.set(cv2.CAP_PROP_BRIGHTNESS, 255) # 120 was default, 0-255
+        self.cam.set(cv2.CAP_PROP_CONTRAST, 80) # 28 was default, 0-127
+        self.cam.set(cv2.CAP_PROP_SATURATION, 80) # 30 was default, 0-127
         self.num = idx
 
     @staticmethod
