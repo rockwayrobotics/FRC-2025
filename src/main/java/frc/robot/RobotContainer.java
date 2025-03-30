@@ -133,6 +133,7 @@ public class RobotContainer {
         AutoPaths.fastCenterFarDumpPlusAlgaeGripBargePrepare(drive, superstructure));
     autoChooser.addOption("fastLeftFarDumpPlusAlgaeGripBargePrep",
         AutoPaths.fastLeftFarDumpPlusAlgaeGripBargeShot(drive, superstructure));
+    autoChooser.addOption("centerDumpAlgaeBargeTurn", AutoPaths.fastCenterFarDumpPlusAlgaeGrripBargeTurn(drive, superstructure));
 
     // INCREDIBLY SUS may GO KABOOM
     autoChooser.addOption("algae grab", AutoPaths.grabTroughAlgaeL3(drive, superstructure));

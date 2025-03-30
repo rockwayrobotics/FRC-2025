@@ -928,6 +928,64 @@ public class AutoPaths {
     return command;
   }
 
+  public static Command fastCenterFarDumpPlusAlgaeGrripBargeTurn(Drive drive, Superstructure superstructure) {
+    double yCenter = 4.026;
+    Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
+    Pose2d algaeDump = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
+    AtomicReference<Trajectory> algaeDumpTrajectory = new AtomicReference<>();
+    algaeDumpTrajectory.set(TrajectoryGenerator.generateTrajectory(List.of(startPose, algaeDump),
+        fasterConfig));
+
+    var command = Commands.sequence(
+        Commands.runOnce(() -> {
+          superstructure.setElevatorGoalHeightMillimeters(400);
+          superstructure.setWristGoalRads(Units.degreesToRadians(0));
+        }),
+        runTrajectory(algaeDumpTrajectory.get(), drive),
+        Commands.run(() -> {
+          superstructure.setGrabberMotor(1);
+          drive.stop();
+        }).withTimeout(0.5),
+        Commands.runOnce(() -> {
+          superstructure.setGrabberMotor(0);
+        }),
+        Commands.run(() -> {
+          drive.stop();
+        }).withTimeout(0.2),
+        Commands.run(() -> {
+          drive.set(-0.2, 0);
+        }).withTimeout(1),
+        Commands.runOnce(() -> {
+          superstructure.gotoAlgaeSetpoint(Constants.AlgaeLevel.L2);
+        }).withTimeout(0.2),
+        Commands.run(() -> {
+          drive.set(0.2, 0);
+          superstructure.setGrabberMotor(-1);
+        }).withTimeout(1),
+        Commands.run(() -> {
+          drive.set(-0.2, 0);
+        }).withTimeout(1),
+        Commands.runOnce(() -> {
+          superstructure.bargePrepare();
+        }),
+
+        new DriveRotate(drive, 135),
+        Commands.run(() ->{
+          drive.set(0.3, 0);
+        }).withTimeout(2),
+        Commands.runOnce(() -> {
+          drive.stop();
+        }),
+        Commands.runOnce(() -> {
+          //superstructure.bargeShot();
+        }));
+    command.addRequirements(drive, superstructure);
+    return command;
+  }
+
+
+
+
   public static Command sideTroughDump(Drive drive, Superstructure superstructure) {
     double yCenter = 4.026;
     Pose2d startPose = new Pose2d(7.580, yCenter, Rotation2d.fromDegrees(180.00));
