@@ -59,5 +59,5 @@ class SetPins:
     def set_index_high(self, *_args): pass
 
 # try to import the real thing when on a Pi
-if re.match(r'(?m)^Model\s+:.*Raspberry', open('/proc/cpuinfo').read()):
+if re.search(r'(?m)^Model\s+:.*Raspberry', open('/proc/cpuinfo').read()):
     from vl53l1x import TofSensor, ThreadError, SetPins

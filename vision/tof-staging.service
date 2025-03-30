@@ -1,0 +1,29 @@
+[Unit]
+Description=TimeOfFlight (TOF) Sensor Service
+After=network.target
+After=autofs.service
+After=mnt-auto-ssd.mount
+Requires=autofs.service
+Requires=mnt-auto-ssd.mount
+
+[Service]
+User=user
+Group=user
+WorkingDirectory=/home/user/FRC-2025/vision
+# RUST_LOG probably does nothing for us currently
+Environment=RUST_LOG=debug
+ExecStart=/home/user/env3.11/bin/python -m tof -d
+# add this option above for testing with local NT server: --serve
+Restart=on-failure
+RestartSec=5s
+
+# Send stdout/stderr to the journal
+StandardOutput=journal
+StandardError=journal
+
+# Add these lines to grant thread priority capabilities
+AmbientCapabilities=CAP_SYS_NICE
+CapabilityBoundingSet=CAP_SYS_NICE
+
+[Install]
+WantedBy=multi-user.target
