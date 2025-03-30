@@ -194,9 +194,11 @@ class SensorManager:
         self.enabled = True
 
 
-    def configure(self, timing, inter):
+    def configure(self, timing, inter, roi=None):
         # this will fail if there's nothing on the bus
         self.tof.init(True)  # True means set for 2.8V
+
+        self.tof.stop_streaming()
 
         self.log.debug('set mode')
         self.tof.set_long_distance_mode(False)  # short distance mode for faster readings
@@ -209,6 +211,16 @@ class SensorManager:
         self.log.debug('set inter=%s ms', inter)
         self.tof.set_inter_measurement_period_ms(max(timing, inter))
 
+        roi_center = self.tof.get_roi_center()
+        self.log.debug('roi center is %s', roi_center)
+
+        roi_size = self.tof.get_roi()
+        self.log.debug('roi size is %s', roi_size)
+
+        if roi is not None:
+            self.log.debug('set roi size=%s', roi)
+            self.tof.set_roi(*roi)
+
         self.log.debug('start streaming')
         self.tof.start_streaming()
 
@@ -217,7 +229,7 @@ class SensorManager:
         return self.tof.is_running()
 
 
-    def read(self, timing, inter, callback=None):
+    def read(self, timing, inter, roi=None, callback=None):
         '''Run loop reading from the sensor, via a blocking call to
         get_reading(), which retrieves readings from the sensor thread.'''
         try:
@@ -233,7 +245,7 @@ class SensorManager:
                     # not present or there's a problem, we'll get an
                     # exception, then try again after a brief pause.
                     try:
-                        self.configure(timing, inter)
+                        self.configure(timing, inter, roi)
                     except Exception as ex:
                         if not warned or warned is not ex.__class__:
                             warned = ex.__class__
@@ -292,8 +304,8 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", action="store_true")
     parser.add_argument("--debug-cd", action="store_true")
-    parser.add_argument("--roi", default="0,15,15,0",
-        help="region of interest (default %(default)s)")
+    parser.add_argument("--roi", default="16,16",
+        help="region of interest width,height (default %(default)s)")
     parser.add_argument(
         "-t", "--timing", type=int, default=DEFAULT_TIMING,
         help="timing budget in ms (default %(default)s)")
@@ -314,8 +326,11 @@ def get_args():
     args.roi = tuple(int(x) for x in args.roi.split(","))
     # Region of interest is top-left X, top-left Y, bottom-right X, bottom-right Y.
     # Minimum size is 4x4, values must be within 0-15 (inclusive)
-    if abs(args.roi[0] - args.roi[2]) < 3 or abs(args.roi[1] - args.roi[3]) < 3:
-        print("ROI must be at least width and height 4")
+    # if abs(args.roi[0] - args.roi[2]) < 3 or abs(args.roi[1] - args.roi[3]) < 3:
+    #     print("ROI must be at least width and height 4")
+    #     sys.exit(0)
+    if args.roi[0] < 4 or args.roi[1] < 4:
+        print("ROI width and height must be at least 4")
         sys.exit(0)
 
     return args
@@ -486,7 +501,7 @@ class TofMain:
         self.check_log_cycle()
         
         # Log the distance reading
-        self.log_manager.append_double(Name.DIST_MM, dist_mm, self.timestamp(ts))
+        self.log_manager.append_double(Name.DIST_MM, dist_mm, ts)
         
         flush = False # whether to flush NT (any time we publish)
         cd = self.cd
@@ -552,7 +567,7 @@ class TofMain:
         self.pins.set_index_high(self.MODE_MAP.get(chute_side))
 
         def reader():
-            self.mgr.read(self.args.timing, self.args.inter, callback=self.on_reading)
+            self.mgr.read(self.args.timing, self.args.inter, roi=self.args.roi, callback=self.on_reading)
         threading.Thread(target=reader, daemon=True).start()
 
         loop_ts = time.monotonic()

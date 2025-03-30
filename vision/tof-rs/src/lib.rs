@@ -218,11 +218,16 @@ impl TofSensor {
     fn set_roi(&self, width: u16, height: u16) -> PyResult<()> {
         let mut sensor = self.sensor.lock().unwrap();
         sensor
-            .set_roi(ROI {
-                width: width,
-                height: height,
-            })
+            .set_roi(ROI { width, height })
             .map_err(|e| PyErr::new::<PyValueError, _>(format!("Failed to set ROI: {:?}", e)))
+    }
+
+    fn get_roi(&self) -> PyResult<(u16, u16)> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor
+            .get_roi()
+            .map(|c| (c.width, c.height))
+            .map_err(|e| PyErr::new::<PyValueError, _>(format!("Failed to get ROI: {:?}", e)))
     }
 
     fn set_roi_center(&self, x: u8, y: u8) -> PyResult<()> {
@@ -230,6 +235,13 @@ impl TofSensor {
         let roi_center = ROICenter::new(x, y);
         sensor.set_roi_center(roi_center).map_err(|e| {
             PyErr::new::<PyValueError, _>(format!("Failed to set ROI center: {:?}", e))
+        })
+    }
+
+    fn get_roi_center(&self) -> PyResult<u8> {
+        let mut sensor = self.sensor.lock().unwrap();
+        sensor.get_roi_center().map(|c| c.spad).map_err(|e| {
+            PyErr::new::<PyValueError, _>(format!("Failed to get ROI center: {:?}", e))
         })
     }
 

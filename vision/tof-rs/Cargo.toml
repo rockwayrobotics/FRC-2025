@@ -1,8 +1,8 @@
 [package]
 name = "vl53l1x-rs"
-version = "0.2.0"
-authors = ["Your Name <you@example.com>"]
-edition = "2018"
+version = "0.3.0"
+authors = ["Team 8089 Coding Team <team8089@rockway.ca>"]
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
