@@ -33,12 +33,15 @@ public class DriveRotate extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
+    var speed = 1.8;
+    /*
+    // FIXME: We want to slow down so we don't overshoot, but this does too much.
     var rotation = RobotTracker.getInstance().getEstimatedPose().getRotation();
     var radiff = Math.abs(rotation.minus(targetRotation).getRadians());
-    var speed = 1.4;
     if (radiff < Units.degreesToRadians(30)) {
       speed = radiff * radiff * 5;
     }
+    */
     drive.setTankDrive(new ChassisSpeeds(0, 0, speed * direction));
   }
 

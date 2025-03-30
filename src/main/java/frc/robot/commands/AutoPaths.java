@@ -966,19 +966,21 @@ public class AutoPaths {
           drive.set(-0.2, 0);
         }).withTimeout(1),
         Commands.runOnce(() -> {
+          superstructure.setGrabberMotor(0);
           superstructure.bargePrepare();
         }),
-
-        new DriveRotate(drive, 135),
+        new DriveRotate(drive, -135),
         Commands.run(() ->{
+          // At 0.3 for 2 s, we went 1955 mm
+          // We want to go 845 mm, but we are accelerating from a stop
+          // so we can't just linearly interpolate.
           drive.set(0.3, 0);
-        }).withTimeout(2),
+        }).withTimeout(1.08),
         Commands.runOnce(() -> {
           drive.stop();
         }),
-        Commands.runOnce(() -> {
-          //superstructure.bargeShot();
-        }));
+        superstructure.bargeShot()
+        );
     command.addRequirements(drive, superstructure);
     return command;
   }
