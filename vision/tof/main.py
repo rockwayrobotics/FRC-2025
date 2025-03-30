@@ -451,18 +451,23 @@ class TofMain:
         to an FPGA timestamp using the latest server time offset. Note
         that the server time offset currently does NOT get updated
         after the first time so our clocks will drift relative to each other.'''
-        # Until we're connected this will return None so make sure
-        # we don't crash, by just calling that 0...
-        offset = self.nt.getServerTimeOffset() or 0 # convert None to 0
+        # # Until we're connected this will return None so make sure
+        # # we don't crash, by just calling that 0...
+        # offset = self.nt.getServerTimeOffset() or 0 # convert None to 0
 
-        # return ts - time.monotonic() + (ntcore._now() + offset) / 1e6
-        # Convert our time.monotonic() timestamps to ntcore._now()'s
-        # view of things by applying the offset, which we believe is
-        # static, and then applying the server time offset to get
-        # this into the FPGATimestamp domain that the robot expects.
-        # Also note that that works in microseconds, not seconds.
-        return int((ts + self._nt_offset) * 1e6 + offset)
-        
+        # # return ts - time.monotonic() + (ntcore._now() + offset) / 1e6
+        # # Convert our time.monotonic() timestamps to ntcore._now()'s
+        # # view of things by applying the offset, which we believe is
+        # # static, and then applying the server time offset to get
+        # # this into the FPGATimestamp domain that the robot expects.
+        # # Also note that that works in microseconds, not seconds.
+        # return int((ts + self._nt_offset) * 1e6 + offset)
+
+        offset_or_none = self.nt.getServerTimeOffset()
+        if offset_or_none is None:
+            return None
+        return ts - time.monotonic() + (ntcore._now() + offset_or_none) / 1e6
+
     def check_log_cycle(self):
         """Check if it's time to cycle log files based on time"""
         if self.args.log_cycle_time <= 0:
@@ -488,22 +493,23 @@ class TofMain:
         cd.add_record(ts, dist_mm, self.speed)
         if cd.found_corner():
             self.saw_corner = True
-            
-            # Log corner detection with both timestamps
-            # corner_ts_micros = int(cd.corner_timestamp * 1_000_000)
-            self.log_manager.append_double(Name.CORNER, cd.corner_dist, self.timestamp(cd.corner_timestamp))
-            # self.log_manager.append_double(Name.CORNER_DIST_MM, cd.corner_dist, cd.corner_timestamp)
-            self.log_manager.append_double(Name.CORNER, 0, self.timestamp(ts))
-            
-            # Convert corner mono time to FPGA for the robot and send via NT
             corner_ts_fpga = self.mono_to_fpga(cd.corner_timestamp)
-            self.corner_pub.set([corner_ts_fpga, cd.corner_dist])
-            self.corner_ts_pub.set(cd.corner_timestamp)
-            self.corner_dist_pub.set(cd.corner_dist)
-            flush = True
+            if corner_ts_fpga is not None:
+                # Log corner detection with both timestamps
+                # corner_ts_micros = int(cd.corner_timestamp * 1_000_000)
+                self.log_manager.append_double(Name.CORNER, cd.corner_dist, cd.corner_timestamp)
+                # self.log_manager.append_double(Name.CORNER_DIST_MM, cd.corner_dist, cd.corner_timestamp)
+                self.log_manager.append_double(Name.CORNER, 0, ts)
+            
+                # Convert corner mono time to FPGA for the robot and send via NT
+                # corner_ts_fpga = self.mono_to_fpga(cd.corner_timestamp)
+                self.corner_pub.set([corner_ts_fpga, cd.corner_dist])
+                self.corner_ts_pub.set(cd.corner_timestamp)
+                self.corner_dist_pub.set(cd.corner_dist)
+                flush = True
 
-            self.log.info("CORNER: @%.3f,%.3f,%.3f,%.3fs", self.timestamp(cd.corner_timestamp),
-                 self.timestamp(ts), corner_ts_fpga, self.speed)
+                self.log.info("CORNER: @%.3f,%.3f,%.3f,%.3fs", cd.corner_timestamp,
+                     ts, corner_ts_fpga, self.speed)
 
             cd.log_timing()
 
@@ -515,13 +521,15 @@ class TofMain:
 
         if self.tof_mode == 'corner':
             ts_fpga = self.mono_to_fpga(ts)
-            # Log to DataLog
-            # self.log_manager.append_double_array(Name.TS_DIST_MM, [ts_fpga, dist_mm], ts)
+            if ts_fpga is not None:
+                # Log to DataLog
+                # self.log_manager.append_double_array(Name.TS_DIST_MM, [ts_fpga, dist_mm], ts)
             
-            # Publish to NT
-            self.ts_dist_pub.set([ts_fpga, dist_mm])
-            if self.saw_corner:
-                flush = True
+                # Publish to NT
+                self.ts_dist_pub.set([ts_fpga, dist_mm])
+
+                if self.saw_corner:
+                    flush = True
 
         self.dist_pub.set(dist_mm)
         if flush:
@@ -547,11 +555,12 @@ class TofMain:
             self.mgr.read(self.args.timing, self.args.inter, callback=self.on_reading)
         threading.Thread(target=reader, daemon=True).start()
 
-        loop_ts = self.timestamp()
+        loop_ts = time.monotonic()
         while self.running:
             # poll for robot info... would be more efficient to use an NT listener
             for event in self.mode_poller.readQueue():
-                ts = self.timestamp()
+                # ts = self.timestamp()
+                ts = time.monotonic()
                 self.log.debug('event: %s', event)
 
                 topic = event.data.topic.getName()
