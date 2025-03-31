@@ -329,13 +329,13 @@ public class RobotContainer {
                 }, superstructure)));
 
     new POVButton(operator2Controller, 0).whileTrue(Commands.run(() -> {
-      superstructure.setGrabberMotor(1);
+      superstructure.setGrabberMotor(0.5);
     }, superstructure)).onFalse(Commands.runOnce(() -> {
       superstructure.setGrabberMotor(0);
     }, superstructure));
 
     new POVButton(operator2Controller, 90).whileTrue(Commands.run(() -> {
-      superstructure.setGrabberMotor(-1);
+      superstructure.setGrabberMotor(-0.75);
     }, superstructure)).onFalse(Commands.runOnce(() -> {
       superstructure.setGrabberMotor(0);
     }, superstructure));
