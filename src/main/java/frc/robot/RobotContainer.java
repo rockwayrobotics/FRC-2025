@@ -136,6 +136,8 @@ public class RobotContainer {
     autoChooser.addOption("centerDumpAlgaeBargeTurn",
         AutoPaths.fastCenterFarDumpPlusAlgaeGrripBargeTurn(drive, superstructure));
 
+    autoChooser.addOption("leftDumpAlgaeBargeTurn", AutoPaths.fastLeftTroughDumpPlusAlgaeGrripBargeTurn(drive, superstructure));
+
     // INCREDIBLY SUS may GO KABOOM
     autoChooser.addOption("algae grab", AutoPaths.grabTroughAlgaeL3(drive, superstructure));
     autoChooser.addOption("centerFarCenterL3Left",
