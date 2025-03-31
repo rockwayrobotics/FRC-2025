@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 '''TOF Sensor reader'''
 
+import asyncio
 import datetime
 import logging
 from pathlib import Path
@@ -11,331 +12,16 @@ import threading
 import time
 
 import ntcore
-import wpiutil
-from wpiutil.log import DoubleLogEntry, StringLogEntry, DoubleArrayLogEntry
 
 from .cd3 import CornerDetector
-from .sensor import TofSensor, SetPins
+from .logs import LogManager, Name, LOG_DIR
+from .sensor import SensorManager, SetPins
 
-__version__ = "0.2"
+__version__ = "0.4"  # Updated version
 
-LOG_DIR = Path("logs")
-
-DEFAULT_TOF_ADDRESS = 0x29
-DEFAULT_TIMING = 20
-DEFAULT_INTER = 25
-
-# Name constants to avoid typos and duplication.
-# These are used for both NetworkTables and DataLog, for consistency and simplicity.
-class Name:
-    DIST_MM = "/Pi/dist_mm"
-    TS_DIST_MM = "/Pi/ts_dist_mm"
-    CORNERS = "/Pi/Corners" # note inconsistent capitalization
-    CORNER = "/Pi/corner"
-    CORNER_TS = "/Pi/corner_ts"
-    CORNER_DIST_MM = "/Pi/corner_dist_mm"
-    TOF_MODE = "/Pi/tof_mode"
-    CHUTE_MODE = "/Pi/chute_mode"
-
-    # untested:
-    MATCH_TIME = "/AdvantageKit/DriverStation/MatchTime"
-    FMS_ATTACHED = "/AdvantageKit/DriverStation/FMSAttached"
-    ENABLED = "/AdvantageKit/DriverStation/Enabled"
-    TIMESTAMP = "/AdvantageKit/Timestamp"
-    
-class EntryType:
-    DOUBLE = "double"
-    STRING = "string"
-    DOUBLE_ARRAY = "double_array"
-
-
-class LogManager:
-    """
-    Manages DataLogBackgroundWriter for logging TOF sensor data
-    """
-    def __init__(self, log_dir=LOG_DIR):
-        self.log_dir = Path(log_dir)
-        self.log_dir.mkdir(exist_ok=True, parents=True)
-        self.log = logging.getLogger("tof.log")
-        self.writer = None
-        
-        # Initialize entries dict to track all created entries
-        self.entries = {}
-        
-        # Define initial entries configuration - centralized definition
-        self.entry_config = {
-            Name.DIST_MM: {"type": EntryType.DOUBLE},
-            Name.TS_DIST_MM: {"type": EntryType.DOUBLE_ARRAY},
-            Name.CORNER: {"type": EntryType.DOUBLE},
-            Name.CORNER_DIST_MM: {"type": EntryType.DOUBLE},
-            Name.TOF_MODE: {"type": EntryType.STRING},
-            Name.CHUTE_MODE: {"type": EntryType.STRING},
-        }
-        
-        # Create initial log file
-        self.start_new_log()
-    
-    def start_new_log(self):
-        """Start a new log file with timestamp-based name"""
-        timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        filename = f"tof-{timestamp}.wpilog"
-        self.log.info(f"Starting new log file: {filename}")
-        
-        # If we have an existing writer, pause it before switching
-        if self.writer:
-            self.writer.pause()
-        
-        # Create new writer
-        self.writer = wpiutil.DataLogBackgroundWriter(
-            str(self.log_dir),  # Directory 
-            filename,           # Filename
-            period=0.5,         # Flush period in seconds
-            extraHeader="TOF Sensor Data"
-        )
-        
-        # Re-create all entries with the new writer
-        self._recreate_entries()
-        
-        return filename
-    
-    def _recreate_entries(self):
-        """Recreate all log entries with the new writer"""
-        # Clear current entries
-        self.entries = {}
-        
-        # Create each entry from the configuration
-        for name, config in self.entry_config.items():
-            self._create_entry(
-                name, 
-                config["type"],
-                metadata=config.get("metadata", None)
-            )
-    
-    def _create_entry(self, name, entry_type, metadata=None):
-        """Internal method to create a new log entry"""
-        if entry_type == EntryType.DOUBLE:
-            if metadata:
-                entry = DoubleLogEntry(self.writer, name, metadata)
-            else:
-                entry = DoubleLogEntry(self.writer, name)
-        elif entry_type == EntryType.STRING:
-            if metadata:
-                entry = StringLogEntry(self.writer, name, metadata)
-            else:
-                entry = StringLogEntry(self.writer, name)
-        elif entry_type == EntryType.DOUBLE_ARRAY:
-            if metadata:
-                entry = DoubleArrayLogEntry(self.writer, name, metadata)
-            else:
-                entry = DoubleArrayLogEntry(self.writer, name)
-        else:
-            raise ValueError(f"Unsupported entry type: {entry_type}")
-            
-        # Store entry for future use
-        self.entries[name] = entry
-        
-        return entry
-    
-    def append_double(self, name, value, timestamp):
-        """Append a double value to the specified entry"""
-        if name not in self.entries:
-            self.log.warning(f"Entry {name} does not exist")
-            return False
-            
-        try:
-            self.entries[name].append(value, int(timestamp * 1000000))
-            return True
-        except Exception as e:
-            self.log.error(f"Error appending to {name}: {e}")
-            return False
-    
-    def append_string(self, name, value, timestamp):
-        """Append a string value to the specified entry"""
-        if name not in self.entries:
-            self.log.warning(f"Entry {name} does not exist")
-            return False
-            
-        try:
-            self.entries[name].append(value, int(timestamp * 1000000))
-            return True
-        except Exception as e:
-            self.log.error(f"Error appending to {name}: {e}")
-            return False
-    
-    # def append_double_array(self, name, value, timestamp):
-    #     """Append a double array value to the specified entry"""
-    #     if name not in self.entries:
-    #         self.log.warning(f"Entry {name} does not exist")
-    #         return False
-            
-    #     try:
-    #         self.entries[name].append(value, int(timestamp * 1000000))
-    #         return True
-    #     except Exception as e:
-    #         self.log.error(f"Error appending to {name}: {e}")
-    #         return False
-    
-    def close(self):
-        """Close the log writer"""
-        if self.writer:
-            self.writer.stop()
-            self.writer = None
-
-
-class SensorManager:
-    """
-    Open and start the VL53L1X ranging sensor
-    """
-
-    def __init__(self, address=DEFAULT_TOF_ADDRESS):
-        self.address = address
-        
-        # This will raise OSError if there's no /dev/i2c-1.
-        self.tof = TofSensor(bus=1, address=address)
-        self.log = logging.getLogger(f'tof.{address:x}')
-        self.enabled = True
-
-
-    def configure(self, timing, inter, roi=None):
-        # this will fail if there's nothing on the bus
-        self.tof.init(True)  # True means set for 2.8V
-
-        self.tof.stop_streaming()
-
-        self.log.debug('set mode')
-        self.tof.set_long_distance_mode(False)  # short distance mode for faster readings
-
-        # Lower timing budgets allow for faster updates, but sacrifice accuracy
-        self.log.debug('set timing=%s ms', timing)
-        self.tof.set_timing_budget_ms(timing)
-
-        # inter-measurement period must be higher than timing budget so use max()
-        self.log.debug('set inter=%s ms', inter)
-        self.tof.set_inter_measurement_period_ms(max(timing, inter))
-
-        roi_center = self.tof.get_roi_center()
-        self.log.debug('roi center is %s', roi_center)
-
-        roi_size = self.tof.get_roi()
-        self.log.debug('roi size is %s', roi_size)
-
-        if roi is not None:
-            self.log.debug('set roi size=%s', roi)
-            self.tof.set_roi(*roi)
-
-        self.log.debug('start streaming')
-        self.tof.start_streaming()
-
-
-    def is_running(self):
-        return self.tof.is_running()
-
-
-    def read(self, timing, inter, roi=None, callback=None):
-        '''Run loop reading from the sensor, via a blocking call to
-        get_reading(), which retrieves readings from the sensor thread.'''
-        try:
-            self.log.info('reading: timing=%s inter=%s', timing, inter)
-            ts_last = time.monotonic() # try to match the one Rust uses...
-            self.enabled = True
-            running = False
-            warned = None # flag when we've reported a problem, to avoid spamming
-            while self.enabled:
-                if not running:
-                    # Try reconfiguring sensor.  If it's present it will
-                    # end up configured properly and streaming.  If it's
-                    # not present or there's a problem, we'll get an
-                    # exception, then try again after a brief pause.
-                    try:
-                        self.configure(timing, inter, roi)
-                    except Exception as ex:
-                        if not warned or warned is not ex.__class__:
-                            warned = ex.__class__
-                            self.log.error("Error: %s", ex)
-
-                        time.sleep(0.2)
-                        continue
-                    running = True
-                    warned = False
-
-                    self.log.info("ACTIVATED")
-
-                try:
-                    # This should block until there's a reading or error.
-                    reading = self.tof.get_reading()
-
-                    if reading is None:
-                        running = False
-                        self.log.warning("DEACTIVATED")
-                        continue
-
-                except Exception as ex:
-                    if not warned:
-                        warned = True
-                        self.log.error("Error: %s", ex)
-
-                    running = False
-                    continue
-
-                else:
-                    ts, distance, status = reading
-                    # self.log.debug('reading: %s,%s,%s', ts, distance, status)
-
-                    delta = ts - ts_last
-                    ts_last = ts
-
-                    if callback is not None:
-                        callback(ts, distance, status, delta)
-
-                    time.sleep(0.001)  # Small sleep to prevent CPU spinning
-                    # (although the new Rust code should block us anyway
-                    # so in theory this is no longer required)
-
-        finally:
-            self.tof.stop_streaming()
-
-
-    def shutdown(self):
-        self.enabled = False
-        self.tof.stop_streaming()
-
-
-def get_args():
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--debug", action="store_true")
-    parser.add_argument("--debug-cd", action="store_true")
-    parser.add_argument("--roi", default="16,16",
-        help="region of interest width,height (default %(default)s)")
-    parser.add_argument(
-        "-t", "--timing", type=int, default=DEFAULT_TIMING,
-        help="timing budget in ms (default %(default)s)")
-    parser.add_argument(
-        "-i", "--inter", type=int, default=DEFAULT_INTER,
-        help="inter-measurement period in ms (default %(default)s)")
-    parser.add_argument("--serve", action="store_true",
-        help="serve NT instance (for testing)")
-    parser.add_argument("--stdout", action="store_true")
-    parser.add_argument("--slope", type=float, default=400,
-        help="slope threshold (for cd1 and cd2) (default %(default)s)")
-    parser.add_argument("--speed", type=float, default=450,
-        help="fake speed (mm/s) (for testing, default %(default)s)")
-    parser.add_argument("--log-cycle-time", type=int, default=30,
-        help="Cycle log files after X minutes (default %(default)s, 0=off)")
-
-    args = parser.parse_args()
-    args.roi = tuple(int(x) for x in args.roi.split(","))
-    # Region of interest is top-left X, top-left Y, bottom-right X, bottom-right Y.
-    # Minimum size is 4x4, values must be within 0-15 (inclusive)
-    # if abs(args.roi[0] - args.roi[2]) < 3 or abs(args.roi[1] - args.roi[3]) < 3:
-    #     print("ROI must be at least width and height 4")
-    #     sys.exit(0)
-    if args.roi[0] < 4 or args.roi[1] < 4:
-        print("ROI width and height must be at least 4")
-        sys.exit(0)
-
-    return args
+# Constants for NT disconnection handling
+DISCONNECTION_GRACE_PERIOD = 5.0  # seconds to wait before considering truly disconnected
+FMS_CONTEXT_WAIT_PERIOD = 2.0     # seconds to wait after FMS attaches to fetch context
 
 
 class TofMain:
@@ -346,25 +32,29 @@ class TofMain:
         self.speed = self.args.speed
         self.tof_mode = 'none'
         self.saw_corner = False
+        self.chute_mode = 'home/right'
+        self.chute_side = 'right'
+        
+        # Network state tracking
+        self.rio_connected = False
+        self.disconnect_time = None
+        self.fms_attached = False
+        self.fms_attached_time = None
+        self.match_context_pending = False
 
-        self.tof_mode_sub = None
-        self.tof_mode_pub = None
-        self.chute_mode_sub = None
-        self.nt = None
-        self.mode_poller = None
-        self.dist_pub = None
-        self.ts_dist_pub = None
-        self.corner_pub = None
-        self.corner_ts_pub = None
+        # Robot state tracking
+        self.robot_enabled = False
+        
+        # Asyncio components
+        self.loop = None
+        self.events = asyncio.Queue()
+        self.pending_timeouts = {}
         
         # time-related values
         self._ts_base = time.monotonic() 
 
-        # Initialize log manager
-        self.log_manager = LogManager()
-        
-        # For log cycling
-        self.last_log_cycle = time.monotonic()
+        # Initialize NetworkTables
+        self.nt = None
 
     def zerotime(self, ts=None):
         '''Make (or convert) a mono timestamp relative to our start time.'''
@@ -372,86 +62,167 @@ class TofMain:
             ts = time.monotonic()
         return ts - self._ts_base
 
-    def nt_init(self):
+    def nt_setup(self):
         '''initialize NetworkTables stuff'''
-        nt = self.nt = ntcore.NetworkTableInstance.getDefault()
-        nt.setServerTeam(8089)
+        self.nt = ntcore.NetworkTableInstance.getDefault()
+        
+        if self.args.serve:
+            self.log.info('starting test NT server')
+            self.nt.startServer()
+        else:
+            self.nt.setServerTeam(8089)
+            self.nt.startClient4("tof")
+        
+        # shortcut to add and remember listeners
+        def add(*args, **kwargs):
+            x = self.nt.addListener(*args, **kwargs)
+            self.nt_listeners.append(x)
 
-        # grab smallest of a batch of deltas to figure out what the magic
-        # offset is between ntcore._now() and time.monotonic()
-        # so we can apply that to later monotonic times to get it into
-        # the same domain as ntcore._now(), since that's the time domain
-        # needed for ServerTimeOffset to work properly.
-        self.ntcore_epoch = min((ntcore._now() / 1e6 - time.monotonic()) for _ in range(10))
-        self.log.info('ntcore_epoch=%.6f', self.ntcore_epoch)
-
-        chute_mode_topic = nt.getStringTopic(Name.CHUTE_MODE)
-        self.chute_mode_sub = chute_mode_topic.subscribe('none')
-
-        tof_mode_topic = nt.getStringTopic(Name.TOF_MODE)
+        # Add connection listener
+        x = self.nt.addConnectionListener(immediate_notify=True, callback=self.on_connection_change)
+        self.nt_listeners = [x]
+        
+        # Create subscriber for tof_mode
+        tof_mode_topic = self.nt.getStringTopic(Name.TOF_MODE)
         self.tof_mode_sub = tof_mode_topic.subscribe('none',
            ntcore.PubSubOptions(keepDuplicates=True))
-
-        self.mode_poller = ntcore.NetworkTableListenerPoller(nt)
-        self.mode_poller.addListener(self.tof_mode_sub, ntcore.EventFlags.kValueAll)
-        self.mode_poller.addListener(self.chute_mode_sub, ntcore.EventFlags.kValueAll)
-
-        self.ts_dist_pub = nt.getDoubleArrayTopic(Name.TS_DIST_MM).publish()
-        self.ts_dist_pub.set([0, 0])
-
-        self.dist_pub = nt.getFloatTopic(Name.DIST_MM).publish()
-        self.dist_pub.set(0)
-
-        self.corner_pub = nt.getFloatArrayTopic(Name.CORNERS).publish()
-        self.corner_pub.set([0.0, 0.0])
-
-        self.corner_ts_pub = nt.getFloatTopic(Name.CORNER_TS).publish()
+        add(self.tof_mode_sub, ntcore.EventFlags.kValueAll, self.on_tof_mode_change)
+        
+        # Create subscriber for chute_mode
+        chute_mode_topic = self.nt.getStringTopic(Name.CHUTE_MODE)
+        self.chute_mode_sub = chute_mode_topic.subscribe('none')
+        add(self.chute_mode_sub, ntcore.EventFlags.kValueAll, self.on_chute_mode_change)
+        
+        # Match state topics
+        fms_topic = self.nt.getBooleanTopic(Name.FMS_ATTACHED)
+        self.fms_sub = fms_topic.subscribe(False)
+        add(self.fms_sub, ntcore.EventFlags.kValueAll, self.on_fms_change)
+        
+        topic = self.nt.getBooleanTopic(Name.ENABLED)
+        self.enabled_sub = topic.subscribe(False)
+        add(self.enabled_sub, ntcore.EventFlags.kValueAll, self.on_enabled_change)
+        
+        # Match info topics (for log naming)
+        mtype_topic = self.nt.getIntegerTopic(Name.MATCH_TYPE)
+        self.match_type_sub = mtype_topic.subscribe(0)
+        add(self.match_type_sub, ntcore.EventFlags.kValueAll, self.on_match_type_change)
+        
+        mnum_topic = self.nt.getIntegerTopic(Name.MATCH_NUMBER)
+        self.match_num_sub = mnum_topic.subscribe(0)
+        add(self.match_num_sub, ntcore.EventFlags.kValueAll, self.on_match_number_change)
+        
+        ename_topic = self.nt.getStringTopic(Name.EVENT_NAME)
+        self.event_name_sub = ename_topic.subscribe("")
+        add(self.event_name_sub, ntcore.EventFlags.kValueAll, self.on_event_name_change)
+        
+        topic = self.nt.getIntegerTopic(Name.REPLAY_NUMBER)
+        self.replay_num_sub = topic.subscribe(0)
+        add(self.replay_num_sub, ntcore.EventFlags.kValueAll, self.on_replay_number_change)
+        
+        # Publishers
+        self.corner_ts_pub = self.nt.getFloatTopic(Name.CORNER_TS).publish()
         self.corner_ts_pub.set(0.0)
-        self.corner_dist_pub = nt.getFloatTopic(Name.CORNER_DIST_MM).publish()
+        
+        self.corner_dist_pub = self.nt.getFloatTopic(Name.CORNER_DIST_MM).publish()
         self.corner_dist_pub.set(0.0)
         
-        # Match state topics - for future use with match-based log cycling
-        self.match_time_sub = nt.getDoubleArrayTopic(Name.MATCH_TIME).subscribe([0, 0])
-        self.fms_attached_sub = nt.getBooleanTopic(Name.FMS_ATTACHED).subscribe(False)
-        self.enabled_sub = nt.getBooleanTopic(Name.ENABLED).subscribe(False)
-
-        # for debugging, serve our NT instance
+        self.corner_pub = self.nt.getFloatArrayTopic(Name.CORNERS).publish()
+        self.corner_pub.set([0.0, 0.0])
+        
+        self.ts_dist_pub = self.nt.getDoubleArrayTopic(Name.TS_DIST_MM).publish()
+        self.ts_dist_pub.set([0, 0])
+        
+        self.dist_pub = self.nt.getFloatTopic(Name.DIST_MM).publish()
+        self.dist_pub.set(0)
+        
+        # Set publishers for chute/tof mode (in case we're serving for testing)
         if self.args.serve:
-            nt.startServer()
-        else:
-            nt.startClient4("tof")
-
-        self.tof_mode_pub = tof_mode_topic.publish()
-        self.tof_mode_pub.set('none')
-        self.chute_mode_pub = chute_mode_topic.publish()
-        self.chute_mode_pub.set('home/right')
-
+            self.tof_mode_pub = tof_mode_topic.publish()
+            self.tof_mode_pub.set('none')
+            self.chute_mode_pub = chute_mode_topic.publish()
+            self.chute_mode_pub.set('home/right')
+            self.fms_pub = fms_topic.publish()
+            self.fms_pub.set(False)
+            self.mtype_pub = mtype_topic.publish()
+            self.mtype_pub.set(2)
+            self.mnum_pub = mnum_topic.publish()
+            self.mnum_pub.set(31)
+            self.ename_pub = ename_topic.publish()
+            self.ename_pub.set('onwat')
+        
         # Brief pause, hoping beyond hope that NT will compare clocks and
         # set the offset during this.
         # Note: empirically measured it takes only about 5-10 ms for it to
         # measure the offset after starting the client, so this wait is adequate.
-        time.sleep(0.2)
+        # time.sleep(0.2)
 
-    def run(self):
-        self.log.info('-' * 40)
-        self.log.info('tof v%s', __version__)
-        self.log.info('args %r', self.args)
+    def nt_shutdown(self):
+        for x in self.nt_listeners:
+            self.nt.removeListener(x)
 
-        def exit_handler(_signal, _frame):
-            self.shutdown()
-        signal.signal(signal.SIGINT, exit_handler)
-
-        self.nt_init()
-
-        self.cd = CornerDetector(400)
-        self.running = True
-
-        self.pins = SetPins([5, 14])
-
-        self.mgr = SensorManager()
-
-        self.running = True
-        self.loop()
+    # NT Event handlers - these queue events for the main asyncio loop
+    def on_connection_change(self, event):
+        """Handle NT connection state changes"""
+        connected = bool(event.flags & 0x02)
+        self.log.debug("Connection event: %s (flags 0x%02x)", connected, event.flags)
+        self.loop.call_soon_threadsafe(self.events.put_nowait,
+            ('connection', connected))
+    
+    def on_tof_mode_change(self, event):
+        """Handle tof_mode changes"""
+        value = event.data.value.getString()
+        # self.log.debug(f"TOF mode event: {value}")
+        self.loop.call_soon_threadsafe(self.events.put_nowait,
+            ('tof_mode', value))
+    
+    def on_chute_mode_change(self, event):
+        """Handle chute_mode changes"""
+        value = event.data.value.getString()
+        # self.log.debug(f"Chute mode event: {value}")
+        self.loop.call_soon_threadsafe(self.events.put_nowait,
+            ('chute_mode', value))
+    
+    def on_fms_change(self, event):
+        """Handle FMS attachment state changes"""
+        value = event.data.value.getBoolean()
+        self.log.debug(f"FMS attached event: {value}")
+        self.loop.call_soon_threadsafe(self.events.put_nowait,
+            ('fms_attached', value))
+    
+    def on_enabled_change(self, event):
+        """Handle robot enabled state changes"""
+        value = event.data.value.getBoolean()
+        # self.log.debug(f"Enabled event: {value}")
+        self.loop.call_soon_threadsafe(self.events.put_nowait,
+            ('enabled', value))
+    
+    def on_match_type_change(self, event):
+        """Handle match type changes"""
+        value = event.data.value.getInteger()
+        # self.log.debug(f"Match type event: {value}")
+        self.loop.call_soon_threadsafe(self.events.put_nowait,
+            ('match_type', value))
+    
+    def on_match_number_change(self, event):
+        """Handle match number changes"""
+        value = event.data.value.getInteger()
+        # self.log.debug(f"Match number event: {value}")
+        self.loop.call_soon_threadsafe(self.events.put_nowait,
+            ('match_number', value))
+    
+    def on_event_name_change(self, event):
+        """Handle event name changes"""
+        value = event.data.value.getString()
+        # self.log.debug(f"Event name event: {value}")
+        self.loop.call_soon_threadsafe(self.events.put_nowait,
+            ('event_name', value))
+    
+    def on_replay_number_change(self, event):
+        """Handle replay number changes"""
+        value = event.data.value.getInteger()
+        # self.log.debug(f"Replay number event: {value}")
+        self.loop.call_soon_threadsafe(self.events.put_nowait,
+            ('replay_number', value))
 
     def mono_to_fpga(self, mono):
         '''Convert a mono timestamp (including from Rust Instant::now()
@@ -476,27 +247,16 @@ class TofMain:
         # When we're not connected this will return None so callers must handle that.
         if st_offset is None:
             return None
-        return mono + self.ntcore_epoch + st_offset / 1e6
-
-    def check_log_cycle(self, force=False):
-        """Check if it's time to cycle log files based on time, or force now."""
-        if not force and self.args.log_cycle_time <= 0:
-            return  # Log cycling disabled
             
-        current_time = time.monotonic()
-        elapsed_minutes = (current_time - self.last_log_cycle) / 60
-        
-        if force or elapsed_minutes >= self.args.log_cycle_time:
-            if force:
-                self.log.info(f"Cycling log file (forced)")
-            else:
-                self.log.info(f"Cycling log file after {elapsed_minutes:.1f} minutes")
-            self.log_manager.start_new_log()
-            self.last_log_cycle = current_time
+        # TODO: We need to calculate ntcore_epoch here. Could be stored as class variable during setup
+        # For now, use a best-guess approach (as a simplification)
+        ntcore_epoch = ntcore._now() / 1e6 - time.monotonic()
+        return mono + ntcore_epoch + st_offset / 1e6
 
     def on_reading(self, ts, dist_mm, status, delta):
-        # Check for log cycling
-        self.check_log_cycle()
+        """Process a TOF reading - may log and publish data"""
+        # # Check for log cycling - if we're not in corner mode
+        # self.log_manager.check_cycle_timeout(self.tof_mode)
         
         # Log the distance reading
         self.log_manager.append_double(Name.DIST_MM, dist_mm, ts)
@@ -509,13 +269,10 @@ class TofMain:
             corner_ts_fpga = self.mono_to_fpga(cd.corner_timestamp)
             if corner_ts_fpga is not None:
                 # Log corner detection with both timestamps
-                # corner_ts_micros = int(cd.corner_timestamp * 1_000_000)
                 self.log_manager.append_double(Name.CORNER, cd.corner_dist, cd.corner_timestamp)
-                # self.log_manager.append_double(Name.CORNER_DIST_MM, cd.corner_dist, cd.corner_timestamp)
                 self.log_manager.append_double(Name.CORNER, 0, ts)
             
                 # Convert corner mono time to FPGA for the robot and send via NT
-                # corner_ts_fpga = self.mono_to_fpga(cd.corner_timestamp)
                 self.corner_pub.set([corner_ts_fpga, cd.corner_dist])
                 self.corner_ts_pub.set(cd.corner_timestamp)
                 self.corner_dist_pub.set(cd.corner_dist)
@@ -525,19 +282,14 @@ class TofMain:
                      ts, corner_ts_fpga, self.speed)
 
             cd.log_timing()
-
             cd.reset()
         else:
-            # self.log.info("dist,%8.3f,%5.0f,%2d,%5.3f", ts, dist_mm, status, delta)
             if self.args.stdout:
                 print("dist,%8.3f,%5.0f,%2d,%5.3f      " % (ts, dist_mm, status, delta), end='\r')
 
         if self.tof_mode == 'corner':
             ts_fpga = self.mono_to_fpga(ts)
             if ts_fpga is not None:
-                # Log to DataLog
-                # self.log_manager.append_double_array(Name.TS_DIST_MM, [ts_fpga, dist_mm], ts)
-            
                 # Publish to NT
                 self.ts_dist_pub.set([ts_fpga, dist_mm])
 
@@ -559,102 +311,301 @@ class TofMain:
         'rear-right': 0,
     }
 
-    def loop(self):
-        # chute_mode = 'home/right'
-        chute_side = 'right'
-        self.pins.set_index_high(self.MODE_MAP.get(chute_side))
-
+    def launch_sensor_thread(self):
+        """Task that runs the TOF sensor reader in a separate thread"""
         def reader():
-            self.mgr.read(self.args.timing, self.args.inter, roi=self.args.roi, callback=self.on_reading)
-        threading.Thread(target=reader, daemon=True).start()
+            self.mgr.read(self.args.timing, self.args.inter, roi=self.args.roi,
+                callback=self.on_reading)
 
-        loop_ts = time.monotonic()
-        while self.running:
-            # poll for robot info... would be more efficient to use an NT listener
-            for event in self.mode_poller.readQueue():
-                mono = time.monotonic()
-                self.log.debug('event: %s', event)
-
-                topic = event.data.topic.getName()
-                if topic == Name.CHUTE_MODE:
-                    val = event.data.value.getString()
-                    self.log.info('chute: %s', val)
-                    
-                    # Log to DataLog with monotonic timestamp
-                    self.log_manager.append_string(Name.CHUTE_MODE, val, self.zerotime(mono))
-                    
-                    pos, _, side = val.partition('/')
-                    if pos != 'load':
-                        side = 'left' if side == 'right' else 'right'
-                    if chute_side != side:
-                        chute_side = side
-
-                        # handle mode changes
-                        # disabling will cause any current reading thread to exit
-                        self.pins.set_index_high(None)
-                        # this gives enough time for the thread to attempt a reading
-                        # and get an i2c error because the sensor will be offline
-                        time.sleep(0.1)
-                        self.pins.set_index_high(self.MODE_MAP.get(chute_side))
-                        self.log.info('selected tof: %s (from %s)', chute_side, val)
-
-                        self.cd.reset()
-
-                elif topic == Name.TOF_MODE:
-                    self.ts_dist_pub.set([0, 0])
-                    self.dist_pub.set(0)
-                    val = event.data.value.getString()
-                    self.saw_corner = False
-                    self.tof_mode = val
-                    self.log.info('tof mode: %s', val)
-                    
-                    # Log to DataLog with monotonic timestamp
-                    self.log_manager.append_string(Name.TOF_MODE, val, self.zerotime(mono))
-
-            # pause to avoid busy cpu, as we're not yet using full NT listeners
-            time.sleep(0.01)
-
-            now = time.monotonic()
-            elapsed = now - loop_ts
-            if elapsed > 0.075:
-                self.log.warning('long loop time %.3fs', elapsed)
-            loop_ts = now
+        # Start the reader in a thread
+        thread = threading.Thread(target=reader, daemon=True)
+        thread.start()
+        self.log.debug('started sensor thread')
             
-            # TODO: Future enhancement - implement match-based log cycling
-            # This would check match state from NetworkTables and start a new log
-            # file at the beginning of each match
+    async def handle_connection_event(self, connected):
+        """Handle connection state changes with debouncing"""
+        now = time.monotonic()
+        
+        if connected:
+            # Rio is connected (or reconnected)
+            if not self.rio_connected:
+                self.rio_connected = True
+                self.disconnect_time = None
+                self.log.info("Rio connected - NT communication established")
+                
+                # If we were disconnected, start a new log
+                if not self.log_manager.awaiting_match_context:
+                    self.log.info("Starting new log after connection")
+                    self.log_manager.start_new_log()
+        else:
+            # Rio is disconnected
+            if self.rio_connected:
+                # Start disconnection grace period
+                if self.disconnect_time is None:
+                    self.disconnect_time = now
+                    self.log.info(f"Rio disconnection detected, starting {DISCONNECTION_GRACE_PERIOD:.1f}s grace period")
+                    
+                    # Schedule a check after the grace period
+                    self.pending_timeouts['disconnect'] = asyncio.create_task(
+                        self.check_disconnection_timeout()
+                    )
+
+    async def handle_enabled_event(self, enabled):
+        """Handle robot enabled state changes"""
+        # Log the enabled state change (for information/debugging)
+        self.log.debug(f"Robot enabled state: {enabled}")
+
+        # Currently we don't need to take any specific action on enabled state changes
+        # If we wanted to use this as another log cycling signal, we could add logic like:
+
+        # if enabled and self.tof_mode != "corner" and not self.log_manager.awaiting_match_context:
+        #     # Start a new log when robot is enabled and not in corner mode
+        #     # Only if we're not already waiting for match context or in corner mode
+        #     if time.monotonic() - self.last_enabled_time > MIN_ENABLE_INTERVAL:
+        #         self.log.info("Starting new log due to robot being enabled")
+        #         self.log_manager.start_new_log()
+        # 
+        # self.last_enabled_time = time.monotonic()
+
+        # For now, we just track the state but don't take action
+        self.robot_enabled = enabled
+
+    async def check_disconnection_timeout(self):
+        """Check if disconnection has persisted past grace period"""
+        try:
+            await asyncio.sleep(DISCONNECTION_GRACE_PERIOD)
+            
+            # If we're still disconnected after the grace period
+            if self.disconnect_time is not None:
+                self.log.info("Rio disconnection confirmed after grace period")
+                self.rio_connected = False
+                
+                # Clear FMS state since we're disconnected
+                if self.fms_attached:
+                    self.fms_attached = False
+                    self.log_manager.set_fms_attached(False)
+        except asyncio.CancelledError:
+            # Task was cancelled, disconnection was just temporary
+            pass
+        finally:
+            # Clear the pending timeout
+            self.pending_timeouts.pop('disconnect', None)
+    
+    async def handle_fms_event(self, attached):
+        """Handle FMS attachment state changes"""
+        if attached == self.fms_attached:
+            return  # No change
+            
+        self.fms_attached = attached
+        self.log_manager.set_fms_attached(attached)
+        
+        if attached:
+            # FMS just attached - schedule match context collection
+            self.fms_attached_time = time.monotonic()
+            self.match_context_pending = True
+            
+            # Schedule context collection after a brief delay
+            self.pending_timeouts['fms_context'] = asyncio.create_task(
+                self.collect_match_context()
+            )
+    
+    async def collect_match_context(self):
+        """Collect match context data after FMS connection"""
+        try:
+            # Wait briefly for all match data to propagate
+            await asyncio.sleep(FMS_CONTEXT_WAIT_PERIOD)
+            
+            # Collect match context data
+            event_name = self.event_name_sub.get()
+            match_type = self.match_type_sub.get()
+            match_number = self.match_num_sub.get()
+            replay_number = self.replay_num_sub.get()
+            
+            self.log.info(f"Collected match context: {event_name} {match_type} {match_number} {replay_number}")
+            
+            # Update log manager with context data
+            self.log_manager.update_match_context(
+                event_name=event_name,
+                match_type=match_type,
+                match_number=match_number,
+                replay_number=replay_number
+            )
+        except asyncio.CancelledError:
+            # Task was cancelled
+            pass
+        finally:
+            # Clear pending flags and tasks
+            self.match_context_pending = False
+            self.pending_timeouts.pop('fms_context', None)
+    
+    async def handle_tof_mode_event(self, mode):
+        """Handle TOF mode changes"""
+        if mode == self.tof_mode:
+            return  # No change
+            
+        # Log the mode change
+        self.log_manager.append_string(Name.TOF_MODE, mode, self.zerotime())
+        
+        # Clear any corner state when mode changes
+        self.ts_dist_pub.set([0, 0])
+        self.dist_pub.set(0)
+        self.saw_corner = False
+        self.tof_mode = mode
+        self.log.info(f'TOF mode: {mode}')
+    
+    async def handle_chute_mode_event(self, mode):
+        """Handle chute mode changes"""
+        if mode == self.chute_mode:
+            return  # No change
+            
+        # Log the mode change
+        self.log_manager.append_string(Name.CHUTE_MODE, mode, self.zerotime())
+        
+        self.chute_mode = mode
+        self.log.info(f'Chute mode: {mode}')
+        
+        # Parse the position/side from the mode
+        pos, _, side = mode.partition('/')
+        if pos != 'load':
+            side = 'left' if side == 'right' else 'right'
+            
+        if self.chute_side != side:
+            self.chute_side = side
+            
+            # Handle mode changes - switch the pins
+            self.pins.set_index_high(None)
+            # This gives enough time for the thread to attempt a reading
+            # and get an i2c error because the sensor will be offline
+            await asyncio.sleep(0.1)
+            self.pins.set_index_high(self.MODE_MAP.get(self.chute_side))
+            self.log.info(f'Selected TOF: {self.chute_side} (from {mode})')
+            
+            # Reset corner detector when changing sides
+            self.cd.reset()
+    
+    async def process_event(self, event):
+        """Process a queued event based on its type"""
+        tag, data = event
+        
+        try:
+            if tag == 'connection':
+                await self.handle_connection_event(data)
+            elif tag == 'enabled':
+                await self.handle_enabled_event(data)
+            elif tag == 'fms_attached':
+                await self.handle_fms_event(data)
+            elif tag == 'tof_mode':
+                await self.handle_tof_mode_event(data)
+            elif tag == 'chute_mode':
+                await self.handle_chute_mode_event(data)
+            elif tag == 'match_type':
+                if self.match_context_pending:
+                    self.log_manager.update_match_context(match_type=data)
+            elif tag == 'match_number':
+                if self.match_context_pending:
+                    self.log_manager.update_match_context(match_number=data)
+            elif tag == 'event_name':
+                if self.match_context_pending:
+                    self.log_manager.update_match_context(event_name=data)
+            elif tag == 'replay_number':
+                if self.match_context_pending:
+                    self.log_manager.update_match_context(replay_number=data)
+            else:
+                self.log.warning(f"Unknown event type: {tag}")
+        except Exception as e:
+            self.log.error(f"Error processing {tag} event: {e}")
 
     def shutdown(self):
-        self.log.warning('shutting down')
-        self.running = False
-        self.mgr.shutdown()
-        self.log_manager.close()
-        self.nt.stopClient()
-        if self.args.serve:
-            self.nt.stopServer()
+        self.log.warning('Shutdown requested')
+        self.loop.call_soon_threadsafe(self.terminate.set)
+        if self.loop:
+            for task in asyncio.all_tasks(self.loop):
+                if task is not asyncio.current_task():
+                    task.cancel()
 
+    async def wait_terminate(self):
+        await self.terminate.wait()
+        self.events.put(('terminate', None))
 
-def main():
-    args = get_args()
+    async def run(self):
+        self.loop = asyncio.get_running_loop()
 
-    filename = LOG_DIR / f"tof-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S.log')}"
-    handlers = [logging.FileHandler(filename, encoding="utf-8")]
-    if args.stdout:
-        handlers.append(logging.StreamHandler(sys.stdout))
-    level = logging.DEBUG if args.debug else logging.INFO
-    logging.basicConfig(level=level,
-        format="%(asctime)s.%(msecs)03d:%(levelname)5s:%(name)s: %(message)s",
-        datefmt="%H:%M:%S",
-        handlers=handlers
-    )
+        self.log.info('-' * 40)
+        self.log.info('tof v%s', __version__)
+        self.log.info('args %r', self.args)
 
-    logging.getLogger('cd').setLevel(logging.DEBUG if args.debug_cd else logging.INFO)
+        self.terminate = asyncio.Event()
 
-    tof = TofMain(args)
-    try:
-        tof.run()
-    finally:
-        logging.info('main exiting')
+        def exit_handler(_signal, _frame):
+            self.shutdown()
+        signal.signal(signal.SIGINT, exit_handler)
+        signal.signal(signal.SIGTERM, exit_handler)
 
-if __name__ == "__main__":
-    main()
+        # Initialize log manager
+        self.log_manager = LogManager(LOG_DIR, cycle_minutes=self.args.log_cycle_time)
+        
+        self.nt_setup()
+
+        self.cd = CornerDetector(400)
+        self.running = True
+        self.pins = SetPins([5, 14])
+        self.mgr = SensorManager(self.args.tof_address)
+
+        # Initialize pin for the default chute side
+        self.pins.set_index_high(self.MODE_MAP.get(self.chute_side))
+
+        # Start the sensor reader thread
+        self.launch_sensor_thread()
+
+        terminate_task = asyncio.create_task(self.wait_terminate())
+
+        try:
+            TIMEOUT = 5
+            next_check = time.monotonic()
+            
+            # Main event loop
+            while True:
+                try:
+                    # Wait for an event with timeout to allow for periodic checks
+                    try:
+                        event = await asyncio.wait_for(self.events.get(), timeout=TIMEOUT)
+                    except asyncio.TimeoutError:
+                        # self.log.debug('timed out')
+                        pass
+                    else:
+                        # we have a message
+                        self.log.debug('event %r', event)
+                        await self.process_event(event)
+                        self.events.task_done()
+
+                    # Periodic checks that should run regardless of events
+                    # Check log cycling needs
+                    now = time.monotonic()
+                    if now >= next_check:
+                        next_check = now + TIMEOUT
+                        self.log_manager.check_cycle_timeout(self.tof_mode)
+                
+                except Exception as e:
+                    self.log.error(f"Error in main loop: {e}")
+                    
+        except asyncio.CancelledError:
+            # Main task cancelled
+            self.log.info("Main task cancelled")
+
+        finally:
+            self.log.debug('cleaning up')
+
+            terminate_task.cancel()
+            # self.events.shutdown(immediate=True) py 3.12 only?
+            
+            # Cancel any pending timeouts
+            for name, task in list(self.pending_timeouts.items()):
+                task.cancel()
+                self.log.debug(f"Cancelled pending timeout: {name}")
+            
+            self.log.info("Shutting down")
+            self.mgr.shutdown()
+            self.log_manager.close()
+            self.nt.stopClient()
+
+            self.pins.set_index_high(None) # deselect both tof sensors
