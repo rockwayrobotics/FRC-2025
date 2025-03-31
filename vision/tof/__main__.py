@@ -58,7 +58,7 @@ def main():
 
     filename = LOG_DIR / f"tof-{dt.datetime.now().strftime('%Y%m%d-%H%M%S.log')}"
     handlers = [logging.FileHandler(filename, encoding="utf-8")]
-    if args.stdout:
+    if args.stdout or os.environ.get('INVOCATION_ID') is not None:
         handlers.append(logging.StreamHandler(sys.stdout))
     level = logging.DEBUG if args.debug else logging.INFO
     logging.basicConfig(level=level,
