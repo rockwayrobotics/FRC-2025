@@ -1,3 +1,5 @@
 #!/bin/bash
 
-less $(ls logs/*.log | tail -1)
+NAME="$(ls logs/*.log | tail -1)"
+echo File: $NAME
+less "$NAME"

@@ -12,7 +12,7 @@ Group=user
 WorkingDirectory=/home/user/stable/vision
 # RUST_LOG probably does nothing for us currently
 Environment=RUST_LOG=debug
-ExecStart=/home/user/env3.11/bin/python -m tof -d
+ExecStart=/home/user/env3.11/bin/python -m tof -d --roi 8,8
 # add this option above for testing with local NT server: --serve
 Restart=on-failure
 RestartSec=5s

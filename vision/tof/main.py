@@ -36,10 +36,12 @@ class Name:
     CORNER_DIST_MM = "/Pi/corner_dist_mm"
     TOF_MODE = "/Pi/tof_mode"
     CHUTE_MODE = "/Pi/chute_mode"
+
     # untested:
     MATCH_TIME = "/AdvantageKit/DriverStation/MatchTime"
     FMS_ATTACHED = "/AdvantageKit/DriverStation/FMSAttached"
     ENABLED = "/AdvantageKit/DriverStation/Enabled"
+    TIMESTAMP = "/AdvantageKit/Timestamp"
     
 class EntryType:
     DOUBLE = "double"
@@ -316,11 +318,11 @@ def get_args():
         help="serve NT instance (for testing)")
     parser.add_argument("--stdout", action="store_true")
     parser.add_argument("--slope", type=float, default=400,
-        help="slope threshold (for corner detector) (default %(default)s)")
+        help="slope threshold (for cd1 and cd2) (default %(default)s)")
     parser.add_argument("--speed", type=float, default=450,
         help="fake speed (mm/s) (for testing, default %(default)s)")
-    parser.add_argument("--log-cycle-time", type=int, default=0,
-        help="Cycle log files after specified minutes (0=disabled)")
+    parser.add_argument("--log-cycle-time", type=int, default=30,
+        help="Cycle log files after X minutes (default %(default)s, 0=off)")
 
     args = parser.parse_args()
     args.roi = tuple(int(x) for x in args.roi.split(","))
@@ -355,14 +357,16 @@ class TofMain:
         self.corner_pub = None
         self.corner_ts_pub = None
         
+        # time-related values
+        self._ts_base = time.monotonic() 
+
         # Initialize log manager
         self.log_manager = LogManager()
         
         # For log cycling
         self.last_log_cycle = time.monotonic()
-        self._ts_base = time.monotonic() 
 
-    def timestamp(self, ts=None):
+    def zerotime(self, ts=None):
         '''Make (or convert) a mono timestamp relative to our start time.'''
         if ts is None:
             ts = time.monotonic()
@@ -372,6 +376,14 @@ class TofMain:
         '''initialize NetworkTables stuff'''
         nt = self.nt = ntcore.NetworkTableInstance.getDefault()
         nt.setServerTeam(8089)
+
+        # grab smallest of a batch of deltas to figure out what the magic
+        # offset is between ntcore._now() and time.monotonic()
+        # so we can apply that to later monotonic times to get it into
+        # the same domain as ntcore._now(), since that's the time domain
+        # needed for ServerTimeOffset to work properly.
+        self.ntcore_epoch = min((ntcore._now() / 1e6 - time.monotonic()) for _ in range(10))
+        self.log.info('ntcore_epoch=%.6f', self.ntcore_epoch)
 
         chute_mode_topic = nt.getStringTopic(Name.CHUTE_MODE)
         self.chute_mode_sub = chute_mode_topic.subscribe('none')
@@ -416,29 +428,9 @@ class TofMain:
 
         # Brief pause, hoping beyond hope that NT will compare clocks and
         # set the offset during this.
-        # Note: empirically measured it takes only about 5ms for it to
+        # Note: empirically measured it takes only about 5-10 ms for it to
         # measure the offset after starting the client, so this wait is adequate.
         time.sleep(0.2)
-
-        # Rust will use Instant::now() which is time.monotonic(),
-        # while ntcore._now() is supposedly the monotonic clock
-        # but has a value like an epoch time, so it appears they initialize
-        # it with the offset between epoch time and time.monotonic(),
-        # so we need to get that back so we can convert Rust times to
-        # ntcore times so that getServerTimeOffset() can be added to
-        # convert the times to FPGATimestamp values... sigh.
-        # Note: repeated connections to the robot will produce server time
-        # offset values that vary up and down within a roughly +/-800us
-        # range, so our overall accuracy on any given connection is about
-        # that much.  If we don't care about accuracy beyond roughly 1ms
-        # then we can probably just live with that, ignoring drift.
-        # With fire3 and the one Rio we have roughly 6ppm drift, e.g. we
-        # saw about 35ms drift over roughly a two hour period. Also low.
-        now = time.monotonic()
-        nt_now = ntcore._now()
-        self._nt_offset = nt_now / 1e6 - now
-        self.log.info('NT time: now=%s, offset=%s, (mono-rel=%s)',
-            nt_now, self._nt_offset, self.timestamp(now))
 
     def run(self):
         self.log.info('-' * 40)
@@ -461,38 +453,44 @@ class TofMain:
         self.running = True
         self.loop()
 
-    def mono_to_fpga(self, ts):
+    def mono_to_fpga(self, mono):
         '''Convert a mono timestamp (including from Rust Instant::now()
         to an FPGA timestamp using the latest server time offset. Note
         that the server time offset currently does NOT get updated
-        after the first time so our clocks will drift relative to each other.'''
-        # # Until we're connected this will return None so make sure
-        # # we don't crash, by just calling that 0...
-        # offset = self.nt.getServerTimeOffset() or 0 # convert None to 0
-
-        # # return ts - time.monotonic() + (ntcore._now() + offset) / 1e6
-        # # Convert our time.monotonic() timestamps to ntcore._now()'s
-        # # view of things by applying the offset, which we believe is
-        # # static, and then applying the server time offset to get
-        # # this into the FPGATimestamp domain that the robot expects.
-        # # Also note that that works in microseconds, not seconds.
-        # return int((ts + self._nt_offset) * 1e6 + offset)
-
-        offset_or_none = self.nt.getServerTimeOffset()
-        if offset_or_none is None:
+        after the first time so our clocks will drift relative to each other.
+        Measurements show with the current Rio and Pi5 that the drift
+        is only about 5ppm, which amounts to roughly 1.5ms during a 5 minute
+        which at 450mm/s would be less than 1mm of travel, so safe for now.'''
+        # Rust will use Instant::now() which is time.monotonic(),
+        # while ntcore._now() is supposedly the monotonic clock
+        # but has a value like an epoch time, so it appears they initialize
+        # it with the offset between epoch time and time.monotonic(),
+        # so we need to get that back so we can convert Rust times to
+        # ntcore times so that getServerTimeOffset() can be added to
+        # convert the times to FPGATimestamp values... sigh.
+        # Note: repeated connections to the robot will produce server time
+        # offset values that vary up and down within a roughly +/-800us
+        # range, so our overall accuracy on any given connection is about
+        # that much.
+        st_offset = self.nt.getServerTimeOffset()
+        # When we're not connected this will return None so callers must handle that.
+        if st_offset is None:
             return None
-        return ts - time.monotonic() + (ntcore._now() + offset_or_none) / 1e6
+        return mono + self.ntcore_epoch + st_offset / 1e6
 
-    def check_log_cycle(self):
-        """Check if it's time to cycle log files based on time"""
-        if self.args.log_cycle_time <= 0:
+    def check_log_cycle(self, force=False):
+        """Check if it's time to cycle log files based on time, or force now."""
+        if not force and self.args.log_cycle_time <= 0:
             return  # Log cycling disabled
             
         current_time = time.monotonic()
         elapsed_minutes = (current_time - self.last_log_cycle) / 60
         
-        if elapsed_minutes >= self.args.log_cycle_time:
-            self.log.info(f"Cycling log file after {elapsed_minutes:.1f} minutes")
+        if force or elapsed_minutes >= self.args.log_cycle_time:
+            if force:
+                self.log.info(f"Cycling log file (forced)")
+            else:
+                self.log.info(f"Cycling log file after {elapsed_minutes:.1f} minutes")
             self.log_manager.start_new_log()
             self.last_log_cycle = current_time
 
@@ -574,8 +572,7 @@ class TofMain:
         while self.running:
             # poll for robot info... would be more efficient to use an NT listener
             for event in self.mode_poller.readQueue():
-                # ts = self.timestamp()
-                ts = time.monotonic()
+                mono = time.monotonic()
                 self.log.debug('event: %s', event)
 
                 topic = event.data.topic.getName()
@@ -584,7 +581,7 @@ class TofMain:
                     self.log.info('chute: %s', val)
                     
                     # Log to DataLog with monotonic timestamp
-                    self.log_manager.append_string(Name.CHUTE_MODE, val, ts)
+                    self.log_manager.append_string(Name.CHUTE_MODE, val, self.zerotime(mono))
                     
                     pos, _, side = val.partition('/')
                     if pos != 'load':
@@ -612,7 +609,7 @@ class TofMain:
                     self.log.info('tof mode: %s', val)
                     
                     # Log to DataLog with monotonic timestamp
-                    self.log_manager.append_string(Name.TOF_MODE, val, ts)
+                    self.log_manager.append_string(Name.TOF_MODE, val, self.zerotime(mono))
 
             # pause to avoid busy cpu, as we're not yet using full NT listeners
             time.sleep(0.01)
