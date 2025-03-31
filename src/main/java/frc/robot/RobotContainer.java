@@ -133,7 +133,8 @@ public class RobotContainer {
         AutoPaths.fastCenterFarDumpPlusAlgaeGripBargePrepare(drive, superstructure));
     autoChooser.addOption("fastLeftFarDumpPlusAlgaeGripBargePrep",
         AutoPaths.fastLeftFarDumpPlusAlgaeGripBargeShot(drive, superstructure));
-    autoChooser.addOption("centerDumpAlgaeBargeTurn", AutoPaths.fastCenterFarDumpPlusAlgaeGrripBargeTurn(drive, superstructure));
+    autoChooser.addOption("centerDumpAlgaeBargeTurn",
+        AutoPaths.fastCenterFarDumpPlusAlgaeGrripBargeTurn(drive, superstructure));
 
     // INCREDIBLY SUS may GO KABOOM
     autoChooser.addOption("algae grab", AutoPaths.grabTroughAlgaeL3(drive, superstructure));
@@ -143,7 +144,8 @@ public class RobotContainer {
         AutoPaths.centerFarCenterAlgaeL3(drive, superstructure, chuterShooter, true));
     autoChooser.addOption("rightFarRightAlgaeL3", AutoPaths.rightFarRightAlgaeL3(drive, superstructure, chuterShooter));
 
-    autoChooser.addOption("driverotate", new DriveRotate(drive, -90));
+    autoChooser.addOption("driverotate +90", new DriveRotate(drive, 90));
+    autoChooser.addOption("driverotate -90", new DriveRotate(drive, -90));
 
     // autoChooser.addOption("leftFarFancy", AutoPaths.leftFarFancy(drive,
     // superstructure, chuterShooter));

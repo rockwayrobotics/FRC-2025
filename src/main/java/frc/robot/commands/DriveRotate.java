@@ -1,18 +1,26 @@
 package frc.robot.commands;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotTracker;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.Tuner;
 
+/**
+ * Counter-clockwise rotation is positive.
+ */
 public class DriveRotate extends Command {
 
   private Drive drive;
   private double angle;
   private Rotation2d targetRotation;
-  private double direction;
+  private PIDController pidController;
+
+  private static Tuner kP = new Tuner("DriveRotate/kP", 0.03, true);
+  private static Tuner kI = new Tuner("DriveRotate/kI", 0.0, true);
+  private static Tuner kD = new Tuner("DriveRotate/kD", 0.0, true);
 
   public DriveRotate(Drive drive, double angle) {
     this.drive = drive;
@@ -23,26 +31,20 @@ public class DriveRotate extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
+    this.pidController = new PIDController(kP.get(), kI.get(), kD.get());
+    this.pidController.enableContinuousInput(-180, 180);
+
     var rotation = RobotTracker.getInstance().getEstimatedPose().getRotation();
     targetRotation = rotation.rotateBy(Rotation2d.fromDegrees(angle));
-    direction = Math.signum(angle);
-
     System.out.println("move by angle: " + angle);
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    var speed = 1.8;
-    /*
-    // FIXME: We want to slow down so we don't overshoot, but this does too much.
     var rotation = RobotTracker.getInstance().getEstimatedPose().getRotation();
-    var radiff = Math.abs(rotation.minus(targetRotation).getRadians());
-    if (radiff < Units.degreesToRadians(30)) {
-      speed = radiff * radiff * 5;
-    }
-    */
-    drive.setTankDrive(new ChassisSpeeds(0, 0, speed * direction));
+    var output = pidController.calculate(rotation.getDegrees(), targetRotation.getDegrees());
+    drive.setTankDrive(new ChassisSpeeds(0, 0, output));
   }
 
   // Called once the command ends or is interrupted.
