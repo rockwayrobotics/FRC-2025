@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import datetime as dt
 import logging
+import os
 import sys
 
 from .logs import LOG_DIR
