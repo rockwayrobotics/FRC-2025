@@ -64,6 +64,10 @@ public class Grabber {
     io.setGrabberMotor(speed);
   }
 
+  public void stopWrist() {
+    io.stopWrist();
+  }
+
   public void home() {
     io.home();
     setWristGoalRads(Units.degreesToRadians(-90));

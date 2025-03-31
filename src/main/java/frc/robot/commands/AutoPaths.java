@@ -843,7 +843,7 @@ public class AutoPaths {
     command.addRequirements(drive, superstructure);
     return command;
   }
-  
+
   public static Command fastLeftFarDumpPlusAlgaeGripBargeShot(Drive drive, Superstructure superstructure) {
     Pose2d startPose = new Pose2d(7.2, 7.3, Rotation2d.fromDegrees(180.00));
     Pose2d coralDump = new Pose2d(5.194, 5.247, Rotation2d.fromDegrees(240.00));
@@ -970,7 +970,7 @@ public class AutoPaths {
           superstructure.bargePrepare();
         }),
         new DriveRotate(drive, -135),
-        Commands.run(() ->{
+        Commands.run(() -> {
           // At 0.3 for 2 s, we went 1955 mm
           // We want to go 845 mm, but we are accelerating from a stop
           // so we can't just linearly interpolate.
@@ -979,8 +979,7 @@ public class AutoPaths {
         Commands.runOnce(() -> {
           drive.stop();
         }),
-        superstructure.bargeShot()
-        );
+        superstructure.bargeShot());
     command.addRequirements(drive, superstructure);
     return command;
   }

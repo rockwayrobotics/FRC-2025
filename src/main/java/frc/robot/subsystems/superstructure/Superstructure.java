@@ -114,6 +114,10 @@ public class Superstructure extends SubsystemBase {
     grabber.setGrabberMotor(speed);
   }
 
+  public void stopWrist() {
+    grabber.stopWrist();
+  }
+
   public Optional<CoralLevel> getLastElevatorSetpoint() {
     return lastElevatorSetpoint;
   }

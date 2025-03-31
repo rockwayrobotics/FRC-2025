@@ -308,15 +308,25 @@ public class RobotContainer {
 
     new POVButton(operator2Controller, 180).whileTrue(Commands.run(() -> {
       superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads() + 0.5);
-    }, superstructure)).onFalse(Commands.runOnce(() -> {
-      superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
-    }, superstructure));
+    }, superstructure))
+        .onFalse(
+            Commands.sequence(
+                Commands.runOnce(
+                    () -> superstructure.stopWrist(), superstructure),
+                Commands.runOnce(() -> {
+                  superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
+                }, superstructure)));
 
     new POVButton(operator2Controller, 270).whileTrue(Commands.run(() -> {
       superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads() - 0.5);
-    }, superstructure)).onFalse(Commands.runOnce(() -> {
-      superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
-    }, superstructure));
+    }, superstructure))
+        .onFalse(
+            Commands.sequence(
+                Commands.runOnce(
+                    () -> superstructure.stopWrist(), superstructure),
+                Commands.runOnce(() -> {
+                  superstructure.setWristGoalRads(superstructure.grabber.getCurrentRads());
+                }, superstructure)));
 
     new POVButton(operator2Controller, 0).whileTrue(Commands.run(() -> {
       superstructure.setGrabberMotor(1);
