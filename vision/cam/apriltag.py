@@ -13,6 +13,7 @@ import threading
 import math
 import os
 import platform
+import sys
 import time
 from cscore import CvSource, VideoMode, CameraServer, MjpegServer
 
@@ -28,6 +29,7 @@ from wpimath import units
 
 TAG_SIZE_METERS = 0.1651
 
+CONSOLE = sys.stdout.isatty()
 
 class FieldTag:
     def __init__(self, id, absolutePose, corners):
@@ -77,17 +79,19 @@ class AprilTagDetection:
                 for i in range(4):
                     corner = tag.getCorner(i)
                     image_corners += [[corner.x, corner.y]]
-                print(image_corners)
+                if CONSOLE:
+                    print(image_corners)
                 shortest_side_length = min(
                     math.dist(image_corners[1], image_corners[0]),
                     math.dist(image_corners[2], image_corners[1]),
                 )
                 object_corners += fieldTag.corners
-                print(object_corners)
-                print(f"tag = {tag.getId()}")
-                print(f"  image_corners = {image_corners}")
-                print(f"  object_corners = {object_corners}")
-                print(f"  shortest side: {shortest_side_length / 8}")
+                if CONSOLE:
+                    print(object_corners)
+                    print(f"tag = {tag.getId()}")
+                    print(f"  image_corners = {image_corners}")
+                    print(f"  object_corners = {object_corners}")
+                    print(f"  shortest side: {shortest_side_length / 8}")
 
             _, rotations, translations, errors = cv2.solvePnPGeneric(
                 np.array(object_corners),
@@ -96,12 +100,14 @@ class AprilTagDetection:
                 None,
                 flags=cv2.SOLVEPNP_SQPNP
             )
-            print('opencv errors:', errors)
+            if CONSOLE:
+                print('opencv errors:', errors)
 
             camera_to_field_transform = openCvPoseToWpilib(translations[0], rotations[0])
             field_to_camera_transform = camera_to_field_transform.inverse()
             field_to_camera_pose = Pose3d(field_to_camera_transform.translation(), field_to_camera_transform.rotation())
-            print(f'from opencv: {field_to_camera_pose}')
+            if CONSOLE:
+                print(f'from opencv: {field_to_camera_pose}')
             pose1 = field_to_camera_pose.toPose2d()
             self.cameraPose.set([pose1.x, pose1.y, pose1.rotation().radians()])
             return True
