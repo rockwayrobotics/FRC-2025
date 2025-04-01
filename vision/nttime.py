@@ -133,7 +133,7 @@ class TimeMonitor:
                     # slightly later than the true difference between these
                     # since it takes a few microseconds for the packet to travel
                     # the network.
-                    self.update_udp_offset(ts, fpga / 1e6)
+                    self.update_udp_offset(mono, fpga / 1e6)
 
                     # fpga = ts_sub.get() / 1e6
                     offset = self.inst.getServerTimeOffset()
@@ -193,7 +193,7 @@ class TimeMonitor:
         '''Calculate offset between FPGA value sent over UDP and
         our local mono time.  Because of network latency the udp offset value
         will be lower than the "true" value, and more lower then larger the
-        network latency.''''
+        network latency.'''
         ts = mono + self.mono_adjust
         offset = fpga - ts
 
