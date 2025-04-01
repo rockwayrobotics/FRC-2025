@@ -132,7 +132,7 @@ public final class Constants {
     public final static double WHEEL_ENCODER_SCALING = WHEEL_CIRCUM_CM / WHEEL_GEAR_RATIO;
 
     // Measured with the feedForwardCharacterization drive command
-    //                                         Mar 14 Simple        SysId
+    // Mar 14 Simple SysId
     public static final double REAL_KS = 0.23357; // 0.24487 // left 0.23191 right 0.23573
     public static final double REAL_KV = 2.22866; // 2.36262 // left 2.2005 right 2.2267
     // left kA 0.66129
@@ -188,10 +188,14 @@ public final class Constants {
     public static final Transform2d BACK_RIGHT = new Transform2d(new Translation2d(-0.5, -0.5),
         Rotation2d.fromDegrees(-90));
 
-    // Distances measured from centre of ToF sensors to fore and aft edges of the chute,
-    // averaged to give a reasonable value for the centre. Note that we aren't certain
-    // the centre is the right thing yet as the coral appears possibly to pop towards
-    // the rear as it leaves the green spinner wheels, so there may be a little room for
+    // Distances measured from centre of ToF sensors to fore and aft edges of the
+    // chute,
+    // averaged to give a reasonable value for the centre. Note that we aren't
+    // certain
+    // the centre is the right thing yet as the coral appears possibly to pop
+    // towards
+    // the rear as it leaves the green spinner wheels, so there may be a little room
+    // for
     // refinement here.
     public static final double TOF_FWD_RIGHT_TO_CHUTE = (321 + 201) / 2; // 261mm
     public static final double TOF_FWD_LEFT_TO_CHUTE = (320 + 195) / 2; // 257.5mm
@@ -210,8 +214,8 @@ public final class Constants {
 
   public static final class Reef {
     // Note: while this says measured from field CAD, it's unclear what this
-    // is measured to.  Is it the top of the bar, the bottom, the centre of
-    // the "face" at the end, or something else?  We measured manually to
+    // is measured to. Is it the top of the bar, the bottom, the centre of
+    // the "face" at the end, or something else? We measured manually to
     // the centre of the face (which seems to be the best reference point)
     // and got more like 50mm.
     public static final double TIP_TO_WALL = 53.6; // measured from field CAD
@@ -272,7 +276,7 @@ public final class Constants {
   }
 
   public static enum CoralLevel {
-    L1, L2, L3, Intake
+    L1, L2, L3, Intake, AutoSafe
   }
 
   public static enum AlgaeLevel {

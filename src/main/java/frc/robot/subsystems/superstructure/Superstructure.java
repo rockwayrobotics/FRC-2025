@@ -207,6 +207,9 @@ public class Superstructure extends SubsystemBase {
         setElevatorGoalHeightMillimeters(setpoints.intake_elevator_height_mm());
         chuteModePublisher.set((side == Side.LEFT) ? "load/left" : "load/right");
         break;
+      case AutoSafe:
+        setChutePivotGoalRads(0);
+        setElevatorGoalHeightMillimeters(150);
     }
   }
 

@@ -934,7 +934,7 @@ public class AutoPaths {
     Pose2d algaeDump = new Pose2d(5.9, yCenter, Rotation2d.fromDegrees(180.00));
     AtomicReference<Trajectory> algaeDumpTrajectory = new AtomicReference<>();
     algaeDumpTrajectory.set(TrajectoryGenerator.generateTrajectory(List.of(startPose, algaeDump),
-        fasterConfig));
+        slightlyFasterConfig));
 
     var command = Commands.sequence(
         Commands.runOnce(() -> {
@@ -957,7 +957,10 @@ public class AutoPaths {
         }).withTimeout(1),
         Commands.runOnce(() -> {
           superstructure.gotoAlgaeSetpoint(Constants.AlgaeLevel.L2);
-        }).withTimeout(0.2),
+        }),
+        Commands.run(() -> {
+          drive.stop();
+        }).withTimeout(0.3),
         Commands.run(() -> {
           drive.set(0.2, 0);
           superstructure.setGrabberMotor(-1);
@@ -975,11 +978,14 @@ public class AutoPaths {
           // We want to go 845 mm, but we are accelerating from a stop
           // so we can't just linearly interpolate.
           drive.set(0.3, 0);
-        }).withTimeout(1.08),
+        }).withTimeout(.93),
         Commands.runOnce(() -> {
           drive.stop();
         }),
-        superstructure.bargeShot());
+        superstructure.bargeShot(),
+        Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.AutoSafe, Side.LEFT)),
+        Commands.waitSeconds(0.3),
+        Commands.run(() -> drive.set(-0.5, 0)).withTimeout(0.6));
     command.addRequirements(drive, superstructure);
     return command;
   }
@@ -1013,7 +1019,7 @@ public class AutoPaths {
         }).withTimeout(1),
         Commands.runOnce(() -> {
           superstructure.gotoAlgaeSetpoint(Constants.AlgaeLevel.L3);
-        }).withTimeout(0.2),
+        }).withTimeout(0.4),
         Commands.run(() -> {
           drive.set(0.2, 0);
           superstructure.setGrabberMotor(-1);
@@ -1035,7 +1041,10 @@ public class AutoPaths {
         Commands.runOnce(() -> {
           drive.stop();
         }),
-        superstructure.bargeShot());
+        superstructure.bargeShot(),
+        Commands.runOnce(() -> superstructure.gotoSetpoint(CoralLevel.AutoSafe, Side.LEFT)),
+        Commands.waitSeconds(0.3),
+        Commands.run(() -> drive.set(-0.5, 0)).withTimeout(0.6));
     command.addRequirements(drive, superstructure);
     return command;
   }
