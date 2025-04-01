@@ -1025,13 +1025,13 @@ public class AutoPaths {
           superstructure.setGrabberMotor(0);
           superstructure.bargePrepare();
         }),
-        new DriveRotate(drive,115),
+        new DriveRotate(drive, 105),
         Commands.run(() -> {
           // At 0.3 for 2 s, we went 1955 mm
           // We want to go 845 mm, but we are accelerating from a stop
           // so we can't just linearly interpolate.
-          drive.set(0.3, 0);
-        }).withTimeout(1.38),
+          drive.set(0.4, 0);
+        }).withTimeout(1.45),
         Commands.runOnce(() -> {
           drive.stop();
         }),

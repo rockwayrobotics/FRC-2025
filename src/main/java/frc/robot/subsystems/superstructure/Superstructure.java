@@ -268,6 +268,7 @@ public class Superstructure extends SubsystemBase {
           setElevatorMaxSpeed(oldSpeed);
           // foldForClimp();
         }, this)).finallyDo((boolean interrupted) -> {
+          setGrabberMotor(0);
           setElevatorMaxSpeed(oldSpeed);
         });
   }
