@@ -7,6 +7,7 @@ import java.net.UnknownHostException;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -136,7 +137,8 @@ public class RobotContainer {
     autoChooser.addOption("centerDumpAlgaeBargeTurn",
         AutoPaths.fastCenterFarDumpPlusAlgaeGrripBargeTurn(drive, superstructure));
 
-    autoChooser.addOption("leftDumpAlgaeBargeTurn", AutoPaths.fastLeftTroughDumpPlusAlgaeGrripBargeTurn(drive, superstructure));
+    autoChooser.addOption("leftDumpAlgaeBargeTurn",
+        AutoPaths.fastLeftTroughDumpPlusAlgaeGrripBargeTurn(drive, superstructure));
 
     // INCREDIBLY SUS may GO KABOOM
     autoChooser.addOption("algae grab", AutoPaths.grabTroughAlgaeL3(drive, superstructure));
@@ -531,5 +533,19 @@ public class RobotContainer {
 
   public void sendTimeToPiPeriodic() {
     timeSend.periodic();
+  }
+
+  public void checkRumble() {
+    if (DriverStation.isFMSAttached()) {
+      double matchTime = DriverStation.getMatchTime();
+
+      if (matchTime <= 20.0 && matchTime > 18) {
+        driverController.setRumble(GenericHID.RumbleType.kLeftRumble, 1.0);
+        driverController.setRumble(GenericHID.RumbleType.kRightRumble, 1.0);
+      } else {
+        driverController.setRumble(GenericHID.RumbleType.kLeftRumble, 0.0);
+        driverController.setRumble(GenericHID.RumbleType.kRightRumble, 0.0);
+      }
+    }
   }
 }

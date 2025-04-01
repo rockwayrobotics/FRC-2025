@@ -122,6 +122,7 @@ public class Robot extends LoggedRobot {
     Threads.setCurrentThreadPriority(false, 10);
 
     m_robotContainer.sendTimeToPiPeriodic();
+    m_robotContainer.checkRumble();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
