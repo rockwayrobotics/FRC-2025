@@ -29,6 +29,7 @@ class TimeMonitor:
         self.mono_base = time.monotonic()
         self.mono_adjust = time.time() - self.mono_base
         self.log.debug('mono_adjust %.6f', self.mono_adjust)
+        self.next_temp_time = self.timestamp() + 5.0       
 
     def udp_watcher(self):
         log = logging.getLogger('udp')
@@ -84,6 +85,9 @@ class TimeMonitor:
 
         # measured error in getServerTimeOffset() compared to what UDP info tells us
         self.error_trec = wlog.DoubleLogEntry(dlog, "/Pi/sync_error")
+
+        # record Pi temperature periodically
+        self.temp_trec = wlog.DoubleLogEntry(dlog, "/Pi/temperature")
 
         thread = threading.Thread(target=self.udp_watcher, daemon=True)
         thread.start()
@@ -187,6 +191,20 @@ class TimeMonitor:
                         self.mono_base, self.mono_adjust,
                         self.udp_offset, self.st_offset)
 
+            # periodic temperature logging
+            self.temperature_check()
+
+    def temperature_check(self):
+        now = self.timestamp()
+        if now >= self.next_temp_time:
+            self.next_temp_time = now + 5.0
+            try:
+                val = int(open('/sys/class/thermal/thermal_zone0/temp').read().strip())
+            except Exception:
+                pass
+            else:
+                self.temp_trec.append(val / 1000, timestamp=now)
+                # self.log.debug('temperature %.3fC', val / 1000)
 
                 
     def update_udp_offset(self, mono, fpga):
