@@ -34,11 +34,11 @@ public class ShotCalc {
   private double dist_to_target = 0.0;
   private double wall_angle_rads = 0.0;
 
-  private Tuner chuteAngleOffset = new Tuner("ShotCalc/chuteAngleOffset", 5, true);
+  private Tuner chuteAngleOffset = new Tuner("ShotCalc/chuteAngleOffset", 0, true);
   private Tuner chuteAngleLow = new Tuner("ShotCalc/chuteAngleLow", 70.0, true);
-  private Tuner chuteAngleHigh = new Tuner("ShotCalc/chuteAngleHigh", 90.0, true);
+  private Tuner chuteAngleHigh = new Tuner("ShotCalc/chuteAngleHigh", 82.1, true);
   private Tuner shotSpeedLow = new Tuner("ShotCalc/shotSpeedLow", 0.23, true);
-  private Tuner shotSpeedHigh = new Tuner("ShotCalc/shotSpeedHigh", 0.25, true);
+  private Tuner shotSpeedHigh = new Tuner("ShotCalc/shotSpeedHigh", 0.3, true);
 
   InterpolatingDoubleTreeMap chuteAngleTable = new InterpolatingDoubleTreeMap();
   InterpolatingDoubleTreeMap shooterSpeedTable = new InterpolatingDoubleTreeMap();

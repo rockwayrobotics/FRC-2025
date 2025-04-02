@@ -58,7 +58,7 @@ public class ScoreCommandsOnlyDrive {
   static final Tuner angleProportionalTuner = new Tuner("Score/angle_proportional_early_shot", 0, true);
   static final Tuner speedProportionalTuner = new Tuner("Score/speed_proportional_early_shot", 0, true);
 
-  static final Tuner autoL2ElevatorHeightTuner = new Tuner("Score/L2_height_mm", 765, true);
+  static final Tuner autoL2ElevatorHeightTuner = new Tuner("Score/L2_height_mm", 725, true);
   static final Tuner autoL3ElevatorHeightTuner = new Tuner("Score/L3_height_mm", 1160, true);
 
   public static final double SCORING_EPSILON_METERS = 0.25;
@@ -281,7 +281,7 @@ public class ScoreCommandsOnlyDrive {
       // We wanted to go to safe chute height, but in the rare case that a coral manages to land
       // vertically on the robot, that would be unsafe.
       // Instead, go down to L2 height.
-      // Operator doesn't like moving after shot, so L2 height commented out. 
+      // Operator doesn't like moving after shot, so L2 height commented out.
       // superstructure.gotoElevatorL2();
 
       // FIXME: Reset? Detect if coral was shot?
