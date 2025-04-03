@@ -943,7 +943,7 @@ public class AutoPaths {
         }),
         runTrajectory(algaeDumpTrajectory.get(), drive),
         Commands.run(() -> {
-          superstructure.setGrabberMotor(1);
+          superstructure.setGrabberMotor(0.5);
           drive.stop();
         }).withTimeout(0.5),
         Commands.runOnce(() -> {
@@ -1005,7 +1005,7 @@ public class AutoPaths {
         }),
         runTrajectory(algaeDumpTrajectory.get(), drive),
         Commands.run(() -> {
-          superstructure.setGrabberMotor(1);
+          superstructure.setGrabberMotor(0.5);
           drive.stop();
         }).withTimeout(0.5),
         Commands.runOnce(() -> {
