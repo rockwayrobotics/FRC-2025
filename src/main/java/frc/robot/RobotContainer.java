@@ -404,12 +404,16 @@ public class RobotContainer {
     new JoystickButton(operator1Controller, 8).onTrue(Commands.runOnce(() -> {
       superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
     }, superstructure));
-    new JoystickButton(operator1Controller, 5).onTrue(Commands.runOnce(() -> {
-      superstructure.gotoSetpoint(CoralLevel.L1, Side.LEFT);
-    }, superstructure));
-    new JoystickButton(operator1Controller, 7).onTrue(Commands.runOnce(() -> {
-      superstructure.gotoSetpoint(CoralLevel.L1, Side.RIGHT);
-    }, superstructure));
+    new JoystickButton(operator1Controller, 5).whileTrue(Commands.run(() -> {
+      chuterShooter.startShooting();
+    }, chuterShooter)).onFalse(Commands.runOnce(() -> {
+      chuterShooter.setShooterMotor(0);
+    }, chuterShooter));
+    new JoystickButton(operator1Controller, 7).whileTrue(Commands.run(() -> {
+      chuterShooter.setShooterMotor(-0.1); // intake
+    }, chuterShooter)).onFalse(Commands.runOnce(() -> {
+      chuterShooter.stopShooting();
+    }, chuterShooter));
 
     new JoystickButton(operator1Controller, 12).onTrue(Commands.sequence(
         new ProxyCommand(
@@ -425,22 +429,24 @@ public class RobotContainer {
 
     // Algae setpoints
     // FIXME: spin wheels until algae sensor detects algae
-    new POVButton(operator1Controller, 270).onTrue(Commands.runOnce(() -> {
-      superstructure.gotoAlgaeSetpoint(AlgaeLevel.L3);
+    new POVButton(operator1Controller, 90).whileTrue(Commands.run(() -> {
+      superstructure.setGrabberMotor(-0.75);
+    }, superstructure)).onFalse(Commands.runOnce(() -> {
+      superstructure.setGrabberMotor(0);
     }, superstructure));
-    new POVButton(operator1Controller, 180).onTrue(Commands.runOnce(() -> {
+    new POVButton(operator1Controller, 270).onTrue(Commands.runOnce(() -> {
       superstructure.gotoAlgaeSetpoint(AlgaeLevel.L2);
     }, superstructure));
-    new POVButton(operator1Controller, 90).onTrue(Commands.runOnce(() -> {
+    new POVButton(operator1Controller, 180).onTrue(Commands.runOnce(() -> {
       superstructure.gotoAlgaeSetpoint(AlgaeLevel.Floor);
     }, superstructure));
-    new JoystickButton(operator1Controller, 13).onTrue(Commands.runOnce(() -> {
-      superstructure.gotoAlgaeSetpoint(AlgaeLevel.Score);
+    new JoystickButton(operator1Controller, 13).whileTrue(Commands.run(() -> {
+      superstructure.setGrabberMotor(0.5);
+    }, superstructure)).onFalse(Commands.runOnce(() -> {
+      superstructure.setGrabberMotor(0);
     }, superstructure));
 
-    new POVButton(operator1Controller, 0).onTrue(Commands.runOnce(() -> {
-      superstructure.bargePrepare();
-    }, superstructure));
+    new POVButton(operator1Controller, 0).onTrue(superstructure.childBargeShot());
 
     // new POVButton(operator1Controller, 0).whileTrue(Commands.run(() -> {
     // superstructure.setGrabberMotor(1);

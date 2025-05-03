@@ -276,6 +276,33 @@ public class Superstructure extends SubsystemBase {
         });
   }
 
+  public Command childBargeShot() {
+    double oldSpeed = getElevatorMaxSpeed();
+
+    return Commands.sequence(
+        Commands.runOnce(() -> setElevatorMaxSpeed(setpoints.barge_shoot_elevator_speed())),
+        Commands.runOnce(() -> setElevatorGoalHeightMillimeters(800)),
+
+        Commands.waitUntil(() -> getElevatorHeightMillimeters() >= 300),
+        Commands.runOnce(() -> setWristGoalRads(setpoints.barge_shoot_wrist_angle_rads())),
+        Commands.waitUntil(() -> getElevatorHeightMillimeters() >= 600),
+        // Commands.runOnce(() ->
+        // setWristGoalRads(setpoints.barge_shoot_wrist_angle_rads())),
+        // Commands.waitUntil(() -> Math.abs(getGrabberWristAngleRads() -
+        // setpoints.barge_shoot_wrist_angle_rads()) < 0.05),
+        Commands.runOnce(() -> setGrabberMotor(1)),
+        Commands.waitSeconds(0.75),
+        Commands.runOnce(() -> {
+          setGrabberMotor(0);
+          setElevatorMaxSpeed(oldSpeed);
+          // foldForClimp();
+        }, this)).finallyDo((boolean interrupted) -> {
+          setGrabberMotor(0);
+          setElevatorMaxSpeed(oldSpeed);
+        });
+  }
+
+
   public void stayStill() {
     elevator.stayStill();
     chute.stayStill();
